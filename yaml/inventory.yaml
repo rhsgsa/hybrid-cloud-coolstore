@@ -1,0 +1,381 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: inventory
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.openshift.io/runtime: quarkus
+  name: inventory
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: inventory
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+  type: ClusterIP
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  labels:
+    app.kubernetes.io/name: inventory
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.openshift.io/runtime: quarkus
+  name: inventory
+spec: {}
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: openjdk-11
+spec:
+  dockerImageRepository: registry.access.redhat.com/ubi8/openjdk-11
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/name: inventory
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.openshift.io/runtime: quarkus
+  name: inventory-artifact-image
+spec:
+  lookupPolicy:
+    local: false
+status:
+  dockerImageRepository: ""
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/name: inventory
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.openshift.io/runtime: quarkus
+  name: inventory-artifact-build
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: inventory-artifact-image:1.0-SNAPSHOT
+  postCommit: {}
+  resources: {}
+  source:
+    contextDir: m4/inventory-service
+    git:
+      uri: https://github.com/RedHat-Middleware-Workshops/cloud-native-workshop-v2-labs-solutions.git
+      ref: ocp-4.10
+    type: Git
+  strategy:
+    type: Source
+    sourceStrategy:
+      env:
+      - name: MAVEN_MIRROR_URL
+        value: http://nexus:8081/repository/maven-all-public/
+      - name: MAVEN_ARGS
+        value: "compile package -DskipTests -Dquarkus.kubernetes.deploy=false"
+      - name: ARTIFACT_COPY_ARGS
+        value: "-r quarkus-app/"
+      from:
+        kind: ImageStreamTag
+        name: ubi8-openjdk-11:1.10
+        namespace: openshift
+  triggers:
+  - type: ConfigChange
+  - type: ImageChange
+    imageChange: {}
+status:
+  lastVersion: 0
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  labels:
+    app.kubernetes.io/name: inventory
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.openshift.io/runtime: quarkus
+  name: inventory
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: inventory:1.0-SNAPSHOT
+  source:
+    dockerfile: "####\n# This Dockerfile is used in order to build a container that\
+      \ runs the Quarkus application in JVM mode\n#\n# Before building the container\
+      \ image run:\n#\n# ./mvnw package\n#\n# Then, build the image with:\n#\n# docker\
+      \ build -f src/main/docker/Dockerfile.jvm -t quarkus/code-with-quarkus-jvm .\n\
+      #\n# Then run the container using:\n#\n# docker run -i --rm -p 8080:8080 quarkus/code-with-quarkus-jvm\n\
+      #\n# If you want to include the debug port into your docker image\n# you will\
+      \ have to expose the debug port (default 5005) like this :  EXPOSE 8080 5005\n\
+      #\n# Then run the container using :\n#\n# docker run -i --rm -p 8080:8080 -p\
+      \ 5005:5005 -e JAVA_ENABLE_DEBUG=\"true\" quarkus/code-with-quarkus-jvm\n#\n\
+      ###\nFROM registry.access.redhat.com/ubi8/ubi-minimal:8.4 \n\nARG JAVA_PACKAGE=java-11-openjdk-headless\n\
+      ARG RUN_JAVA_VERSION=1.3.8\nENV LANG='en_US.UTF-8' LANGUAGE='en_US:en'\n# Install\
+      \ java and the run-java script\n# Also set up permissions for user `1001`\n\
+      RUN microdnf install curl ca-certificates ${JAVA_PACKAGE} \\\n    && microdnf\
+      \ update \\\n    && microdnf clean all \\\n    && mkdir /deployments \\\n  \
+      \  && chown 1001 /deployments \\\n    && chmod \"g+rwX\" /deployments \\\n \
+      \   && chown 1001:root /deployments \\\n    && curl https://repo1.maven.org/maven2/io/fabric8/run-java-sh/${RUN_JAVA_VERSION}/run-java-sh-${RUN_JAVA_VERSION}-sh.sh\
+      \ -o /deployments/run-java.sh \\\n    && chown 1001 /deployments/run-java.sh\
+      \ \\\n    && chmod 540 /deployments/run-java.sh \\\n    && echo \"securerandom.source=file:/dev/urandom\"\
+      \ >> /etc/alternatives/jre/conf/security/java.security\n\n# Configure the JAVA_OPTIONS,\
+      \ you can add -XshowSettings:vm to also display the heap size.\nENV JAVA_OPTIONS=\"\
+      -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager\"\
+      \n# We make four distinct layers so if there are application changes the library\
+      \ layers can be re-used\nCOPY --chown=1001 target/quarkus-app/lib/ /deployments/lib/\n\
+      COPY --chown=1001 target/quarkus-app/*.jar /deployments/\nCOPY --chown=1001\
+      \ target/quarkus-app/app/ /deployments/app/\nCOPY --chown=1001 target/quarkus-app/quarkus/\
+      \ /deployments/quarkus/\n\nEXPOSE 8080\nUSER 1001\n\nENTRYPOINT [ \"/deployments/run-java.sh\"\
+      \ ]\n\n"
+    images:
+    - from:
+        kind: ImageStreamTag
+        name: inventory-artifact-image:1.0-SNAPSHOT
+      paths:
+      - sourcePath: "/deployments/."
+        destinationDir: "./target/"
+  strategy:
+    dockerStrategy: {}
+  triggers:
+  - type: ConfigChange
+  - type: ImageChange
+    imageChange: {}
+---
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    app.openshift.io/connects-to: '["inventory-database",{"apiVersion":"apps.openshift.io/v1","kind":"DeploymentConfig","name":"inventory-database"}]'
+  labels:
+    app.kubernetes.io/name: inventory
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.openshift.io/runtime: quarkus
+    app.kubernetes.io/part-of: inventory
+  name: inventory
+spec:
+  replicas: 1
+  selector:
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.kubernetes.io/name: inventory
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: inventory
+        app.kubernetes.io/version: 1.0-SNAPSHOT
+        app.openshift.io/runtime: quarkus
+    spec:
+      containers:
+        - env:
+            - name: KUBERNETES_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+          image: kwkoo/inventory:1.0-SNAPSHOT
+          imagePullPolicy: IfNotPresent
+          name: inventory
+          ports:
+            - containerPort: 8080
+              name: http
+              protocol: TCP
+  triggers:
+    - imageChangeParams:
+        automatic: true
+        containerNames:
+          - inventory
+        from:
+          kind: ImageStreamTag
+          name: inventory:1.0-SNAPSHOT
+      type: ImageChange
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app.kubernetes.io/name: inventory
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.openshift.io/runtime: quarkus
+  name: inventory
+spec:
+  port:
+    targetPort: 8080
+  to:
+    kind: Service
+    name: inventory
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+    template.openshift.io/expose-database_name: '{.data[''database-name'']}'
+    template.openshift.io/expose-password: '{.data[''database-password'']}'
+    template.openshift.io/expose-username: '{.data[''database-user'']}'
+  creationTimestamp: null
+  labels:
+    app: postgresql-persistent
+    app.kubernetes.io/component: postgresql-persistent
+    app.kubernetes.io/instance: postgresql-persistent
+    template: postgresql-persistent-template
+  name: inventory-database
+stringData:
+  database-name: inventory
+  database-password: mysecretpassword
+  database-user: inventory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+    template.openshift.io/expose-uri: postgres://{.spec.clusterIP}:{.spec.ports[?(.name=="postgresql")].port}
+  creationTimestamp: null
+  labels:
+    app: postgresql-persistent
+    app.kubernetes.io/component: postgresql-persistent
+    app.kubernetes.io/instance: postgresql-persistent
+    template: postgresql-persistent-template
+  name: inventory-database
+spec:
+  ports:
+  - name: postgresql
+    port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    name: inventory-database
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  labels:
+    app: postgresql-persistent
+    app.kubernetes.io/component: postgresql-persistent
+    app.kubernetes.io/instance: postgresql-persistent
+    template: postgresql-persistent-template
+  name: inventory-database
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+status: {}
+---
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+    template.alpha.openshift.io/wait-for-ready: "true"
+  creationTimestamp: null
+  labels:
+    app: postgresql-persistent
+    app.kubernetes.io/component: postgresql-persistent
+    app.kubernetes.io/instance: postgresql-persistent
+    template: postgresql-persistent-template
+    app.kubernetes.io/part-of: inventory
+    app.openshift.io/runtime: postgresql
+  name: inventory-database
+spec:
+  replicas: 1
+  selector:
+    name: inventory-database
+  strategy:
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+        name: inventory-database
+    spec:
+      containers:
+      - env:
+        - name: POSTGRESQL_USER
+          valueFrom:
+            secretKeyRef:
+              key: database-user
+              name: inventory-database
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: database-password
+              name: inventory-database
+        - name: POSTGRESQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              key: database-name
+              name: inventory-database
+        image: ' '
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - /usr/libexec/check-container
+            - --live
+          initialDelaySeconds: 120
+          timeoutSeconds: 10
+        name: postgresql
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - /usr/libexec/check-container
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+        resources:
+          limits:
+            memory: 512Mi
+        securityContext:
+          capabilities: {}
+          privileged: false
+        terminationMessagePath: /dev/termination-log
+        volumeMounts:
+        - mountPath: /var/lib/pgsql/data
+          name: inventory-database-data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - name: inventory-database-data
+        persistentVolumeClaim:
+          claimName: inventory-database
+  test: false
+  triggers:
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - postgresql
+      from:
+        kind: ImageStreamTag
+        name: postgresql:10-el8
+        namespace: openshift
+    type: ImageChange
+  - type: ConfigChange
+status:
+  availableReplicas: 0
+  latestVersion: 0
+  observedGeneration: 0
+  replicas: 0
+  unavailableReplicas: 0
+  updatedReplicas: 0

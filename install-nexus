@@ -1,0 +1,252 @@
+#!/bin/bash
+
+cd $(dirname $0)
+BASE=$(pwd)
+cd - >> /dev/null
+
+PROJ=demo
+
+#
+# https://help.sonatype.com/repomanager3/integrations/rest-and-integration-api/script-api/writing-scripts
+#
+function add_nexus3_hosted_repo() {
+  local _REPO_ID=$1
+  local _NEXUS_USER=$2
+  local _NEXUS_PWD=$3
+  local _NEXUS_URL=$4
+
+  read -r -d '' _REPO_JSON << EOM
+{
+  "name": "$_REPO_ID",
+  "type": "groovy",
+  "content": "repository.createMavenHosted('$_REPO_ID')"
+}
+EOM
+
+  # Pre Nexus 3.8
+  #curl -v -H "Accept: application/json" -H "Content-Type: application/json" -d "$_REPO_JSON" -u "$_NEXUS_USER:$_NEXUS_PWD" "${_NEXUS_URL}/service/siesta/rest/v1/script/"
+  #curl -v -X POST -H "Content-Type: text/plain" -u "$_NEXUS_USER:$_NEXUS_PWD" "${_NEXUS_URL}/service/siesta/rest/v1/script/$_GROUP_ID/run"
+
+  # Post Nexus 3.8
+  curl -v -H "Accept: application/json" -H "Content-Type: application/json" -d "$_REPO_JSON" -u "$_NEXUS_USER:$_NEXUS_PWD" "${_NEXUS_URL}/service/rest/v1/script/"
+  curl -v -X POST -H "Content-Type: text/plain" -u "$_NEXUS_USER:$_NEXUS_PWD" "${_NEXUS_URL}/service/rest/v1/script/$_REPO_ID/run"
+}
+
+
+#
+# modified from https://raw.githubusercontent.com/OpenShiftDemos/nexus/master/scripts/nexus-functions
+#
+function add_nexus3_repos_to_group() {
+  local _NEXUS_USER=$1
+  local _NEXUS_PWD=$2
+  local _NEXUS_URL=$3
+
+  add_nexus3_repo redhat-ga https://maven.repository.redhat.com/ga/ $_NEXUS_USER $_NEXUS_PWD $_NEXUS_URL
+  add_nexus3_repo redhat-ea https://maven.repository.redhat.com/earlyaccess/all/ $_NEXUS_USER $_NEXUS_PWD $_NEXUS_URL
+  add_nexus3_repo redhat-techpreview https://maven.repository.redhat.com/techpreview/all $_NEXUS_USER $_NEXUS_PWD $_NEXUS_URL
+  add_nexus3_repo jboss-ce https://repository.jboss.org/nexus/content/groups/public/ $_NEXUS_USER $_NEXUS_PWD $_NEXUS_URL
+
+  add_nexus3_group_repo camel,maven-central,maven-releases,maven-snapshots,jboss-ce,redhat-ga,redhat-ea,redhat-techpreview maven-all-public $_NEXUS_USER $_NEXUS_PWD $_NEXUS_URL
+}
+
+#
+# Add a Docker Registry Repo to Nexus3
+# add_nexus3_docker_repo [repo-id] [repo-port] [nexus-username] [nexus-password] [nexus-url]
+#
+function add_nexus3_docker_repo() {
+  local _REPO_ID="$1"
+  local _REPO_PORT="$2"
+  local _NEXUS_USER="$3"
+  local _NEXUS_PWD="$4"
+  local _NEXUS_URL="$5"
+
+  read -r -d '' _REPO_JSON <<EOM
+{
+  "name": "$_REPO_ID",
+  "type": "groovy",
+  "content": "import org.sonatype.nexus.repository.config.WritePolicy; import org.sonatype.nexus.security.realm.RealmManager; repository.createDockerHosted('$_REPO_ID', $_REPO_PORT, 0, 'default', true, true, WritePolicy.ALLOW, false); container.lookup(RealmManager.class.getName()).enableRealm('DockerToken', true)"
+}
+EOM
+
+  curl -v -H "Accept: application/json" -H "Content-Type: application/json" -d "$_REPO_JSON" -u "$_NEXUS_USER:$_NEXUS_PWD" "${_NEXUS_URL}/service/rest/v1/script/"
+  curl -v -X POST -H "Content-Type: text/plain" -u "$_NEXUS_USER:$_NEXUS_PWD" "${_NEXUS_URL}/service/rest/v1/script/$_REPO_ID/run"
+}
+
+
+function on_minikube() {
+    minikube ip &> /dev/null
+    if [ $? -eq 0 ]; then
+      echo -n "true"
+    else
+      echo -n "false"
+    fi
+}
+
+function nexus_url() {
+    if [ "$(on_minikube)" = "true" ]; then
+      echo -n "http://$(minikube ip):$(kubectl get -n $PROJ svc/nexus -o jsonpath='{.spec.ports[0].nodePort}')"
+    else
+      echo -n "http://$(kubectl get -n $PROJ route/nexus -o jsonpath='{.spec.host}')"
+    fi
+}
+
+kubectl get ns $PROJ &> /dev/null
+if [ $? -ne 0 ]; then
+  kubectl create ns $PROJ
+fi
+
+set -e
+
+cat <<EOF | kubectl apply -n $PROJ -f -
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app: nexus
+  name: nexus
+spec:
+  accessModes:
+    - ReadWriteOnce
+  volumeMode: Filesystem
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: nexus
+  name: nexus
+spec:
+  type: NodePort
+  selector:
+    deployment: nexus
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: nexus
+  name: nexus
+spec:
+  selector:
+    matchLabels:
+      deployment: nexus
+  template:
+    metadata:
+      labels:
+        deployment: nexus
+    spec:
+      containers:
+        - name: nexus
+          image: docker.io/sonatype/nexus3
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "4"
+            limits:
+              memory: "4Gi"
+              cpu: "4"
+          ports:
+          - containerPort: 8081
+            name: 8081-tcp
+          livenessProbe:
+            httpGet:
+              path: /service/rest/v1/status
+              port: 8081
+            # nexus has lots of init to do first time so lets give
+            # more time for that to happen
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          readinessProbe:
+            httpGet:
+              path: /service/rest/v1/status
+              port: 8081
+            # nexus has lots of init to do first time so lets give
+            # more time for that to happen
+            initialDelaySeconds: 180
+            periodSeconds: 3
+          volumeMounts:
+          - name: nexus-data
+            mountPath: /nexus-data
+      volumes:
+      - name: nexus-data
+        persistentVolumeClaim:
+          claimName: nexus
+EOF
+
+
+echo "waiting for nexus to come up..."
+kubectl wait -n $PROJ --for=condition=available deploy/nexus --timeout=300s
+
+NEXUS_POD="$(kubectl -n $PROJ get pods -ldeployment=nexus -ojsonpath='{.items[0].metadata.name}')"
+echo "nexus pod=$NEXUS_POD"
+
+kubectl exec -n $PROJ $NEXUS_POD -- /bin/sh -c "echo nexus.scripts.allowCreation=true >./nexus-data/etc/nexus.properties"
+
+kubectl delete -n $PROJ pod $NEXUS_POD
+sleep 5
+
+echo "waiting for nexus to come up..."
+kubectl wait -n $PROJ --for=condition=available deploy/nexus --timeout=300s
+
+NEXUS_POD="$(kubectl -n $PROJ get pods -ldeployment=nexus -ojsonpath='{.items[0].metadata.name}')"
+echo "nexus pod=$NEXUS_POD"
+
+NEXUS_PASSWORD="$(kubectl exec -n $PROJ $NEXUS_POD -- cat /nexus-data/admin.password)"
+echo "admin password=$NEXUS_PASSWORD"
+
+if [ "$(on_minikube)" != "true" ]; then
+  oc expose -n $PROJ svc/nexus
+fi
+
+NEXUS_URL="$(nexus_url)"
+echo "nexus url=$NEXUS_URL"
+
+set +e
+
+echo -n "waiting for pod to be ready..."
+RC=0
+while [ $RC -ne 200 -a $RC -ne 302 -a $RC -ne 403 ]; do
+  sleep 5
+  RC=$(curl -k -sL -w "%{http_code}" ${NEXUS_URL} -o /dev/null 2>/dev/null)
+  echo -n "."
+done
+echo "done"
+
+if [ "$(on_minikube)" = "true" ]; then
+
+  # Configure nexus as a docker registry
+  add_nexus3_docker_repo docker 5000 admin $NEXUS_PASSWORD $NEXUS_URL
+
+  kubectl expose -n $PROJ deploy/nexus --port=5000 --name=docker-registry
+
+  REGISTRY_IP="$(kubectl -n $PROJ get svc/docker-registry -o jsonpath='{.spec.clusterIP}')"
+  echo "registry service IP=${REGISTRY_IP}"
+
+  kubectl create secret docker-registry \
+    -n $PROJ \
+    docker-registry \
+    --docker-server=http://${REGISTRY_IP}:5000 \
+    --docker-username=admin \
+    --docker-password=$NEXUS_PASSWORD \
+    --docker-email=admin@example.com
+fi
+
+# Add Red Hat repos
+curl -o /tmp/nexus-functions -s https://raw.githubusercontent.com/OpenShiftDemos/nexus/master/scripts/nexus-functions
+source /tmp/nexus-functions
+add_nexus3_hosted_repo camel admin $NEXUS_PASSWORD $NEXUS_URL
+add_nexus3_repos_to_group admin $NEXUS_PASSWORD $NEXUS_URL
+rm -f /tmp/nexus-functions
+
+echo "***"
+echo "*** Note: it is safe to ignore errors emitted from curl above"
+echo "***"
+
+echo "nexus URL is ${URL}"
+echo "nexus admin password is ${NEXUS_PASSWORD}"
