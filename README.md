@@ -1,5 +1,11 @@
 # CCN Module 4
 
+## Fix for shopping cart service compilation error
+
+```
+mvn quarkus:add-extension -Dextensions="messaging-kafka"
+```
+
 ## Resources
 
 * [Solution git repo](https://github.com/RedHat-Middleware-Workshops/cloud-native-workshop-v2-labs-solutions/tree/ocp-4.9/m4)

@@ -1,0 +1,338 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+    template.openshift.io/expose-database_name: '{.data[''database-name'']}'
+    template.openshift.io/expose-password: '{.data[''database-password'']}'
+    template.openshift.io/expose-username: '{.data[''database-user'']}'
+  creationTimestamp: null
+  labels:
+    app: postgresql-persistent
+    app.kubernetes.io/component: postgresql-persistent
+    app.kubernetes.io/instance: postgresql-persistent
+    template: postgresql-persistent-template
+  name: catalog-database
+stringData:
+  database-name: catalog
+  database-password: mysecretpassword
+  database-user: catalog
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+    template.openshift.io/expose-uri: postgres://{.spec.clusterIP}:{.spec.ports[?(.name=="postgresql")].port}
+  creationTimestamp: null
+  labels:
+    app: postgresql-persistent
+    app.kubernetes.io/component: postgresql-persistent
+    app.kubernetes.io/instance: postgresql-persistent
+    template: postgresql-persistent-template
+  name: catalog-database
+spec:
+  ports:
+  - name: postgresql
+    port: 5432
+    protocol: TCP
+    targetPort: 5432
+  selector:
+    name: catalog-database
+  sessionAffinity: None
+  type: ClusterIP
+status:
+  loadBalancer: {}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  labels:
+    app: postgresql-persistent
+    app.kubernetes.io/component: postgresql-persistent
+    app.kubernetes.io/instance: postgresql-persistent
+    template: postgresql-persistent-template
+  name: catalog-database
+spec:
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+status: {}
+---
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+    template.alpha.openshift.io/wait-for-ready: "true"
+  creationTimestamp: null
+  labels:
+    app: postgresql-persistent
+    app.kubernetes.io/component: postgresql-persistent
+    app.kubernetes.io/instance: postgresql-persistent
+    template: postgresql-persistent-template
+    app.kubernetes.io/part-of: catalog
+    app.openshift.io/runtime: postgresql
+  name: catalog-database
+spec:
+  replicas: 1
+  selector:
+    name: catalog-database
+  strategy:
+    resources: {}
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+        name: catalog-database
+    spec:
+      containers:
+      - env:
+        - name: POSTGRESQL_USER
+          valueFrom:
+            secretKeyRef:
+              key: database-user
+              name: catalog-database
+        - name: POSTGRESQL_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: database-password
+              name: catalog-database
+        - name: POSTGRESQL_DATABASE
+          valueFrom:
+            secretKeyRef:
+              key: database-name
+              name: catalog-database
+        image: ' '
+        imagePullPolicy: IfNotPresent
+        livenessProbe:
+          exec:
+            command:
+            - /usr/libexec/check-container
+            - --live
+          initialDelaySeconds: 120
+          timeoutSeconds: 10
+        name: postgresql
+        ports:
+        - containerPort: 5432
+          protocol: TCP
+        readinessProbe:
+          exec:
+            command:
+            - /usr/libexec/check-container
+          initialDelaySeconds: 5
+          timeoutSeconds: 1
+        resources:
+          limits:
+            memory: 512Mi
+        securityContext:
+          capabilities: {}
+          privileged: false
+        terminationMessagePath: /dev/termination-log
+        volumeMounts:
+        - mountPath: /var/lib/pgsql/data
+          name: catalog-database-data
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      volumes:
+      - name: catalog-database-data
+        persistentVolumeClaim:
+          claimName: catalog-database
+  test: false
+  triggers:
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - postgresql
+      from:
+        kind: ImageStreamTag
+        name: postgresql:10-el8
+        namespace: openshift
+    type: ImageChange
+  - type: ConfigChange
+status:
+  availableReplicas: 0
+  latestVersion: 0
+  observedGeneration: 0
+  replicas: 0
+  unavailableReplicas: 0
+  updatedReplicas: 0
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  labels:
+    app.kubernetes.io/name: catalog
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+  name: catalog
+spec: {}
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  labels:
+    app.kubernetes.io/name: catalog
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+  name: catalog
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: catalog:1.0-SNAPSHOT
+  postCommit: {}
+  resources: {}
+  source:
+    contextDir: m4/catalog-service
+    git:
+      uri: https://github.com/RedHat-Middleware-Workshops/cloud-native-workshop-v2-labs-solutions.git
+      ref: ocp-4.10
+    type: Git
+  strategy:
+    type: Source
+    sourceStrategy:
+      env:
+      - name: MAVEN_MIRROR_URL
+        value: http://nexus:8081/repository/maven-all-public/
+      - name: MAVEN_ARGS
+        value: "package spring-boot:repackage -DskipTests"
+      - name: MAVEN_S2I_ARTIFACT_DIRS
+        value: target
+      - name: S2I_SOURCE_DEPLOYMENTS_FILTER
+        value: "*.jar"
+      from:
+        kind: ImageStreamTag
+        name: ubi8-openjdk-11:1.10
+        namespace: openshift
+  triggers:
+  - type: ConfigChange
+  - type: ImageChange
+    imageChange: {}
+status:
+  lastVersion: 0
+---
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+    app.openshift.io/connects-to: '[{"apiVersion":"apps.openshift.io/v1","kind":"DeploymentConfig","name":"catalog-database"},{"apiVersion":"apps.openshift.io/v1","kind":"DeploymentConfig","name":"inventory"}]'
+  creationTimestamp: null
+  labels:
+    app: catalog
+    app.kubernetes.io/component: catalog
+    app.kubernetes.io/instance: catalog
+    app.kubernetes.io/name: catalog
+    app.kubernetes.io/part-of: catalog
+    app.openshift.io/runtime: rh-spring-boot
+  name: catalog
+spec:
+  replicas: 1
+  selector:
+    deploymentconfig: catalog
+  strategy:
+    resources: {}
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+        deploymentconfig: catalog
+    spec:
+      containers:
+      - env:
+        - name: JAVA_OPTS_APPEND
+          value: -Dspring.profiles.active=openshift
+        image: image-registry.openshift-image-registry.svc:5000/demo/catalog:1.0-SNAPSHOT
+        name: catalog
+        ports:
+        - containerPort: 8778
+          protocol: TCP
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 8443
+          protocol: TCP
+        resources: {}
+  test: false
+  triggers:
+  - type: ConfigChange
+  - imageChangeParams:
+      automatic: true
+      containerNames:
+      - catalog
+      from:
+        kind: ImageStreamTag
+        name: catalog:1.0-SNAPSHOT
+        namespace: demo
+    type: ImageChange
+status:
+  availableReplicas: 0
+  latestVersion: 0
+  observedGeneration: 0
+  replicas: 0
+  unavailableReplicas: 0
+  updatedReplicas: 0
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  labels:
+    app: catalog
+    app.kubernetes.io/component: catalog
+    app.kubernetes.io/instance: catalog
+    app.kubernetes.io/name: catalog
+  name: catalog
+spec:
+  ports:
+  - name: 8080-tcp
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: 8443-tcp
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  - name: 8778-tcp
+    port: 8778
+    protocol: TCP
+    targetPort: 8778
+  selector:
+    deploymentconfig: catalog
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    openshift.io/host.generated: "true"
+  creationTimestamp: null
+  labels:
+    app: catalog
+    app.kubernetes.io/component: catalog
+    app.kubernetes.io/instance: catalog
+    app.kubernetes.io/name: catalog
+  name: catalog
+spec:
+  port:
+    targetPort: 8080-tcp
+  to:
+    kind: Service
+    name: catalog
+    weight: 100
+  wildcardPolicy: None
+status: {}

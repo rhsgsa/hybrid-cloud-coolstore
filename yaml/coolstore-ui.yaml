@@ -1,0 +1,81 @@
+apiVersion: apps.openshift.io/v1
+kind: DeploymentConfig
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+    app.openshift.io/connects-to: order-cart,catalog,inventory,order
+  creationTimestamp: null
+  labels:
+    app: coolstore-ui
+    app.kubernetes.io/component: coolstore-ui
+    app.kubernetes.io/instance: coolstore-ui
+    app.kubernetes.io/part-of: coolstore
+  name: coolstore-ui
+spec:
+  replicas: 1
+  selector:
+    deploymentconfig: coolstore-ui
+  strategy:
+    resources: {}
+  template:
+    metadata:
+      annotations:
+        openshift.io/generated-by: OpenShiftNewApp
+      creationTimestamp: null
+      labels:
+        deploymentconfig: coolstore-ui
+    spec:
+      containers:
+      - image: ghcr.io/rhsgsa/coolstore-ui:latest
+        name: coolstore-ui
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        resources: {}
+status:
+  availableReplicas: 0
+  latestVersion: 0
+  observedGeneration: 0
+  replicas: 0
+  unavailableReplicas: 0
+  updatedReplicas: 0
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  labels:
+    app: coolstore-ui
+    app.kubernetes.io/component: coolstore-ui
+    app.kubernetes.io/instance: coolstore-ui
+  name: coolstore-ui
+spec:
+  ports:
+  - name: 8080-tcp
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  selector:
+    deploymentconfig: coolstore-ui
+status:
+  loadBalancer: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: null
+  labels:
+    app: coolstore-ui
+    app.kubernetes.io/component: coolstore-ui
+    app.kubernetes.io/instance: coolstore-ui
+  name: coolstore-ui
+spec:
+  port:
+    targetPort: 8080-tcp
+  to:
+    kind: ""
+    name: coolstore-ui
+    weight: null
+status: {}
