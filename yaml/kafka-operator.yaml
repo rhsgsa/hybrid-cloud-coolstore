@@ -13,6 +13,7 @@ kind: Subscription
 metadata:
   labels:
     operators.coreos.com/amq-streams.demo: ""
+  name: amq-streams
 spec:
   channel: stable
   installPlanApproval: Automatic

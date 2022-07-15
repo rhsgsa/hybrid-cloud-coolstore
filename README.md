@@ -1,5 +1,7 @@
 # CCN Module 4
 
+Note: Some of the manifests assume that we are deploying into the `demo` namespace
+
 ## Fix for shopping cart service compilation error
 
 ```
