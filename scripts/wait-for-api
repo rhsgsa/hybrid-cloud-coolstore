@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ "$#" -lt 1 ]; then
+  echo "Usage: $0 RESOURCE_KIND"
+  exit 1
+fi
+
+API="$1"
+
+echo -n "waiting for $API API to show up..."
+while [ "$(oc api-resources | grep -i "^$API" | wc -l)" -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"

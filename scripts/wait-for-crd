@@ -1,0 +1,15 @@
+#!/bin/bash
+
+if [ "$#" -lt 1 ]; then
+  echo "Usage: $0 CRD_NAME"
+  exit 1
+fi
+
+CRD="$1"
+
+echo -n "waiting for $CRD to show up..."
+while [ "$(oc get crd $CRD -o name 2>/dev/null | wc -l)" -lt 1 ]; do
+  echo -n "."
+  sleep 10
+done
+echo "done"

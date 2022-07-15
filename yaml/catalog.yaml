@@ -254,7 +254,7 @@ spec:
       - env:
         - name: JAVA_OPTS_APPEND
           value: -Dspring.profiles.active=openshift
-        image: image-registry.openshift-image-registry.svc:5000/demo/catalog:1.0-SNAPSHOT
+        image: ""
         name: catalog
         ports:
         - containerPort: 8778

@@ -4,7 +4,7 @@ cd $(dirname $0)
 BASE=$(pwd)
 cd - >> /dev/null
 
-PROJ=demo
+source ${BASE}/../config.sh
 
 #
 # https://help.sonatype.com/repomanager3/integrations/rest-and-integration-api/script-api/writing-scripts
