@@ -32,13 +32,6 @@ spec:
         - containerPort: 8080
           protocol: TCP
         resources: {}
-status:
-  availableReplicas: 0
-  latestVersion: 0
-  observedGeneration: 0
-  replicas: 0
-  unavailableReplicas: 0
-  updatedReplicas: 0
 ---
 apiVersion: v1
 kind: Service
@@ -59,8 +52,6 @@ spec:
     targetPort: 8080
   selector:
     deploymentconfig: coolstore-ui
-status:
-  loadBalancer: {}
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
@@ -78,4 +69,3 @@ spec:
     kind: Service
     name: coolstore-ui
     weight: null
-status: {}

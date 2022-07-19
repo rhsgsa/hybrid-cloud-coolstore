@@ -48,8 +48,6 @@ metadata:
 spec:
   lookupPolicy:
     local: false
-status:
-  dockerImageRepository: ""
 ---
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
@@ -93,8 +91,6 @@ spec:
   - type: ConfigChange
   - type: ImageChange
     imageChange: {}
-status:
-  lastVersion: 0
 ---
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
@@ -258,8 +254,6 @@ spec:
     name: inventory-database
   sessionAffinity: None
   type: ClusterIP
-status:
-  loadBalancer: {}
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -279,7 +273,6 @@ spec:
   resources:
     requests:
       storage: 1Gi
-status: {}
 ---
 apiVersion: apps.openshift.io/v1
 kind: DeploymentConfig
@@ -375,10 +368,3 @@ spec:
         namespace: openshift
     type: ImageChange
   - type: ConfigChange
-status:
-  availableReplicas: 0
-  latestVersion: 0
-  observedGeneration: 0
-  replicas: 0
-  unavailableReplicas: 0
-  updatedReplicas: 0
