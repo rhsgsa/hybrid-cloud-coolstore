@@ -14,26 +14,26 @@ demo-manual-install:
 	# ensure we are logged into OpenShift
 	oc whoami
 	oc new-project $(PROJ) || oc project $(PROJ)
-	oc create -n $(PROJ) -f $(BASE)/yaml/kafka-operator.yaml
-	oc create -f $(BASE)/yaml/serverless-operator.yaml
+	oc apply -f $(BASE)/yaml/operators/kafka-operator.yaml
+	oc apply -f $(BASE)/yaml/operators/serverless-operator.yaml
 	$(BASE)/scripts/install-nexus
 	$(BASE)/scripts/wait-for-api knativeservings
-	oc apply -f $(BASE)/yaml/knative-serving.yaml
+	oc apply -f $(BASE)/yaml/knative/knative-serving.yaml
 	$(BASE)/scripts/wait-for-api knativeeventings
-	oc apply -f $(BASE)/yaml/knative-eventing.yaml
+	oc apply -f $(BASE)/yaml/knative/knative-eventing.yaml
 	$(BASE)/scripts/wait-for-api knativekafkas
-	oc apply -f $(BASE)/yaml/knative-kafka.yaml
+	oc apply -f $(BASE)/yaml/knative/knative-kafka.yaml
 	$(BASE)/scripts/wait-for-api kafkas
 	$(BASE)/scripts/wait-for-api kafkatopics
-	oc apply -n $(PROJ) -f $(BASE)/yaml/kafka.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/cart.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/catalog.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/coolstore-ui.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/inventory.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/order.yaml
+	oc apply -n $(PROJ) -f $(BASE)/yaml/kafka/kafka.yaml
+	oc apply -n $(PROJ) -f $(BASE)/yaml/services/cart.yaml
+	oc apply -n $(PROJ) -f $(BASE)/yaml/services/catalog.yaml
+	oc apply -n $(PROJ) -f $(BASE)/yaml/services/coolstore-ui.yaml
+	oc apply -n $(PROJ) -f $(BASE)/yaml/services/inventory.yaml
+	oc apply -n $(PROJ) -f $(BASE)/yaml/services/order.yaml
 	$(BASE)/scripts/wait-for-api kafkasources
 	$(BASE)/scripts/wait-for-crd services.serving.knative.dev
-	oc apply -n $(PROJ) -f $(BASE)/yaml/payment.yaml
+	oc apply -n $(PROJ) -f $(BASE)/yaml/services/payment.yaml
 
 argocd:
 	@open "https://`oc get -n openshift-gitops route/openshift-gitops-server -o jsonpath='{.spec.host}'`"
