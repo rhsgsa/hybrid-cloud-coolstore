@@ -1,0 +1,26 @@
+#!/bin/bash
+
+APIS="$(oc get -n openshift-operators operatorgroup global-operators -o jsonpath='{.metadata.annotations.olm\.providedAPIs}')"
+
+if [ -n "$APIS" ]; then
+  APIS="${APIS},"
+fi
+
+APIS="${APIS}AppProject.v1alpha1.argoproj.io,Application.v1alpha1.argoproj.io,ApplicationSet.v1alpha1.argoproj.io,ArgoCD.v1alpha1.argoproj.io,GitopsService.v1alpha1.pipelines.openshift.io"
+
+oc annotate -n openshift-operators operatorgroup/global-operators olm.providedAPIs="$APIS"
+
+cat <<EOF | oc apply -n openshift-operators -f -
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    operators.coreos.com/openshift-gitops-operator.openshift-operators: ""
+  name: openshift-gitops-operator
+spec:
+  channel: latest
+  installPlanApproval: Automatic
+  name: openshift-gitops-operator
+  source: redhat-operators
+  sourceNamespace: openshift-marketplace
+EOF

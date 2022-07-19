@@ -202,8 +202,8 @@ spec:
     type: Source
     sourceStrategy:
       env:
-      - name: MAVEN_MIRROR_URL
-        value: http://nexus:8081/repository/maven-all-public/
+      #- name: MAVEN_MIRROR_URL
+      #  value: http://nexus:8081/repository/maven-all-public/
       - name: MAVEN_ARGS
         value: "package spring-boot:repackage -DskipTests"
       - name: MAVEN_S2I_ARTIFACT_DIRS

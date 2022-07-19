@@ -1,0 +1,71 @@
+#!/bin/bash
+
+# Creates an admin user in gitea and clones a few repos.
+# Note that the username cannot be "admin".
+
+if [ "$#" -lt 5 ]; then
+  echo "Usage: $0 PROJECT APP_NAME GIT_USER GIT_PASSWORD GIT_EMAIL [clone_dir project_name project_description]..."
+  exit 1
+fi
+
+PROJ="$1"
+APP_NAME="$2"
+GIT_USER="$3"
+GIT_PASSWORD="$4"
+GIT_EMAIL="$5"
+
+shift
+shift
+shift
+shift
+shift
+
+cd `dirname $0`
+BASE=`pwd`/..
+cd - >> /dev/null
+
+set -e
+
+TOKEN=$(oc rsh -n $PROJ statefulset/$APP_NAME gitea admin user create --admin --username "$GIT_USER" --password "$GIT_PASSWORD" --email "$GIT_EMAIL" --access-token true | grep "Access token was successfully created..." | sed 's/.* \([^ ]*\)$/\1/' | sed $'s/\r//g')
+
+if [ -z "$TOKEN" ]; then
+  echo "could not get access token"
+  exit 1
+fi
+
+echo "token is $TOKEN"
+
+ROUTE_HOST="$(oc get route/$APP_NAME -n $PROJ -o jsonpath='{.spec.host}')"
+
+function clone_repo {
+  local repoDir="$1"
+  local repoName="$2"
+  local repoDescription="$3"
+
+  echo "repoName $repoName"
+  echo "repoDescription $repoDescription"
+
+  curl \
+    -k \
+    -X POST \
+    -H "accept: application/json" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: token $TOKEN" \
+    -d '{"auto_init":false, "default_branch":"master", "description":"'"$repoDescription"'", "gitignores":"", "issue_labels":"", "license":"", "name":"'"$repoName"'", "private":false, "readme":"", "template":false, "trust_model":"default"}' \
+    https://${ROUTE_HOST}/api/v1/user/repos
+
+  cd ${BASE}/${repoDir}
+  rm -rf .git
+  git init
+  git add .
+  git commit -m 'Initial commit'
+  git push --mirror https://${GIT_USER}:${GIT_PASSWORD}@${ROUTE_HOST}/${GIT_USER}/${repoName}.git
+  rm -rf .git
+}
+
+while [ "$#" -gt 1 ]; do
+  clone_repo "$1" "$2" "$3"
+  shift
+  shift
+  shift
+done

@@ -88,13 +88,6 @@ spec:
         kind: ImageStreamTag
         name: datagrid-service:12.0.0.Final-1
     type: ImageChange
-status:
-  availableReplicas: 0
-  latestVersion: 0
-  observedGeneration: 0
-  replicas: 0
-  unavailableReplicas: 0
-  updatedReplicas: 0
 ---
 apiVersion: v1
 kind: Service
@@ -139,8 +132,6 @@ spec:
     targetPort: 57600
   selector:
     deploymentconfig: datagrid-service
-status:
-  loadBalancer: {}
 ---
 apiVersion: image.openshift.io/v1
 kind: ImageStream
@@ -156,8 +147,6 @@ metadata:
 spec:
   lookupPolicy:
     local: false
-status:
-  dockerImageRepository: ""
 ---
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
@@ -187,8 +176,8 @@ spec:
     type: Source
     sourceStrategy:
       env:
-      - name: MAVEN_MIRROR_URL
-        value: http://nexus:8081/repository/maven-all-public/
+      #- name: MAVEN_MIRROR_URL
+      #  value: http://nexus:8081/repository/maven-all-public/
       - name: MAVEN_ARGS
         value: "compile package -DskipTests -Dquarkus.kubernetes.deploy=false"
       - name: ARTIFACT_COPY_ARGS
@@ -201,8 +190,6 @@ spec:
   - type: ConfigChange
   - type: ImageChange
     imageChange: {}
-status:
-  lastVersion: 0
 ---
 apiVersion: v1
 kind: Service

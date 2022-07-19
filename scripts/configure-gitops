@@ -1,0 +1,49 @@
+#!/bin/bash
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+# assign cluster-admin to argocd controller - this is so we can create the openshift-serverless namespace
+oc apply -f ${BASE}/../yaml/argocd/argocd-cluster-admin-role-binding.yaml
+
+echo -n "waiting for Application API to show up..."
+until oc get crd/applications.argoproj.io >/dev/null 2>/dev/null; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+echo -n "waiting for openshift-gitops namespace to show up..."
+until oc get ns/openshift-gitops >/dev/null 2>/dev/null; do
+  echo -n "."
+  sleep 10
+done
+echo "done"
+
+cat <<EOF | oc apply -f -
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: app-of-apps
+  namespace: openshift-gitops
+spec:
+  destination:
+    server: https://kubernetes.default.svc
+  project: default
+  source:
+    directory:
+      jsonnet: {}
+      recurse: true
+    path: argocd
+    repoURL: http://gitea.infra.svc.cluster.local:3000/demo/demo.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated: {}
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m0s
+      limit: 100
+EOF

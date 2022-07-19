@@ -1,39 +1,3 @@
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app.kubernetes.io/name: inventory
-    app.kubernetes.io/version: 1.0-SNAPSHOT
-    app.openshift.io/runtime: quarkus
-  name: inventory
-spec:
-  ports:
-    - name: http
-      port: 80
-      targetPort: 8080
-  selector:
-    app.kubernetes.io/name: inventory
-    app.kubernetes.io/version: 1.0-SNAPSHOT
-  type: ClusterIP
----
-apiVersion: image.openshift.io/v1
-kind: ImageStream
-metadata:
-  labels:
-    app.kubernetes.io/name: inventory
-    app.kubernetes.io/version: 1.0-SNAPSHOT
-    app.openshift.io/runtime: quarkus
-  name: inventory
-spec: {}
----
-apiVersion: image.openshift.io/v1
-kind: ImageStream
-metadata:
-  name: openjdk-11
-spec:
-  dockerImageRepository: registry.access.redhat.com/ubi8/openjdk-11
----
 apiVersion: image.openshift.io/v1
 kind: ImageStream
 metadata:
@@ -41,10 +5,10 @@ metadata:
     openshift.io/generated-by: OpenShiftNewApp
   creationTimestamp: null
   labels:
-    app.kubernetes.io/name: inventory
+    app.kubernetes.io/name: order
     app.kubernetes.io/version: 1.0-SNAPSHOT
     app.openshift.io/runtime: quarkus
-  name: inventory-artifact-image
+  name: order-artifact-image
 spec:
   lookupPolicy:
     local: false
@@ -58,19 +22,19 @@ metadata:
     openshift.io/generated-by: OpenShiftNewApp
   creationTimestamp: null
   labels:
-    app.kubernetes.io/name: inventory
+    app.kubernetes.io/name: order
     app.kubernetes.io/version: 1.0-SNAPSHOT
     app.openshift.io/runtime: quarkus
-  name: inventory-artifact-build
+  name: order-artifact-build
 spec:
   output:
     to:
       kind: ImageStreamTag
-      name: inventory-artifact-image:1.0-SNAPSHOT
+      name: order-artifact-image:1.0-SNAPSHOT
   postCommit: {}
   resources: {}
   source:
-    contextDir: m4/inventory-service
+    contextDir: m4/order-service
     git:
       uri: https://github.com/RedHat-Middleware-Workshops/cloud-native-workshop-v2-labs-solutions.git
       ref: ocp-4.10
@@ -79,8 +43,8 @@ spec:
     type: Source
     sourceStrategy:
       env:
-      - name: MAVEN_MIRROR_URL
-        value: http://nexus:8081/repository/maven-all-public/
+      #- name: MAVEN_MIRROR_URL
+      #  value: http://nexus:8081/repository/maven-all-public/
       - name: MAVEN_ARGS
         value: "compile package -DskipTests -Dquarkus.kubernetes.deploy=false"
       - name: ARTIFACT_COPY_ARGS
@@ -96,19 +60,54 @@ spec:
 status:
   lastVersion: 0
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/name: order
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.openshift.io/runtime: quarkus
+  name: order
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+  selector:
+    app.kubernetes.io/name: order
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+  type: ClusterIP
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: openjdk-11
+spec:
+  dockerImageRepository: registry.access.redhat.com/ubi8/openjdk-11
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  labels:
+    app.kubernetes.io/name: order
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.openshift.io/runtime: quarkus
+  name: order
+spec: {}
+---
 apiVersion: build.openshift.io/v1
 kind: BuildConfig
 metadata:
   labels:
-    app.kubernetes.io/name: inventory
+    app.kubernetes.io/name: order
     app.kubernetes.io/version: 1.0-SNAPSHOT
     app.openshift.io/runtime: quarkus
-  name: inventory
+  name: order
 spec:
   output:
     to:
       kind: ImageStreamTag
-      name: inventory:1.0-SNAPSHOT
+      name: order:1.0-SNAPSHOT
   source:
     dockerfile: "####\n# This Dockerfile is used in order to build a container that\
       \ runs the Quarkus application in JVM mode\n#\n# Before building the container\
@@ -140,7 +139,7 @@ spec:
     images:
     - from:
         kind: ImageStreamTag
-        name: inventory-artifact-image:1.0-SNAPSHOT
+        name: order-artifact-image:1.0-SNAPSHOT
       paths:
       - sourcePath: "/deployments/."
         destinationDir: "./target/"
@@ -152,40 +151,42 @@ spec:
     imageChange:
       from:
         kind: ImageStreamTag
-        name: inventory-artifact-image:1.0-SNAPSHOT
+        name: order-artifact-image:1.0-SNAPSHOT
 ---
 apiVersion: apps.openshift.io/v1
 kind: DeploymentConfig
 metadata:
   annotations:
-    app.openshift.io/connects-to: '["inventory-database",{"apiVersion":"apps.openshift.io/v1","kind":"DeploymentConfig","name":"inventory-database"}]'
+    app.openshift.io/connects-to: my-cluster,order-database
   labels:
-    app.kubernetes.io/name: inventory
+    app.kubernetes.io/name: order
     app.kubernetes.io/version: 1.0-SNAPSHOT
     app.openshift.io/runtime: quarkus
-    app.kubernetes.io/part-of: inventory
-  name: inventory
+    app.kubernetes.io/part-of: order
+  name: order
 spec:
   replicas: 1
   selector:
     app.kubernetes.io/version: 1.0-SNAPSHOT
-    app.kubernetes.io/name: inventory
+    app.kubernetes.io/name: order
   template:
     metadata:
       labels:
-        app.kubernetes.io/name: inventory
+        app.kubernetes.io/name: order
         app.kubernetes.io/version: 1.0-SNAPSHOT
         app.openshift.io/runtime: quarkus
     spec:
       containers:
         - env:
+            - name: QUARKUS_MONGODB_DATABASE
+              value: orders
             - name: KUBERNETES_NAMESPACE
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.namespace
           image: ""
           imagePullPolicy: IfNotPresent
-          name: inventory
+          name: order
           ports:
             - containerPort: 8080
               name: http
@@ -194,187 +195,108 @@ spec:
     - imageChangeParams:
         automatic: true
         containerNames:
-          - inventory
+          - order
         from:
           kind: ImageStreamTag
-          name: inventory:1.0-SNAPSHOT
+          name: order:1.0-SNAPSHOT
       type: ImageChange
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
 metadata:
   labels:
-    app.kubernetes.io/name: inventory
+    app.kubernetes.io/name: order
     app.kubernetes.io/version: 1.0-SNAPSHOT
     app.openshift.io/runtime: quarkus
-  name: inventory
+  name: order
 spec:
   port:
     targetPort: 8080
   to:
     kind: Service
-    name: inventory
+    name: order
 ---
-apiVersion: v1
-kind: Secret
+apiVersion: image.openshift.io/v1
+kind: ImageStream
 metadata:
   annotations:
     openshift.io/generated-by: OpenShiftNewApp
-    template.openshift.io/expose-database_name: '{.data[''database-name'']}'
-    template.openshift.io/expose-password: '{.data[''database-password'']}'
-    template.openshift.io/expose-username: '{.data[''database-user'']}'
   creationTimestamp: null
   labels:
-    app: postgresql-persistent
-    app.kubernetes.io/component: postgresql-persistent
-    app.kubernetes.io/instance: postgresql-persistent
-    template: postgresql-persistent-template
-  name: inventory-database
-stringData:
-  database-name: inventory
-  database-password: mysecretpassword
-  database-user: inventory
----
-apiVersion: v1
-kind: Service
-metadata:
-  annotations:
-    openshift.io/generated-by: OpenShiftNewApp
-    template.openshift.io/expose-uri: postgres://{.spec.clusterIP}:{.spec.ports[?(.name=="postgresql")].port}
-  creationTimestamp: null
-  labels:
-    app: postgresql-persistent
-    app.kubernetes.io/component: postgresql-persistent
-    app.kubernetes.io/instance: postgresql-persistent
-    template: postgresql-persistent-template
-  name: inventory-database
+    app: order-database
+    app.kubernetes.io/component: order-database
+    app.kubernetes.io/instance: order-database
+  name: order-database
 spec:
-  ports:
-  - name: postgresql
-    port: 5432
-    protocol: TCP
-    targetPort: 5432
-  selector:
-    name: inventory-database
-  sessionAffinity: None
-  type: ClusterIP
-status:
-  loadBalancer: {}
----
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  annotations:
-    openshift.io/generated-by: OpenShiftNewApp
-  creationTimestamp: null
-  labels:
-    app: postgresql-persistent
-    app.kubernetes.io/component: postgresql-persistent
-    app.kubernetes.io/instance: postgresql-persistent
-    template: postgresql-persistent-template
-  name: inventory-database
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 1Gi
-status: {}
+  lookupPolicy:
+    local: false
+  tags:
+  - annotations:
+      openshift.io/imported-from: quay.io/openshiftlabs/ccn-mongo:4.0
+    from:
+      kind: DockerImage
+      name: quay.io/openshiftlabs/ccn-mongo:4.0
+    generation: null
+    importPolicy: {}
+    name: "4.0"
+    referencePolicy:
+      type: "Source"
 ---
 apiVersion: apps.openshift.io/v1
 kind: DeploymentConfig
 metadata:
   annotations:
     openshift.io/generated-by: OpenShiftNewApp
-    template.alpha.openshift.io/wait-for-ready: "true"
   creationTimestamp: null
   labels:
-    app: postgresql-persistent
-    app.kubernetes.io/component: postgresql-persistent
-    app.kubernetes.io/instance: postgresql-persistent
-    template: postgresql-persistent-template
-    app.kubernetes.io/part-of: inventory
-    app.openshift.io/runtime: postgresql
-  name: inventory-database
+    app: order-database
+    app.kubernetes.io/component: order-database
+    app.kubernetes.io/instance: order-database
+    app.kubernetes.io/part-of: order
+    app.openshift.io/runtime: mongodb
+  name: order-database
 spec:
   replicas: 1
   selector:
-    name: inventory-database
+    deploymentconfig: order-database
   strategy:
     resources: {}
-    type: Recreate
   template:
     metadata:
       annotations:
         openshift.io/generated-by: OpenShiftNewApp
       creationTimestamp: null
       labels:
-        name: inventory-database
+        deploymentconfig: order-database
     spec:
       containers:
-      - env:
-        - name: POSTGRESQL_USER
-          valueFrom:
-            secretKeyRef:
-              key: database-user
-              name: inventory-database
-        - name: POSTGRESQL_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: database-password
-              name: inventory-database
-        - name: POSTGRESQL_DATABASE
-          valueFrom:
-            secretKeyRef:
-              key: database-name
-              name: inventory-database
-        image: ' '
-        imagePullPolicy: IfNotPresent
-        livenessProbe:
-          exec:
-            command:
-            - /usr/libexec/check-container
-            - --live
-          initialDelaySeconds: 120
-          timeoutSeconds: 10
-        name: postgresql
+      - image: quay.io/openshiftlabs/ccn-mongo:4.0
+        name: order-database
         ports:
-        - containerPort: 5432
+        - containerPort: 27017
           protocol: TCP
-        readinessProbe:
-          exec:
-            command:
-            - /usr/libexec/check-container
-          initialDelaySeconds: 5
-          timeoutSeconds: 1
-        resources:
-          limits:
-            memory: 512Mi
-        securityContext:
-          capabilities: {}
-          privileged: false
-        terminationMessagePath: /dev/termination-log
+        resources: {}
         volumeMounts:
-        - mountPath: /var/lib/pgsql/data
-          name: inventory-database-data
-      dnsPolicy: ClusterFirst
-      restartPolicy: Always
+        - mountPath: /data/configdb
+          name: order-database-volume-1
+        - mountPath: /data/db
+          name: order-database-volume-2
       volumes:
-      - name: inventory-database-data
-        persistentVolumeClaim:
-          claimName: inventory-database
+      - emptyDir: {}
+        name: order-database-volume-1
+      - emptyDir: {}
+        name: order-database-volume-2
   test: false
   triggers:
+  - type: ConfigChange
   - imageChangeParams:
       automatic: true
       containerNames:
-      - postgresql
+      - order-database
       from:
         kind: ImageStreamTag
-        name: postgresql:10-el8
-        namespace: openshift
+        name: order-database:4.0
     type: ImageChange
-  - type: ConfigChange
 status:
   availableReplicas: 0
   latestVersion: 0
@@ -382,3 +304,25 @@ status:
   replicas: 0
   unavailableReplicas: 0
   updatedReplicas: 0
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  labels:
+    app: order-database
+    app.kubernetes.io/component: order-database
+    app.kubernetes.io/instance: order-database
+  name: order-database
+spec:
+  ports:
+  - name: 27017-tcp
+    port: 27017
+    protocol: TCP
+    targetPort: 27017
+  selector:
+    deploymentconfig: order-database
+status:
+  loadBalancer: {}

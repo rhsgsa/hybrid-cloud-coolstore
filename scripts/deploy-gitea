@@ -1,0 +1,52 @@
+#!/bin/bash
+
+APP="gitea"
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+source ${BASE}/../config.sh
+
+set -e
+
+oc new-project $GIT_PROJ || oc project $GIT_PROJ
+
+# create a dummy route to figure out routing suffix
+oc create route edge dummy --service=dummy --port=8080 -n $GIT_PROJ
+SUFFIX="$(oc get route/dummy -n $GIT_PROJ -o jsonpath='{.spec.host}' | sed -e 's/^[^.]*\.//')"
+oc delete route/dummy -n $GIT_PROJ
+
+oc new-app \
+  -n $GIT_PROJ \
+  -f https://raw.githubusercontent.com/kwkoo/gitea-openshift/master/yaml/gitea-template.yaml \
+  -p DOMAIN="${APP}-${GIT_PROJ}.${SUFFIX}" \
+  -p ROOT_URL="https://${APP}-${GIT_PROJ}.${SUFFIX}"
+
+if [ "$(oc get -n $GIT_PROJ cm/kube-root-ca.crt 2>/dev/null | wc -l)" -lt 1 ]; then
+  # we are on an earlier version of Kubernetes - we will need to copy over
+  # the root CA ConfigMap
+  oc get -n openshift-kube-apiserver secret/external-loadbalancer-serving-certkey -o json | jq -r '.data."tls.crt"' | base64 -d > /tmp/ca.crt
+  oc create \
+    -n $GIT_PROJ \
+    cm \
+    kube-root-ca.crt \
+    --from-file=/tmp/ca.crt
+  rm -f /tmp/ca.crt
+fi
+
+oc set volume \
+  statefulset/${APP} \
+  -n $GIT_PROJ \
+  --add \
+  --name=ca \
+  --mount-path=/etc/ssl/certs/ca.crt \
+  --sub-path=ca.crt \
+  --configmap-name=kube-root-ca.crt
+
+# this should trigger a redeploy - wait for the old pod to go away
+sleep 5
+
+oc rollout status statefulset/${APP} -n $GIT_PROJ -w
+
+echo "Gitea is now available at https://$(oc get route/${APP} -n $GIT_PROJ -o jsonpath='{.spec.host}')"

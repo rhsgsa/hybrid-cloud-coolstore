@@ -75,7 +75,7 @@ spec:
   port:
     targetPort: 8080-tcp
   to:
-    kind: ""
+    kind: Service
     name: coolstore-ui
     weight: null
 status: {}
