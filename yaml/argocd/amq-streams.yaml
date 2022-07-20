@@ -2,22 +2,21 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   annotations:
-    argocd.argoproj.io/sync-wave: "20"
-  name: knative
+    argocd.argoproj.io/sync-wave: "10"
+  name: kafka
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
   destination:
+    namespace: demo
     server: https://kubernetes.default.svc
   project: default
   source:
-    directory:
-      jsonnet: {}
-      recurse: true
-    path: knative/knative
-    repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
-    targetRevision: HEAD
+    path: helm
+    repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore/raw/branch/master/helm/
+    targetRevision: "0.1.0"
+    chart: amq-streams
   syncPolicy:
     automated: {}
     retry:
