@@ -26,6 +26,13 @@ To install,
 
 		make coolstore-ui
 
+	* Add an item to the shopping cart
+	* Select `Cart` / `Checkout`
+	* Enter your details and click `Checkout`
+	* Select the `Orders` tab - you should see a new order with a payment status of `PROCESSING`
+	* If you look at the Topology View, you should see the `payment` Knative service spinning up
+	* After a few seconds, reload the orders page, and the order's payment status should be set to `COMPLETED`
+
 01. To get an overview of all the deployed services, access the Topology View in the `demo` project on the OpenShift Console
 
 		make topology-view
