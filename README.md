@@ -28,6 +28,8 @@ To install,
 
 01. To get an overview of all the deployed services, access the Topology View in the `demo` project on the OpenShift Console
 
+		make topology-view
+
 
 ## Updating Helm Charts
 

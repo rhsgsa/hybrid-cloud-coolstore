@@ -2,7 +2,7 @@ BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 include $(BASE)/config.sh
 
-.PHONY: install demo-manual-install argocd argocd-password gitea
+.PHONY: install demo-manual-install argocd argocd-password gitea coolstore-ui topology-view
 
 install:
 	$(BASE)/scripts/install-gitops
@@ -46,3 +46,6 @@ gitea:
 
 coolstore-ui:
 	@open "http://`oc get -n $(PROJ) route/coolstore-ui -o jsonpath='{.spec.host}'`"
+
+topology-view:
+	@open "https://`oc get -n openshift-console route/console -o jsonpath='{.spec.host}'`/topology/ns/$(PROJ)"
