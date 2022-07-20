@@ -24,7 +24,8 @@ spec:
             bootstrapServers:
             - my-cluster-kafka-bootstrap.demo:9092
             topics:
-            - orders
+              incoming: orders
+              outgoing: payments
   syncPolicy:
     syncOptions:
     - RespectIgnoreDifferences=true

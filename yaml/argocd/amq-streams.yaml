@@ -3,7 +3,7 @@ kind: Application
 metadata:
   annotations:
     argocd.argoproj.io/sync-wave: "10"
-  name: kafka
+  name: amq-streams
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
