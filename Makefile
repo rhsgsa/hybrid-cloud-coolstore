@@ -7,7 +7,7 @@ include $(BASE)/config.sh
 install:
 	$(BASE)/scripts/install-gitops
 	$(BASE)/scripts/deploy-gitea
-	$(BASE)/scripts/init-gitea $(GIT_PROJ) gitea $(GIT_ADMIN) $(GIT_PASSWORD) $(GIT_ADMIN)@example.com yaml demo 'Demo App'
+	$(BASE)/scripts/init-gitea $(GIT_PROJ) gitea $(GIT_ADMIN) $(GIT_PASSWORD) $(GIT_ADMIN)@example.com yaml coolstore 'Demo App'
 	$(BASE)/scripts/configure-gitops
 
 demo-manual-install:
