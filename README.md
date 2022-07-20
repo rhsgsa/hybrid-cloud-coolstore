@@ -16,6 +16,8 @@ To install,
 
 	*   Open a browser to the ArgoCD UI - login as `admin` with the password from the previous step; do not login with `OpenShift Login` - your user will have a read-only role even if you are logged in as a `cluster-admin`
 
+			make argocd
+
 01. To access `gitea` - login with `demo` / `password`
 
 		make gitea
