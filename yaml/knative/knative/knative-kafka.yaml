@@ -3,6 +3,8 @@ kind: KnativeKafka
 metadata:
   name: knative-kafka
   namespace: knative-eventing
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
 spec:
   channel:
     enabled: false

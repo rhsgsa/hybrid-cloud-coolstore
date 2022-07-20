@@ -3,3 +3,5 @@ kind: KnativeEventing
 metadata:
   name: knative-eventing
   namespace: knative-eventing
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
