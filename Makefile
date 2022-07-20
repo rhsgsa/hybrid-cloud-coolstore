@@ -43,3 +43,6 @@ argocd-password:
 
 gitea:
 	@open "https://`oc get -n $(GIT_PROJ) route/gitea -o jsonpath='{.spec.host}'`"
+
+coolstore-ui:
+	@open "http://`oc get -n $(PROJ) route/coolstore-ui -o jsonpath='{.spec.host}'`"
