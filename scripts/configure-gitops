@@ -25,6 +25,8 @@ cat <<EOF | oc apply -f -
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
   name: app-of-apps
   namespace: openshift-gitops
   finalizers:

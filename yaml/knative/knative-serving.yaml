@@ -1,5 +1,7 @@
 apiVersion: operator.knative.dev/v1alpha1
 kind: KnativeServing
 metadata:
-    name: knative-serving
-    namespace: knative-serving
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+  name: knative-serving
+  namespace: knative-serving

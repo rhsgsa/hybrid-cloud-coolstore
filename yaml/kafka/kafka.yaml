@@ -1,6 +1,8 @@
 apiVersion: kafka.strimzi.io/v1beta2
 kind: Kafka
 metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
   name: my-cluster
 spec:
   kafka:
@@ -35,6 +37,8 @@ spec:
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
   name: orders
   labels:
     strimzi.io/cluster: my-cluster
@@ -48,6 +52,8 @@ spec:
 apiVersion: kafka.strimzi.io/v1beta2
 kind: KafkaTopic
 metadata:
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
   name: payments
   labels:
     strimzi.io/cluster: my-cluster

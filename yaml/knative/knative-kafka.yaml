@@ -1,17 +1,19 @@
 apiVersion: operator.serverless.openshift.io/v1alpha1
 kind: KnativeKafka
 metadata:
-    name: knative-kafka
-    namespace: knative-eventing
+  annotations:
+    argocd.argoproj.io/sync-wave: "20"
+  name: knative-kafka
+  namespace: knative-eventing
 spec:
-    channel:
-        enabled: false
-        bootstrapServers: ''
-    source:
-        enabled: true 
-    broker:
-        enabled: false
-        defaultConfig:
-          bootstrapServers: ''
-    sink:
-        enabled: true
+  channel:
+    enabled: false
+    bootstrapServers: ''
+  source:
+    enabled: true 
+  broker:
+    enabled: false
+    defaultConfig:
+      bootstrapServers: ''
+  sink:
+    enabled: true
