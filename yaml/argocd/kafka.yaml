@@ -13,12 +13,10 @@ spec:
     server: https://kubernetes.default.svc
   project: default
   source:
-    directory:
-      jsonnet: {}
-      recurse: true
-    path: kafka
-    repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
-    targetRevision: HEAD
+    path: helm
+    repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore/raw/branch/master/helm/
+    targetRevision: "0.1.0"
+    chart: kafka
   syncPolicy:
     automated: {}
     retry:
