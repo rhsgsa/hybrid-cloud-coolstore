@@ -2,8 +2,8 @@ apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
   annotations:
-    argocd.argoproj.io/sync-wave: "10"
-  name: openshift-serverless
+    argocd.argoproj.io/sync-wave: "20"
+  name: knative
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -15,7 +15,7 @@ spec:
     directory:
       jsonnet: {}
       recurse: true
-    path: knative/serverless
+    path: knative/knative
     repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
     targetRevision: HEAD
   syncPolicy:

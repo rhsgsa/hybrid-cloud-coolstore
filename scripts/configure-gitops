@@ -14,40 +14,11 @@ until oc get crd/applications.argoproj.io >/dev/null 2>/dev/null; do
 done
 echo "done"
 
-echo -n "waiting for openshift-gitops namespace to show up..."
-until oc get ns/openshift-gitops >/dev/null 2>/dev/null; do
+echo -n "waiting for default AppProject to show up..."
+until oc get -n openshift-gitops appproject/default >/dev/null 2>/dev/null; do
   echo -n "."
   sleep 10
 done
 echo "done"
 
-cat <<EOF | oc apply -f -
-apiVersion: argoproj.io/v1alpha1
-kind: Application
-metadata:
-  annotations:
-    argocd.argoproj.io/sync-options: Prune=true
-  name: app-of-apps
-  namespace: openshift-gitops
-  finalizers:
-  - resources-finalizer.argocd.argoproj.io
-spec:
-  destination:
-    server: https://kubernetes.default.svc
-  project: default
-  source:
-    directory:
-      jsonnet: {}
-      recurse: true
-    path: argocd
-    repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
-    targetRevision: HEAD
-  syncPolicy:
-    automated: {}
-    retry:
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m0s
-      limit: 100
-EOF
+oc apply -f ${BASE}/../yaml/argocd/coolstore.yaml
