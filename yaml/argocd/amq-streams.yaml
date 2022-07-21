@@ -18,6 +18,8 @@ spec:
     targetRevision: "0.1.0"
     chart: amq-streams
   syncPolicy:
+    syncOptions:
+    - CreateNamespace=true
     automated: {}
     retry:
       backoff:

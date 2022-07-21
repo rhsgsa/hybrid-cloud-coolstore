@@ -31,6 +31,6 @@ spec:
   - group: kafka.strimzi.io
     kind: KafkaTopic
     jqPathExpressions:
-    - .metadata.labels.app\.kubernetes\.io/instance
+    - '.metadata.labels.app."kubernetes.io/instance"'
     - .spec.config
     - .spec.partitions
