@@ -31,7 +31,8 @@ spec:
     syncOptions:
     - RespectIgnoreDifferences=true
     - CreateNamespace=true
-    automated: {}
+    automated:
+      prune: true
     retry:
       backoff:
         duration: 5s

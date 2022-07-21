@@ -19,7 +19,8 @@ spec:
     repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
     targetRevision: HEAD
   syncPolicy:
-    automated: {}
+    automated:
+      prune: true
     retry:
       backoff:
         duration: 5s
