@@ -58,6 +58,8 @@ To install,
 
 ## Install OpenShift Serverless, Knative Serving, Knative Eventing, and `payment` to the remote cluster
 
+### Note: This flow needs to be reworked - ArgoCD isn't able to cleanly remove OpenShift Serverless and Knative; we should just remove `payment.yaml` from the `argocd` folder and create a separate directory for the remote cluster
+
 01. Login to the `gitea` web interface, select `demo/coolstore` / `argocd` / `openshift-serverless.yaml` / Edit File
 
 01. Remove `.spec.destination.server`
