@@ -27,3 +27,10 @@ spec:
         factor: 2
         maxDuration: 3m0s
       limit: 100
+  ignoreDifferences:
+  - group: kafka.strimzi.io
+    kind: KafkaTopic
+    jqPathExpressions:
+    - .metadata.labels.app\.kubernetes\.io/instance
+    - .spec.config
+    - .spec.partitions
