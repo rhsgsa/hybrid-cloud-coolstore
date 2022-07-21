@@ -58,28 +58,21 @@ To install,
 
 ## Install OpenShift Serverless, Knative Serving, Knative Eventing, and `payment` to the remote cluster
 
-### Note: This flow needs to be reworked - ArgoCD isn't able to cleanly remove OpenShift Serverless and Knative; we should just remove `payment.yaml` from the `argocd` folder and create a separate directory for the remote cluster
+01. Login to the `gitea` web interface, select `demo/coolstore` / `remote-coolstore`
 
-01. Login to the `gitea` web interface, select `demo/coolstore` / `argocd` / `openshift-serverless.yaml` / Edit File
+01. Examine the manifests in that directory - point out how `.spec.destination.name` has been set to `remote-cluster` for `remote-openshift-serverless.yaml`, `remote-knative.yaml`, `remote-payment.yaml`
 
-01. Remove `.spec.destination.server`
+01. `remote-payment.yaml` also points to the Kafka service on another cluster
 
-01. Set `.spec.destination.name` to `remote-cluster`
+01. Configure ArgoCD to deploy to the remote cluster
 
-01. It should look like this
+		oc apply -f ./yaml/remote-coolstore/remote-coolstore.yaml
 
-		...
-		spec:
-		  destination:
-		    name: remote-cluster
-		  project: default
-		...
+01. Point your browser to the Topology View of the `demo` namespace in the second cluster - you should see the payment service being deployed after a few minutes
 
-01. Commit the change
+01. After the payment service has been deployed on the second cluster, remove the payment service from the first cluster
 
-01. Repeat the steps above for `knative.yaml` and `payment.yaml`
-
-01. While you're editing `payment.yaml`, you will also need to configure `.spec.source.helm.values.payment.kafka.bootstrapServers` to point to Kafka on the first cluster
+	*   Login to `gitea`, select `argocd` / `payment.yaml` - delete the file
 
 01. Login to the ArgoCD UI, select Manage your applications / `coolstore` / REFRESH
 
