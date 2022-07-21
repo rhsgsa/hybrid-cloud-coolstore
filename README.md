@@ -38,6 +38,50 @@ To install,
 		make topology-view
 
 
+## Moving `payment` to Another Cluster
+
+### Create credentials to the remote cluster
+
+01. While you are connected to the remote cluster,
+
+		./scripts/generate-cluster-secret remote-cluster \
+		  > /tmp/remote-cluster-secret.yaml
+
+01. Connect back to the ArgoCD cluster, then create the secret
+
+		oc apply \
+		  -n openshift-gitops \
+		  -f /tmp/remote-cluster-secret.yaml
+
+01. In the ArgoCD UI, select the gear icon / Clusters - you should see an entry for `remote-cluster`
+
+
+## Install OpenShift Serverless, Knative Serving, Knative Eventing, and `payment` to the remote cluster
+
+01. Login to the `gitea` web interface, select `demo/coolstore` / `argocd` / `openshift-serverless.yaml` / Edit File
+
+01. Remove `.spec.destination.server`
+
+01. Set `.spec.destination.name` to `remote-cluster`
+
+01. It should look like this
+
+		...
+		spec:
+		  destination:
+		    name: remote-cluster
+		  project: default
+		...
+
+01. Commit the change
+
+01. Repeat the steps above for `knative.yaml` and `payment.yaml`
+
+01. While you're editing `payment.yaml`, you will also need to configure `.spec.source.helm.values.payment.kafka.bootstrapServers` to point to Kafka on the first cluster
+
+01. Login to the ArgoCD UI, select Manage your applications / `coolstore` / REFRESH
+
+
 ## Updating Helm Charts
 
 The `amq-streams` operator installation manifests and the `payment` service have been packaged as Helm Charts in the `yaml/helm` directory.

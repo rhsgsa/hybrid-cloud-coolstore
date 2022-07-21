@@ -29,6 +29,7 @@ spec:
   syncPolicy:
     syncOptions:
     - RespectIgnoreDifferences=true
+    - CreateNamespace=true
     automated: {}
     retry:
       backoff:
