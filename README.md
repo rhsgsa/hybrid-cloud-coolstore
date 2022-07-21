@@ -58,9 +58,9 @@ To install,
 
 ## Install OpenShift Serverless, Knative Serving, Knative Eventing, and `payment` to the remote cluster
 
-01. Login to the `gitea` web interface, select `demo/coolstore` / `remote-coolstore`
+01. Login to the `gitea` web interface (as `demo` / `password`), select `demo/coolstore` / `remote-coolstore`
 
-01. Examine the manifests in that directory - point out how `.spec.destination.name` has been set to `remote-cluster` for `remote-openshift-serverless.yaml`, `remote-knative.yaml`, `remote-payment.yaml`
+01. Examine the manifests in that directory - point out how `.spec.destination.name` has been set to `remote-cluster` for `remote-openshift-serverless.yaml`, `remote-knative.yaml`, `remote-payment.yaml`; `remote-coolstore.yaml` still points to `in-cluster` because the child `Application` resources need to reside on the ArgoCD cluster
 
 01. `remote-payment.yaml` also points to the Kafka service on another cluster
 
