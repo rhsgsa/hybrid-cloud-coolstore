@@ -56,7 +56,7 @@ To install,
 01. In the ArgoCD UI, select the gear icon / Clusters - you should see an entry for `remote-cluster`
 
 
-## Install OpenShift Serverless, Knative Serving, Knative Eventing, and `payment` to the remote cluster
+### Install OpenShift Serverless, Knative Serving, Knative Eventing, and `payment` to the remote cluster
 
 01. Login to the `gitea` web interface (as `demo` / `password`), select `demo/coolstore` / `remote-coolstore`
 
