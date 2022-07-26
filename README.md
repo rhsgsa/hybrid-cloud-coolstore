@@ -28,7 +28,7 @@ To install,
 
 	* Add an item to the shopping cart
 	* Select `Cart` / `Checkout`
-	* Enter your details and click `Checkout`
+	* Enter your details and click `Checkout` - [ensure that your credit card number starts with `4`](https://github.com/RedHat-Middleware-Workshops/cloud-native-workshop-v2-labs-solutions/blob/c32daed7aa7c803b1a29fbe56be350bf4a5e6be2/m4/payment-service/src/main/java/com/redhat/cloudnative/PaymentResource.java#L61)
 	* Select the `Orders` tab - you should see a new order with a payment status of `PROCESSING`
 	* If you look at the Topology View, you should see the `payment` Knative service spinning up
 	* After a few seconds, reload the orders page, and the order's payment status should be set to `COMPLETED`
