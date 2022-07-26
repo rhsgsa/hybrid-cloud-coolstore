@@ -8,6 +8,6 @@ cd - >> /dev/null
 
 source ${BASE}/../config.sh
 
-oc delete sts,svc,route,pvc -l app=gitea -n $GIT_PROJ
+oc delete sts,svc,route,pvc -l app=$APP -n $GIT_PROJ
 
 exit 0
