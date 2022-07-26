@@ -59,7 +59,7 @@ function clone_repo {
   git init
   git add .
   git commit -m 'Initial commit'
-  git push --mirror https://${GIT_USER}:${GIT_PASSWORD}@${ROUTE_HOST}/${GIT_USER}/${repoName}.git
+  git push --mirror http://${GIT_USER}:${GIT_PASSWORD}@${ROUTE_HOST}/${GIT_USER}/${repoName}.git
   rm -rf .git
 }
 
