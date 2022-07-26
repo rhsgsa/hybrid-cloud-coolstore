@@ -5,7 +5,8 @@ include $(BASE)/config.sh
 .PHONY: install demo-manual-install argocd argocd-password gitea coolstore-ui topology-view
 
 install:
-	$(BASE)/scripts/install-gitops
+	#$(BASE)/scripts/install-gitops
+	$(BASE)/scripts/clean-gitea
 	$(BASE)/scripts/deploy-gitea
 	$(BASE)/scripts/init-gitea $(GIT_PROJ) gitea $(GIT_ADMIN) $(GIT_PASSWORD) $(GIT_ADMIN)@example.com yaml coolstore 'Demo App'
 	$(BASE)/scripts/configure-gitops

@@ -44,6 +44,9 @@ oc set volume \
   --sub-path=ca.crt \
   --configmap-name=kube-root-ca.crt
 
+# allow http access to get around problem with self-signed certificates
+oc patch -n $GIT_PROJ route/gitea --type json -p '[{"op":"replace","path":"/spec/tls/insecureEdgeTerminationPolicy","value":"Allow"}]'
+
 # this should trigger a redeploy - wait for the old pod to go away
 sleep 5
 
