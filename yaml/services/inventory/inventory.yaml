@@ -65,6 +65,9 @@ metadata:
 spec:
   port:
     targetPort: 8080
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow
   to:
     kind: Service
     name: inventory
