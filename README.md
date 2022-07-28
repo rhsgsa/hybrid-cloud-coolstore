@@ -48,7 +48,7 @@ To install,
 
 01. Edit `kafka/kafka.yaml` - replace it with the contents from [`kafka-submariner/kafka.yaml`](yaml/kafka-submariner/kafka.yaml); this file sets up extra services and exports them
 
-01. Login to ArgoCD, select the `kafka` application, click on `Refresh`
+01. Login to ArgoCD, select the `kafka` application, click on REFRESH
 
 
 ### Create credentials to the remote cluster
@@ -86,6 +86,8 @@ To install,
 	*   Login to `gitea`, select `argocd` / `payment.yaml` - delete the file
 
 01. Login to the ArgoCD UI, select Manage your applications / `coolstore` / REFRESH
+
+01. Perform another transaction on the `coolstore-ui` - the order should be processed by the `payment` service even though it is now residing on another cluster
 
 
 ## Updating Helm Charts
