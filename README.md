@@ -40,6 +40,17 @@ To install,
 
 ## Moving `payment` to Another Cluster
 
+### Modify Kafka to be accessible from other clusters
+
+01. Provision another cluster, and setup Submariner in both clusters
+
+01. Login to `gitea` with `demo` / `password`
+
+01. Edit `kafka/kafka.yaml` - replace it with the contents from `kafka-submariner/kafka.yaml`; this file sets up extra services and exports them
+
+01. Login to ArgoCD, select the `kafka` application, click on `Refresh`
+
+
 ### Create credentials to the remote cluster
 
 01. While you are connected to the remote cluster,
@@ -95,3 +106,5 @@ If you wish to make any changes to the Helm Charts,
 * [Solution git repo](https://github.com/RedHat-Middleware-Workshops/cloud-native-workshop-v2-labs-solutions/tree/ocp-4.9/m4)
 
 * [Lab instructions](http://guides-m4-labs-infra.6923.rh-us-east-1.openshiftapps.com/workshop/cloudnative/lab/high-performing-cache-services)
+
+* [Strimzi advertised addresses](https://strimzi.io/docs/operators/latest/configuring.html#property-listener-config-broker-reference)

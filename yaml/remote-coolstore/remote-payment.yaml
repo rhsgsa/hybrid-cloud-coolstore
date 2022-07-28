@@ -22,7 +22,7 @@ spec:
         payment:
           kafka:
             bootstrapServers:
-            - my-cluster-kafka-bootstrap.demo:9092
+            - my-cluster-kafka-bootstrap.demo.svc.clusterset.local:9092
             topics:
               incoming: orders
               outgoing: payments
