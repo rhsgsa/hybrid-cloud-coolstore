@@ -46,7 +46,7 @@ To install,
 
 01. Login to `gitea` with `demo` / `password`
 
-01. Edit `kafka/kafka.yaml` - replace it with the contents from `kafka-submariner/kafka.yaml`; this file sets up extra services and exports them
+01. Edit `kafka/kafka.yaml` - replace it with the contents from [`kafka-submariner/kafka.yaml`](yaml/kafka-submariner/kafka.yaml); this file sets up extra services and exports them
 
 01. Login to ArgoCD, select the `kafka` application, click on `Refresh`
 

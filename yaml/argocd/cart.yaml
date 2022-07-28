@@ -10,7 +10,7 @@ metadata:
 spec:
   destination:
     namespace: demo
-    server: https://kubernetes.default.svc
+    name: in-cluster
   project: default
   source:
     directory:
