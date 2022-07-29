@@ -53,12 +53,20 @@ To install,
 
 ### Create credentials to the remote cluster
 
-01. While you are connected to the remote cluster,
+01. If you have the API URL and the token of the remote cluster handy,
+
+		./scripts/generate-cluster-secret \
+		  remote-cluster \
+		  'https://api...:6443' \
+		  'sha256~...' \
+		  > /tmp/remote-cluster-secret.yaml
+
+	If you don't have the token handy, login to the remote cluster using the `oc` CLI, and execute the following
 
 		./scripts/generate-cluster-secret remote-cluster \
 		  > /tmp/remote-cluster-secret.yaml
 
-01. Connect back to the ArgoCD cluster, then create the secret
+01. **Connect back to the ArgoCD cluster**, then create the secret
 
 		oc apply \
 		  -n openshift-gitops \
@@ -89,6 +97,7 @@ To install,
 
 01. Perform another transaction on the `coolstore-ui` - the order should be processed by the `payment` service even though it is now residing on another cluster
 
+---
 
 ## Updating Helm Charts
 
@@ -101,6 +110,30 @@ If you wish to make any changes to the Helm Charts,
 01. Package up the chart - e.g. `helm package payment`
 
 01. Regenerate `index.yaml`: `helm repo index .`
+
+
+## Troubleshooting
+
+*   If you have trouble connecting to Kafka from the remote cluster, spin up a test Kafka pod to access `my-cluster-kafka-bootstrap.demo.svc.clusterset.local`
+
+		apiVersion: v1
+		kind: Pod
+		metadata:
+		  creationTimestamp: null
+		  labels:
+		    run: client
+		  name: client
+		spec:
+		  containers:
+		  - command:
+		    - tail
+		    - -f
+		    - /dev/null
+		    image: registry.redhat.io/amq7/amq-streams-kafka-31-rhel8@sha256:c113eefe89a40c96e190a24bcdf1b0823865e3c80ffb883bc8ed4b7bb2661df6
+		    name: client
+		    resources: {}
+		  dnsPolicy: ClusterFirst
+		  restartPolicy: Always
 
 
 ## Resources
