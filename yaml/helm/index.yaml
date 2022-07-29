@@ -3,7 +3,7 @@ entries:
   amq-streams:
   - apiVersion: v2
     appVersion: 1.0.0
-    created: "2022-07-29T08:01:50.228989+08:00"
+    created: "2022-07-29T08:27:34.032881+08:00"
     description: A Helm chart for Kubernetes
     digest: 2dbb2b9cf186e5ecbae4528f39fbb31a8b92aa12acdf56f2fdcda72451ec0123
     name: amq-streams
@@ -11,10 +11,21 @@ entries:
     urls:
     - amq-streams-0.1.0.tgz
     version: 0.1.0
+  kafka:
+  - apiVersion: v2
+    appVersion: 1.0.0
+    created: "2022-07-29T08:27:34.033817+08:00"
+    description: A Helm chart for Kubernetes
+    digest: c20f1537497c6496c6b04bd8336a222e9d3cb765e07dc2f88587698a96315058
+    name: kafka
+    type: application
+    urls:
+    - kafka-0.1.0.tgz
+    version: 0.1.0
   payment:
   - apiVersion: v2
     appVersion: 1.0-SNAPSHOT
-    created: "2022-07-29T08:01:50.229229+08:00"
+    created: "2022-07-29T08:27:34.034739+08:00"
     description: A Helm chart for Kubernetes
     digest: c7f85e308d02c9408f9057d399649ace1340773e072751c61fdb12dc0c2524ff
     name: payment
@@ -22,4 +33,4 @@ entries:
     urls:
     - payment-0.1.0.tgz
     version: 0.1.0
-generated: "2022-07-29T08:01:50.227996+08:00"
+generated: "2022-07-29T08:27:34.031562+08:00"
