@@ -2,13 +2,17 @@
 
 APIS="$(oc get -n openshift-operators operatorgroup global-operators -o jsonpath='{.metadata.annotations.olm\.providedAPIs}')"
 
-if [ -n "$APIS" ]; then
-  APIS="${APIS},"
+if [ "$(echo $APIS | grep Application.v1alpha1.argoproj.io | wc -l)" -lt 1 ]; then
+
+  if [ -n "$APIS" ]; then
+    APIS="${APIS},"
+  fi
+
+  APIS="${APIS}AppProject.v1alpha1.argoproj.io,Application.v1alpha1.argoproj.io,ApplicationSet.v1alpha1.argoproj.io,ArgoCD.v1alpha1.argoproj.io,GitopsService.v1alpha1.pipelines.openshift.io"
+
+  oc annotate -n openshift-operators operatorgroup/global-operators olm.providedAPIs="$APIS"
+
 fi
-
-APIS="${APIS}AppProject.v1alpha1.argoproj.io,Application.v1alpha1.argoproj.io,ApplicationSet.v1alpha1.argoproj.io,ArgoCD.v1alpha1.argoproj.io,GitopsService.v1alpha1.pipelines.openshift.io"
-
-oc annotate -n openshift-operators operatorgroup/global-operators olm.providedAPIs="$APIS"
 
 cat <<EOF | oc apply -n openshift-operators -f -
 apiVersion: operators.coreos.com/v1alpha1
