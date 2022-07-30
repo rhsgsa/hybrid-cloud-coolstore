@@ -1,36 +1,46 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
-  annotations:
-    argocd.argoproj.io/sync-wave: "20"
   name: kafka
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
-  destination:
-    namespace: demo
-    name: in-cluster
-  project: default
-  source:
-    directory:
-      jsonnet: {}
-      recurse: true
-    path: kafka
-    repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
-    targetRevision: HEAD
-  syncPolicy:
-    automated: {}
-    retry:
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m0s
-      limit: 100
-  ignoreDifferences:
-  - group: kafka.strimzi.io
-    kind: KafkaTopic
-    jqPathExpressions:
-    - '.metadata.labels.app."kubernetes.io/instance"'
-    - .spec.config
-    - .spec.partitions
+  generators:
+  - clusters:
+      selector:
+        matchLabels:
+          kafka: "true"
+      values:
+        namespace: demo
+  template:
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "20"
+      name: "{{name}}-kafka"
+    spec:
+      destination:
+        namespace: "{{values.namespace}}"
+        name: "{{name}}"
+      project: default
+      source:
+        path: helm
+        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore/raw/branch/master/helm/
+        targetRevision: "0.1.0"
+        chart: kafka
+        helm: {}
+      syncPolicy:
+        automated: {}
+        retry:
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m0s
+          limit: 100
+      ignoreDifferences:
+      - group: kafka.strimzi.io
+        kind: KafkaTopic
+        jqPathExpressions:
+        - '.metadata.labels.app."kubernetes.io/instance"'
+        - .spec.config
+        - .spec.partitions

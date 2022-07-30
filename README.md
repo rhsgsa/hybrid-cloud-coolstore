@@ -2,11 +2,28 @@
 
 To install,
 
+01. Provision an ACM Hub cluster in RHPDS
+
+01. Create 2 clusters and install Submariner in the 2 clusters
+
 01. Login to OpenShift as `cluster-admin` using `oc login`
 
 01. Install services - this will: install the OpenShift GitOps operator, install `gitea`, upload manifests to `gitea`, setup a `coolstore` Application that points to the manifests in `gitea` (app-of-apps pattern)
 
 		make install
+
+01. Adjust cluster labels
+
+	|Components|Label|
+	|---|---|
+	|`amq-streams`, `kafka`|`kafka: "true"`|
+	|`cart`|`cart: "true"`|
+	|`catalog`|`catalog: "true"`|
+	|`coolstore-ui`|`coolstore-ui: "true"`|
+	|`inventory`|`inventory: "true"`|
+	|`knative`, `openshift-serverless`|`knative: "true"`|
+	|`order`|`order: "true"`|
+	|`payment`|`payment: "true"`|
 
 01. To login to the ArgoCD UI,
 

@@ -1,47 +1,58 @@
 apiVersion: argoproj.io/v1alpha1
-kind: Application
+kind: ApplicationSet
 metadata:
-  annotations:
-    argocd.argoproj.io/sync-wave: "30"
   name: coolstore-ui
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
 spec:
-  destination:
-    namespace: demo
-    name: in-cluster
-  project: default
-  source:
-    directory:
-      jsonnet: {}
-      recurse: true
-    path: services/coolstore-ui
-    repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
-    targetRevision: HEAD
-  syncPolicy:
-    syncOptions:
-    - RespectIgnoreDifferences=true
-    automated: {}
-    retry:
-      backoff:
-        duration: 5s
-        factor: 2
-        maxDuration: 3m0s
-      limit: 100
-  ignoreDifferences:
-  - group: image.openshift.io
-    kind: ImageStream
-    jqPathExpressions:
-    - .spec.tags[].referencePolicy.type
-    - .spec.tags[].generation
-    - .status.dockerImageRepository
-  - group: apps.openshift.io
-    kind: DeploymentConfig
-    jqPathExpressions:
-    - .spec.template.spec.containers[].image
-    - .status
-  - group: build.openshift.io
-    kind: BuildConfig
-    jqPathExpressions:
-    - .status
+  generators:
+  - clusters:
+      selector:
+        matchLabels:
+          coolstore-ui: "true"
+      values:
+        namespace: demo
+  template:
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "30"
+      name: "{{name}}-coolstore-ui"
+    spec:
+      destination:
+        namespace: "{{values.namespace}}"
+        name: "{{name}}"
+      project: default
+      source:
+        directory:
+          jsonnet: {}
+          recurse: true
+        path: services/coolstore-ui
+        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
+        targetRevision: HEAD
+      syncPolicy:
+        syncOptions:
+        - RespectIgnoreDifferences=true
+        automated: {}
+        retry:
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m0s
+          limit: 100
+      ignoreDifferences:
+      - group: image.openshift.io
+        kind: ImageStream
+        jqPathExpressions:
+        - .spec.tags[].referencePolicy.type
+        - .spec.tags[].generation
+        - .status.dockerImageRepository
+      - group: apps.openshift.io
+        kind: DeploymentConfig
+        jqPathExpressions:
+        - .spec.template.spec.containers[].image
+        - .status
+      - group: build.openshift.io
+        kind: BuildConfig
+        jqPathExpressions:
+        - .status

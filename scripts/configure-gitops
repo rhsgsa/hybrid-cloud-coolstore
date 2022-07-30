@@ -4,9 +4,6 @@ cd `dirname $0`
 BASE=`pwd`
 cd - >> /dev/null
 
-# assign cluster-admin to argocd controller - this is so we can create the openshift-serverless namespace
-oc apply -f ${BASE}/../yaml/argocd/argocd-cluster-admin-role-binding.yaml
-
 echo -n "waiting for Application API to show up..."
 until oc get crd/applications.argoproj.io >/dev/null 2>/dev/null; do
   echo -n "."
