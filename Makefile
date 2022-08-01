@@ -2,7 +2,7 @@ BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 include $(BASE)/config.sh
 
-.PHONY: install demo-manual-install argocd argocd-password gitea coolstore-ui topology-view
+.PHONY: install demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password
 
 install:
 	#$(BASE)/scripts/install-gitops
@@ -51,4 +51,10 @@ coolstore-ui:
 	@$(BASE)/scripts/open-coolstore-ui
 
 topology-view:
-	@open "https://`oc get -n openshift-console route/console -o jsonpath='{.spec.host}'`/topology/ns/$(PROJ)"
+	@CONSOLE=`oc get mcl/coolstore-a -o json | jq -r '.status.clusterClaims[] | select (.name=="consoleurl.cluster.open-cluster-management.io") | .value'`; \
+	if [ -z "$$CONSOLE" ]; then echo "error: could not get OpenShift Console URL"; exit 1; fi; \
+	open "$${CONSOLE}/topology/ns/$(PROJ)"
+
+coolstore-a-password:
+	@oc get secrets -n coolstore-a -l hive.openshift.io/secret-type=kubeadmincreds -o jsonpath='{.items[].data.password}' | base64 -d
+	@echo

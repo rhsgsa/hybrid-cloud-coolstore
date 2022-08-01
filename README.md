@@ -89,6 +89,16 @@
 
 01. Walk through the manifests in gitea, starting with the `argocd` directory
 
+01. Login to the `coolstore-a` topology view to look at all the components deployed
+
+	*   Get the `coolstore-a` `kubeadmin` password
+
+			make coolstore-a-password
+
+	*   Opena browser to the `coolstore-a` topology view - login with `kubeadmin` as the username
+
+			make topology-view
+
 01. To test the demo app,
 
 		make coolstore-ui
