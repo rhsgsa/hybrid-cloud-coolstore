@@ -1,10 +1,8 @@
 # Hybrid Cloud Coolstore Demo
 
-To install,
+## Installation
 
 01. Provision an ACM Hub cluster in RHPDS
-
-01. Create 2 clusters and install Submariner in the 2 clusters
 
 01. Login to OpenShift as `cluster-admin` using `oc login`
 
@@ -12,7 +10,31 @@ To install,
 
 		make install
 
-01. Adjust cluster labels
+01. Create credentials for AWS named `aws` in the ACM console
+
+01. Create a cluster set named `coolstore`
+
+	* Create a namespace binding to `openshift-gitops` - with this in place, ACM will create secrets in the `openshift-gitops` namespace for each cluster in the clusterset
+
+01. Create an AWS cluster in the `coolstore` cluster set named `coolstore-a`
+
+	|Network|CIDR|
+	|---|---|
+	|Cluster network|`10.128.0.0/14`|
+	|Service network|`172.30.0.0/16`|
+
+01. Create an AWS cluster in the `coolstore` cluster set named `coolstore-b`
+
+	|Network|CIDR|
+	|---|---|
+	|Cluster network|`10.132.0.0/14`|
+	|Service network|`172.31.0.0/16`|
+
+01. After both clusters have been provisioned, edit the `coolstore` clusterset and install Submariner add-ons in both clusters
+
+01. Wait for the submariner add-ons to complete installation on both nodes
+
+01. The coolstore services are provisioned based on labels
 
 	|Components|Label|
 	|---|---|
@@ -25,7 +47,31 @@ To install,
 	|`order`|`order: "true"`|
 	|`payment`|`payment: "true"`|
 
-01. To login to the ArgoCD UI,
+01. Provision all services to `coolstore-a`
+
+		oc label \
+		  -n openshift-gitops \
+		  secret/coolstore-a-cluster-secret \
+		  kafka=true \
+		  cart=true \
+		  catalog=true \
+		  coolstore-ui=true \
+		  inventory=true \
+		  knative=true \
+		  order=true \
+		  payment=true
+
+01. Provision OpenShift Serverless to `coolstore-b` - this is avoid a long wait when we move the `payment` service to `coolstore-b` later
+
+		oc label \
+		  -n openshift-gitops \
+		  secret/coolstore-b-cluster-secret \
+		  knative=true
+
+
+## Demo
+
+01. Login to the ArgoCD UI,
 
 	*   Get the ArgoCD admin password
 
@@ -35,9 +81,13 @@ To install,
 
 			make argocd
 
-01. To access `gitea` - login with `demo` / `password`
+01. Walk through all the services deployed to the `coolstore-a` cluster in the Applications screen
+
+01. Login to gitea with `demo` / `password`
 
 		make gitea
+
+01. Walk through the manifests in gitea, starting with the `argocd` directory
 
 01. To test the demo app,
 
@@ -55,62 +105,25 @@ To install,
 		make topology-view
 
 
-## Moving `payment` to Another Cluster
+## Move `payment` to another cluster
 
-### Modify Kafka to be accessible from other clusters
+01. Deploy `payment` service to `coolstore-b`
 
-01. Provision another cluster, and setup Submariner in both clusters
-
-01. Login to `gitea` with `demo` / `password`
-
-01. Edit `kafka/kafka.yaml` - replace it with the contents from [`kafka-submariner/kafka.yaml`](yaml/kafka-submariner/kafka.yaml); this file sets up extra services and exports them
-
-01. Login to ArgoCD, select the `kafka` application, click on REFRESH
-
-
-### Create credentials to the remote cluster
-
-01. If you have the API URL and the token of the remote cluster handy,
-
-		./scripts/generate-cluster-secret \
-		  remote-cluster \
-		  'https://api...:6443' \
-		  'sha256~...' \
-		  > /tmp/remote-cluster-secret.yaml
-
-	If you don't have the token handy, login to the remote cluster using the `oc` CLI, and execute the following
-
-		./scripts/generate-cluster-secret remote-cluster \
-		  > /tmp/remote-cluster-secret.yaml
-
-01. **Connect back to the ArgoCD cluster**, then create the secret
-
-		oc apply \
+		oc label \
 		  -n openshift-gitops \
-		  -f /tmp/remote-cluster-secret.yaml
+		  secret/coolstore-b-cluster-secret \
+		  payment=true
 
-01. In the ArgoCD UI, select the gear icon / Clusters - you should see an entry for `remote-cluster`
+01. You should be able to see the `coolstore-b-payment` Application being rolled out in the ArgoCD UI
 
+01. After `payment` has been deployed to `coolstore-b-payment`, remove `payment` from `coolstore-a`
 
-### Install OpenShift Serverless, Knative Serving, Knative Eventing, and `payment` to the remote cluster
+		oc label \
+		  -n openshift-gitops \
+		  secret/coolstore-a-cluster-secret \
+		  payment-
 
-01. Login to the `gitea` web interface (as `demo` / `password`), select `demo/coolstore` / `remote-coolstore`
-
-01. Examine the manifests in that directory - point out how `.spec.destination.name` has been set to `remote-cluster` for `remote-openshift-serverless.yaml`, `remote-knative.yaml`, `remote-payment.yaml`; `remote-coolstore.yaml` still points to `in-cluster` because the child `Application` resources need to reside on the ArgoCD cluster
-
-01. `remote-payment.yaml` also points to the Kafka service on another cluster
-
-01. Configure ArgoCD to deploy to the remote cluster
-
-		oc apply -f ./yaml/remote-coolstore/remote-coolstore.yaml
-
-01. Point your browser to the Topology View of the `demo` namespace in the second cluster - you should see the payment service being deployed after a few minutes
-
-01. After the payment service has been deployed on the second cluster, remove the payment service from the first cluster
-
-	*   Login to `gitea`, select `argocd` / `payment.yaml` - delete the file
-
-01. Login to the ArgoCD UI, select Manage your applications / `coolstore` / REFRESH
+01. You should see the `coolstore-a-payment` Application disappear from the ArgoCD UI
 
 01. Perform another transaction on the `coolstore-ui` - the order should be processed by the `payment` service even though it is now residing on another cluster
 

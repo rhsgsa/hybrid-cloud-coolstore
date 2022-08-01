@@ -1,0 +1,30 @@
+#!/bin/bash
+
+ADMIN_PASSWORD="$(oc get -n openshift-gitops secret/openshift-gitops-cluster -o jsonpath='{.data.admin\.password}' | base64 -d)"
+
+if [ -z "$ADMIN_PASSWORD" ]; then
+  echo "error: could not get ArgoCD admin password"
+  exit 1
+fi
+
+ARGOCD_URL="$(oc get -n openshift-gitops route/openshift-gitops-server -o jsonpath='{.spec.host}')"
+if [ -z "$ARGOCD_URL" ]; then
+  echo "error: could not get ArgoCD API URL"
+  exit 1
+fi
+
+ARGOCD_URL="https://$ARGOCD_URL"
+
+TOKEN=$(curl -sk $ARGOCD_URL/api/v1/session -d '{"username":"admin","password":"'"$ADMIN_PASSWORD"'"}' | jq -r .token)
+if [ -z "$TOKEN" ]; then
+  echo "error: could not get ArgoCD token"
+  exit 1
+fi
+
+COOLSTORE_UI=$(curl -sk -H "Authorization: Bearer $TOKEN" $ARGOCD_URL/api/v1/applications/coolstore-a-coolstore-ui/managed-resources | jq -r '.items[] | select (.kind=="Route") | .liveState' | jq -r '.spec.host')
+if [ -z "$COOLSTORE_UI" ]; then
+  echo "error: could not get coolstore-ui host"
+  exit 1
+fi
+
+open "http://$COOLSTORE_UI"
