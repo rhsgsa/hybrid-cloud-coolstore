@@ -2,11 +2,11 @@
 
 ## Installation
 
-01. Provision an ACM Hub cluster in RHPDS
+01. Provision an ACM Hub cluster in RHPDS - All Services / OpenShift Workshop / OCP4 ACM Hub
 
-01. Login to OpenShift as `cluster-admin` using `oc login`
+01. Login to the ACM Hub Cluster as `cluster-admin` using `oc login`
 
-01. Install services - this will: install the OpenShift GitOps operator, install `gitea`, upload manifests to `gitea`, setup a `coolstore` Application that points to the manifests in `gitea` (app-of-apps pattern)
+01. Install services to the ACM Hub Cluster - this will: install the OpenShift GitOps operator, install `gitea`, upload manifests to `gitea`, setup a `coolstore` Application that points to the manifests in `gitea` (app-of-apps pattern)
 
 		make install
 
