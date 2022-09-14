@@ -10,7 +10,7 @@
 
 		make install
 
-01. Create credentials for AWS named `aws` in the ACM console
+01. Create credentials for AWS named `aws` in the `open-cluster-management` namespece in the ACM console
 
 01. Create a cluster set named `coolstore`
 
@@ -33,6 +33,46 @@
 01. After both clusters have been provisioned, edit the `coolstore` clusterset and install Submariner add-ons in both clusters
 
 01. Wait for the submariner add-ons to complete installation on both nodes
+
+01. Check if `coolstore-a-cluster-secret` and `coolstore-b-cluster-secret` have been created in the `openshift-gitops` namespace; if it hasn't, create them manually
+
+		apiVersion: v1
+		kind: Secret
+		metadata:
+		  name: coolstore-a-cluster-secret
+		  namespace: openshift-gitops
+		  labels:
+		    argocd.argoproj.io/secret-type: cluster
+		type: Opaque
+		stringData:
+		  name: coolstore-a
+		  server: https://api.coolstore-a.DOMAIN:6443
+		  config: |
+		    {
+		      "bearerToken": "CHANGE_ME",
+		      "tlsClientConfig": {
+		        "insecure": true
+		      }
+		    }
+		---
+		apiVersion: v1
+		kind: Secret
+		metadata:
+		  name: coolstore-b-cluster-secret
+		  namespace: openshift-gitops
+		  labels:
+		    argocd.argoproj.io/secret-type: cluster
+		type: Opaque
+		stringData:
+		  name: coolstore-b
+		  server: https://api.coolstore-b.DOMAIN:6443
+		  config: |
+		    {
+		      "bearerToken": "CHANGE_ME",
+		      "tlsClientConfig": {
+		        "insecure": true
+		      }
+		    }
 
 01. The coolstore services are provisioned based on labels
 
