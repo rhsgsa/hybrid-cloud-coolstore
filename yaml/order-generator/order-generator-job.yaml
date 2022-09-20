@@ -1,0 +1,28 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: order-generator
+spec:
+  template:
+    spec:
+      containers:
+      - name: order-generator
+        image: registry.redhat.io/amq7/amq-streams-kafka-31-rhel8@sha256:1572ced1a3ad802e778f73d6babba532b1e87328183e2e817c2c0980b81ddd26
+        env:
+        - name: START
+          value: "500"
+        - name: BOOTSTRAP
+          value: my-cluster-kafka-bootstrap:9092
+        - name: TOPIC
+          value: orders
+        command:
+        - /bin/bash
+        - "-c"
+        - |
+          count=$START
+          while true; do
+            echo '{"orderId":"order-'"$count"'","total":"10.49","creditCard":{"number":"4123123456781234","expiration":"12/23","nameOnCard":"Demo User"},"billingAddress":"100 Random Street","name":"Demo User"}' | /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server $BOOTSTRAP --topic $TOPIC
+            count=$((count + 1))
+            sleep 1
+          done
+      restartPolicy: Never
