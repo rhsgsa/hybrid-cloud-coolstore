@@ -10,7 +10,9 @@ spec:
         image: registry.redhat.io/amq7/amq-streams-kafka-31-rhel8@sha256:1572ced1a3ad802e778f73d6babba532b1e87328183e2e817c2c0980b81ddd26
         env:
         - name: START
-          value: "500"
+          value: "100"
+        - name: STOP
+          value: "110"
         - name: BOOTSTRAP
           value: my-cluster-kafka-bootstrap:9092
         - name: TOPIC
@@ -19,9 +21,15 @@ spec:
         - /bin/bash
         - "-c"
         - |
+          if [ -z "$START" ]; then
+            START=1000
+          fi
+          if [ -z "$STOP" ]; then
+            STOP=9999
+          fi
           count=$START
-          while true; do
-            echo '{"orderId":"order-'"$count"'","total":"10.49","creditCard":{"number":"4123123456781234","expiration":"12/23","nameOnCard":"Demo User"},"billingAddress":"100 Random Street","name":"Demo User"}' | /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server $BOOTSTRAP --topic $TOPIC
+          while [ "$count" -le "$STOP" ]; do
+            echo '{"orderId":"'"$HOSTNAME"'-'"$count"'","total":"10.49","creditCard":{"number":"4123123456781234","expiration":"12/23","nameOnCard":"Demo User"},"billingAddress":"100 Random Street","name":"Demo User"}' | /opt/kafka/bin/kafka-console-producer.sh --bootstrap-server $BOOTSTRAP --topic $TOPIC
             count=$((count + 1))
             sleep 1
           done

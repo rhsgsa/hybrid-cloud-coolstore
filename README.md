@@ -1,6 +1,6 @@
 # Hybrid Cloud Coolstore Demo
 
-## Installation
+## Multicluster
 
 ### Multicluster Installation
 
@@ -111,59 +111,7 @@
 		  knative=true
 
 
-### Single Cluster Installation
-
-01. Provision an OpenShift 4.10 workshop cluster on RHPDS
-
-01. Login to the cluster as a `cluster-admin`
-
-01. Install the OpenShift GitOps operator and `gitea`
-
-		make install
-
-01. Open a browser to `gitea`
-
-		make gitea
-
-01. Select the `coolstore` repo
-
-01. Edit `argocd/kafka.yaml` and set `.kafka.serviceexport` in `.spec.template.spec.source.helm` to `false`
-
-01. Edit `argocd/payment.yaml` and set `.payment.kafka.bootstrapServers` in `.spec.template.spec.source.helm` to `my-cluster-kafka-bootstrap.demo.svc.cluster.local:9092`
-
-01. Create a cluster secret for the `in-cluster` cluster
-
-		cat << EOF | oc apply -f -
-		apiVersion: v1
-		kind: Secret
-		metadata:
-		  name: in-cluster-secret
-		  namespace: openshift-gitops
-		  labels:
-		    argocd.argoproj.io/secret-type: cluster
-		    cart: "true"
-		    catalog: "true"
-		    coolstore-ui: "true"
-		    inventory: "true"
-		    kafka: "true"
-		    knative: "true"
-		    order: "true"
-		    payment: "true"
-		type: Opaque
-		stringData:
-		name: in-cluster
-		  server: https://kubernetes.default.svc
-		  config: |
-		    {
-		      "bearerToken": "$(oc whoami -t)",
-		      "tlsClientConfig": {
-		        "insecure": true
-		      }
-		    }
-		EOF
-
-
-## Demo
+### Multicluster Demo
 
 01. Login to the ArgoCD UI,
 
@@ -209,7 +157,7 @@
 		make topology-view
 
 
-## Move `payment` to another cluster
+### Move `payment` to another cluster
 
 01. Deploy `payment` service to `coolstore-b`
 
@@ -231,6 +179,58 @@
 
 01. Perform another transaction on the `coolstore-ui` - the order should be processed by the `payment` service even though it is now residing on another cluster
 
+
+
+## Single Cluster Installation
+
+01. Provision an OpenShift 4.10 workshop cluster on RHPDS
+
+01. Login to the cluster as a `cluster-admin`
+
+01. Install the OpenShift GitOps operator and `gitea`
+
+		make install
+
+01. Open a browser to `gitea`
+
+		make gitea
+
+01. Select the `coolstore` repo
+
+01. Edit `argocd/kafka.yaml` and set `.kafka.serviceexport` in `.spec.template.spec.source.helm` to `false`
+
+01. Edit `argocd/payment.yaml` and set `.payment.kafka.bootstrapServers` in `.spec.template.spec.source.helm` to `my-cluster-kafka-bootstrap.demo.svc.cluster.local:9092`
+
+01. Create a cluster secret for the `in-cluster` cluster
+
+		cat << EOF | oc apply -f -
+		apiVersion: v1
+		kind: Secret
+		metadata:
+		  name: in-cluster-secret
+		  namespace: openshift-gitops
+		  labels:
+		    argocd.argoproj.io/secret-type: cluster
+		    cart: "true"
+		    catalog: "true"
+		    coolstore-ui: "true"
+		    inventory: "true"
+		    kafka: "true"
+		    knative: "true"
+		    order: "true"
+		    payment: "true"
+		type: Opaque
+		stringData:
+		  name: in-cluster
+		  server: https://kubernetes.default.svc
+		  config: |
+		    {
+		      "bearerToken": "$(oc whoami -t)",
+		      "tlsClientConfig": {
+		        "insecure": true
+		      }
+		    }
+		EOF
 ---
 
 ## Updating Helm Charts

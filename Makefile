@@ -2,7 +2,7 @@ BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 include $(BASE)/config.sh
 
-.PHONY: install demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password
+.PHONY: install demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag
 
 install:
 	$(BASE)/scripts/install-gitops
@@ -45,16 +45,60 @@ argocd-password:
 	@oc get -n openshift-gitops secret/openshift-gitops-cluster -o jsonpath='{.data.admin\.password}' | base64 -d && echo
 
 gitea:
-	@open "https://`oc get -n $(GIT_PROJ) route/gitea -o jsonpath='{.spec.host}'`"
+	@open "https://`oc get -n $(GIT_PROJ) route/gitea -o jsonpath='{.spec.host}'`/$(GIT_ADMIN)/coolstore"
 
 coolstore-ui:
 	@$(BASE)/scripts/open-coolstore-ui
 
 topology-view:
-	@CONSOLE=`oc get mcl/coolstore-a -o json | jq -r '.status.clusterClaims[] | select (.name=="consoleurl.cluster.open-cluster-management.io") | .value'`; \
-	if [ -z "$$CONSOLE" ]; then echo "error: could not get OpenShift Console URL"; exit 1; fi; \
+	@CONSOLE=`oc get mcl/coolstore-a -o json 2>/dev/null | jq -r '.status.clusterClaims[] | select (.name=="consoleurl.cluster.open-cluster-management.io") | .value'`; \
+	if [ -z "$$CONSOLE" ]; then \
+	  CONSOLE="`oc get route/console -n openshift-console -o jsonpath='{.spec.host}'`"; \
+	  if [ -n "$$CONSOLE" ]; then \
+	    CONSOLE="https://$$CONSOLE"; \
+	  else \
+	    echo "error: could not get OpenShift Console URL"; exit 1; \
+	  fi; \
+	fi; \
 	open "$${CONSOLE}/topology/ns/$(PROJ)"
 
 coolstore-a-password:
 	@oc get secrets -n coolstore-a -l hive.openshift.io/secret-type=kubeadmincreds -o jsonpath='{.items[].data.password}' | base64 -d
 	@echo
+
+metrics:
+	@CONSOLE=`oc get mcl/coolstore-a -o json 2>/dev/null | jq -r '.status.clusterClaims[] | select (.name=="consoleurl.cluster.open-cluster-management.io") | .value'`; \
+	if [ -z "$$CONSOLE" ]; then \
+	  CONSOLE="`oc get route/console -n openshift-console -o jsonpath='{.spec.host}'`"; \
+	  if [ -n "$$CONSOLE" ]; then \
+	    CONSOLE="https://$$CONSOLE"; \
+	  else \
+	    echo "error: could not get OpenShift Console URL"; exit 1; \
+	  fi; \
+	fi; \
+	open "$${CONSOLE}/"'/dev-monitoring/ns/$(PROJ)/metrics?query0=kafka_consumergroup_lag_sum%7B%7D'
+
+alerts:
+	@CONSOLE=`oc get mcl/coolstore-a -o json 2>/dev/null | jq -r '.status.clusterClaims[] | select (.name=="consoleurl.cluster.open-cluster-management.io") | .value'`; \
+	if [ -z "$$CONSOLE" ]; then \
+	  CONSOLE="`oc get route/console -n openshift-console -o jsonpath='{.spec.host}'`"; \
+	  if [ -n "$$CONSOLE" ]; then \
+	    CONSOLE="https://$$CONSOLE"; \
+	  else \
+	    echo "error: could not get OpenShift Console URL"; exit 1; \
+	  fi; \
+	fi; \
+	open "$${CONSOLE}/dev-monitoring/ns/$(PROJ)/alerts"
+
+# Generate 10 orders - run this after killing the payment service
+generate-orders:
+	@oc apply -n $(PROJ) -f $(BASE)/yaml/order-generator/order-generator-job.yaml
+	@sleep 30
+	@oc delete -n $(PROJ) -f $(BASE)/yaml/order-generator/order-generator-job.yaml
+
+email:
+	@# Namespace is hardcoded to demo
+	@open "https://`oc get -n demo route/maildev-web -o jsonpath='{.spec.host}'`"
+
+remove-lag:
+	@oc rsh -n $(PROJ) my-cluster-kafka-0 bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --group knative-group --topic orders --timeout-ms 10000

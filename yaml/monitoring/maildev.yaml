@@ -1,0 +1,105 @@
+# Note: these resources are hardcoded to the demo namespace because
+# Alertmanagerconfig expects the SMTP server to be in the demo namespace
+#
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: maildev
+  name: maildev
+  namespace: demo
+spec:
+  progressDeadlineSeconds: 600
+  replicas: 1
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: maildev
+  strategy:
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+    type: RollingUpdate
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: maildev
+    spec:
+      containers:
+      - image: docker.io/maildev/maildev:2.0.0-beta3
+        imagePullPolicy: IfNotPresent
+        name: maildev
+        ports:
+        - containerPort: 1025
+          protocol: TCP
+        resources: {}
+        terminationMessagePath: /dev/termination-log
+        terminationMessagePolicy: File
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
+      schedulerName: default-scheduler
+      securityContext: {}
+      terminationGracePeriodSeconds: 30
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: maildev
+  name: maildev-smtp
+  namespace: demo
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 25
+    protocol: TCP
+    targetPort: 1025
+  selector:
+    app: maildev
+  sessionAffinity: None
+  type: ClusterIP
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: maildev
+  name: maildev-web
+spec:
+  internalTrafficPolicy: Cluster
+  ipFamilies:
+  - IPv4
+  ipFamilyPolicy: SingleStack
+  ports:
+  - port: 1080
+    protocol: TCP
+    targetPort: 1080
+  selector:
+    app: maildev
+  sessionAffinity: None
+  type: ClusterIP
+status: {}
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  labels:
+    app: maildev
+  name: maildev-web
+  namespace: demo
+spec:
+  tls:
+    insecureEdgeTerminationPolicy: Allow
+    termination: edge
+  to:
+    kind: Service
+    name: maildev-web
+    weight: 100
+  wildcardPolicy: None
+status: {}

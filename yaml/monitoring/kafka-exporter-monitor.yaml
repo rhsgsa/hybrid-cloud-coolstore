@@ -6,7 +6,7 @@ metadata:
   name: kafka-exporter-monitor
 spec:
   podMetricsEndpoints:
-  - interval: 30s
+  - interval: 15s
     port: tcp-prometheus
     scheme: http
   selector:

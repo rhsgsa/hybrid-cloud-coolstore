@@ -1,0 +1,15 @@
+# Note: The SMTP server is expected to be in the demo namespace
+apiVersion: monitoring.coreos.com/v1alpha1
+kind: AlertmanagerConfig
+metadata:
+  name: email-routing
+spec:
+  route:
+    receiver: email
+  receivers:
+  - name: email
+    emailConfigs:
+    - from: openshift@example.com
+      to: admin@example.com
+      smarthost: maildev-smtp.demo.svc.cluster.local:25
+      requireTLS: false
