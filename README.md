@@ -89,7 +89,7 @@
 	|`order`|`order: "true"`|
 	|`payment`|`payment: "true"`|
 
-01. Provision all services to `coolstore-a`
+01. Provision all services (except `payment`) to `coolstore-a`
 
 		oc label \
 		  -n openshift-gitops \
@@ -100,18 +100,53 @@
 		  coolstore-ui=true \
 		  inventory=true \
 		  knative=true \
-		  order=true \
-		  payment=true
+		  order=true
 
-01. Provision OpenShift Serverless to `coolstore-b` - this is avoid a long wait when we move the `payment` service to `coolstore-b` later
+01. Provision OpenShift Serverless and the `payment` service to `coolstore-b`
 
 		oc label \
 		  -n openshift-gitops \
 		  secret/coolstore-b-cluster-secret \
-		  knative=true
+		  knative=true \
+		  payment=true
+
+01. Login to the `coolstore-a` OpenShift Console, edit the alert manager configuration and set `group_interval` and `group_wait` to `15s`
+
+01. Add banners to the OpenShift Consoles so you know which cluster you're on - do this for the hub cluster, `coolstore-a`, `coolstore-b`
+
+		apiVersion: console.openshift.io/v1
+		kind: ConsoleNotification
+		metadata:
+		  name: my-banner
+		spec:
+		  text: Hub Cluster
+		  location: BannerTop 
+
+01. Modify the `coolstore-a` alert manager settings so that alert emails are sent quicker
+
+	* Open a browser to the `coolstore-a` OpenShift Console
+	* Administrator / Administration / Cluster Settings / Configuration / Alertmanager / YAML
+	* Change `group_interval` to `15s`
+	* Change `group_wait` to `15s`
+
+01. Open the following browser tabs
+
+	* ArgoCD
+		* `make argocd-password` to get the `admin` password
+		* `make argocd` will open a browser to ArgoCD - login as `admin`
+
+	* `coolstore-a` OpenShift Console topology view in the `demo` project
+
+	* `coolstore-b` OpenShift Console topology view in the `demo` project
+
+	* `coolstore-ui` - `make coolstore-ui` to open a browser
+
+	* `maildev` - `make email`
+
+	* Hub cluster OpenShift Console secrets screen in the `openshift-gitops` project
 
 
-### Multicluster Demo
+### Multicluster Demo Part 1
 
 01. Login to the ArgoCD UI,
 
@@ -124,6 +159,8 @@
 			make argocd
 
 01. Walk through all the services deployed to the `coolstore-a` cluster in the Applications screen
+
+01. Show how `payment` is deployed to `coolstore-b`
 
 01. Login to gitea with `demo` / `password`
 
@@ -141,6 +178,8 @@
 
 			make topology-view
 
+01. Switch to the browser tab showing `coolstore-b`'s OpenShift Console `demo` project topology view - point out how the `payment` service is deployed as a serverless component
+
 01. To test the demo app,
 
 		make coolstore-ui
@@ -152,33 +191,47 @@
 	* If you look at the Topology View, you should see the `payment` Knative service spinning up
 	* After a few seconds, reload the orders page, and the order's payment status should be set to `COMPLETED`
 
-01. To get an overview of all the deployed services, access the Topology View in the `demo` project on the OpenShift Console
+01. Switch to the QR code tab, and invite the audience to submit their own orders
 
-		make topology-view
+	
+### Meanwhile in the background - this is to be performed by someone else
+
+01. Make sure you're logged into the hub cluster with `oc login`
+
+01. After the order's payment status has been set to `COMPLETED`, remove the `payment` service
+
+	* Either shutdown the `coolstore-b` cluster
+	* Or undeploy `payment` from `coolstore-b`
+
+			oc label \
+			  -n openshift-gitops \
+			  secret/coolstore-b-cluster-secret \
+			  payment-
+
+01. Generate a few orders
+
+		make generate-orders
+
+01. This should trigger the high consumer lag alert in a few minutes
 
 
-### Move `payment` to another cluster
+### Multicluster Demo Part 2
 
-01. Deploy `payment` service to `coolstore-b`
+01. Switch to the `coolstore-ui` orders screen and show how the number of orders are increasing, but the order status is stuck at `PROCESSING` - talk about how something's happened to the `payment` service
+ 
+01. After about a minute, the high consumer lag alert should be triggered - switch to the maildev browser tab; you should receive an email notifying you of the alert
 
-		oc label \
-		  -n openshift-gitops \
-		  secret/coolstore-b-cluster-secret \
-		  payment=true
+01. Switch to the `coolstore-a` OpenShift Console tab, click on Observe / Alerts and show how the alert has been triggered
 
-01. You should be able to see the `coolstore-b-payment` Application being rolled out in the ArgoCD UI
+01. Switch to the Metrics tab / Custom query / `kafka_consumergroup_lag_sum` - show how the value has spiked, showing a lag between producers and consumers, indicating that something has gone wrong with the `payment` service
 
-01. After `payment` has been deployed to `coolstore-b-payment`, remove `payment` from `coolstore-a`
+01. Move the `payment` service to `coolstore-a`
 
-		oc label \
-		  -n openshift-gitops \
-		  secret/coolstore-a-cluster-secret \
-		  payment-
+	* Switch to the hub cluster OpenShift Console secrets screen, edit the `coolstore-a-cluster-secret` secret, add `payment=true` as a label
 
-01. You should see the `coolstore-a-payment` Application disappear from the ArgoCD UI
+	* Switch to the `coolstore-a` OpenShift Console tab, click on the topology view - show how the `payment` service is deployed and spun up
 
-01. Perform another transaction on the `coolstore-ui` - the order should be processed by the `payment` service even though it is now residing on another cluster
-
+	* After about a minute, the `payment` service should be up - switch back to the `coolstore-ui` browser tab, open up the orders screen, and watch the orders complete the payment phase
 
 
 ## Single Cluster Installation

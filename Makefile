@@ -92,13 +92,10 @@ alerts:
 
 # Generate 10 orders - run this after killing the payment service
 generate-orders:
-	@oc apply -n $(PROJ) -f $(BASE)/yaml/order-generator/order-generator-job.yaml
-	@sleep 30
-	@oc delete -n $(PROJ) -f $(BASE)/yaml/order-generator/order-generator-job.yaml
+	@$(BASE)/scripts/generate-orders
 
 email:
-	@# Namespace is hardcoded to demo
-	@open "https://`oc get -n demo route/maildev-web -o jsonpath='{.spec.host}'`"
+	@$(BASE)/scripts/open-maildev
 
 remove-lag:
 	@oc rsh -n $(PROJ) my-cluster-kafka-0 bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --group knative-group --topic orders --timeout-ms 10000

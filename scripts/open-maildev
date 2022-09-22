@@ -8,7 +8,7 @@ source ${BASE}/../config.sh
 
 # check if we have everything deployed on the connected cluster (single
 # cluster install)
-ROUTE_HOST="$(oc get -n $PROJ route/coolstore-ui -o jsonpath='{.spec.host}' 2>/dev/null)"
+ROUTE_HOST="$(oc get -n $PROJ route/maildev -o jsonpath='{.spec.host}' 2>/dev/null)"
 if [ -n "$ROUTE_HOST" ]; then
   open "http://$ROUTE_HOST"
   exit
@@ -35,10 +35,10 @@ if [ -z "$TOKEN" ]; then
   exit 1
 fi
 
-COOLSTORE_UI=$(curl -sk -H "Authorization: Bearer $TOKEN" $ARGOCD_URL/api/v1/applications/coolstore-a-coolstore-ui/managed-resources | jq -r '.items[] | select (.kind=="Route") | .liveState' | jq -r '.spec.host')
-if [ -z "$COOLSTORE_UI" ]; then
+MAILDEV=$(curl -sk -H "Authorization: Bearer $TOKEN" $ARGOCD_URL/api/v1/applications/coolstore-a-monitoring/managed-resources | jq -r '.items[] | select (.kind=="Route") | .liveState' | jq -r '.spec.host')
+if [ -z "$MAILDEV" ]; then
   echo "error: could not get coolstore-ui host"
   exit 1
 fi
 
-open "http://$COOLSTORE_UI"
+open "http://$MAILDEV"
