@@ -16,7 +16,45 @@
 
 01. Create a cluster set named `coolstore`
 
-	* Create a namespace binding to `openshift-gitops` - with this in place, ACM will create secrets in the `openshift-gitops` namespace for each cluster in the clusterset
+	* [Register managed clusters to OpenShift GitOps](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.6/html/applications/managing-applications#register-gitops)
+
+		* Create a namespace binding to `openshift-gitops`
+
+		* Import the following resources to the hub cluster
+
+				cat <<EOF | oc apply -f -
+				# copied from https://github.com/stolostron/multicloud-integrations/blob/main/examples/placement.yaml
+				apiVersion: cluster.open-cluster-management.io/v1beta1
+				kind: Placement
+				metadata:
+				  name: all-openshift-clusters
+				  namespace: openshift-gitops
+				spec:
+				  predicates:
+				  - requiredClusterSelector:
+				      labelSelector:
+				        matchExpressions:
+				        - key: vendor
+				          operator: "In"
+				          values:
+				          - OpenShift
+				---
+				# copied from https://github.com/stolostron/multicloud-integrations/blob/main/examples/gitopscluster.yaml
+				apiVersion: apps.open-cluster-management.io/v1beta1
+				kind: GitOpsCluster
+				metadata:
+				  name: argo-acm-importer
+				  namespace: openshift-gitops
+				spec:
+				  argoServer:
+				    cluster: notused
+				    argoNamespace: openshift-gitops
+				  placementRef:
+				    kind: Placement
+				    apiVersion: cluster.open-cluster-management.io/v1beta1
+				    name: all-openshift-clusters
+				    namespace: openshift-gitops
+				EOF
 
 01. Create an AWS cluster in the `coolstore` cluster set named `coolstore-a`
 
@@ -135,6 +173,8 @@
 		* `make argocd-password` to get the `admin` password
 		* `make argocd` will open a browser to ArgoCD - login as `admin`
 
+	* `gitea` - `make gitea`, login as `demo` / `password`
+
 	* `coolstore-a` OpenShift Console topology view in the `demo` project
 
 	* `coolstore-b` OpenShift Console topology view in the `demo` project
@@ -148,42 +188,19 @@
 
 ### Multicluster Demo Part 1
 
-01. Login to the ArgoCD UI,
-
-	*   Get the ArgoCD admin password
-
-			make argocd-password
-
-	*   Open a browser to the ArgoCD UI - login as `admin` with the password from the previous step; do not login with `OpenShift Login` - your user will have a read-only role even if you are logged in as a `cluster-admin`
-
-			make argocd
-
-01. Walk through all the services deployed to the `coolstore-a` cluster in the Applications screen
+01. Switch to the ArgoCD browser tab - walk through all the services deployed to the `coolstore-a` cluster in the Applications screen
 
 01. Show how `payment` is deployed to `coolstore-b`
 
-01. Login to gitea with `demo` / `password`
+01. Switch to the `gitea` browser tab - walk through the manifests in gitea, starting with the `argocd` directory
 
-		make gitea
-
-01. Walk through the manifests in gitea, starting with the `argocd` directory
-
-01. Login to the `coolstore-a` topology view to look at all the components deployed
-
-	*   Get the `coolstore-a` `kubeadmin` password
-
-			make coolstore-a-password
-
-	*   Opena browser to the `coolstore-a` topology view - login with `kubeadmin` as the username
-
-			make topology-view
+01. Switch to the `coolstore-a` OpenShift Console browser tab and open the `demo` project's  topology view
 
 01. Switch to the browser tab showing `coolstore-b`'s OpenShift Console `demo` project topology view - point out how the `payment` service is deployed as a serverless component
 
-01. To test the demo app,
+01. Test the demo app
 
-		make coolstore-ui
-
+	* Switch to the `coolstore-ui` browser tab
 	* Add an item to the shopping cart
 	* Select `Cart` / `Checkout`
 	* Enter your details and click `Checkout` - [ensure that your credit card number starts with `4`](https://github.com/RedHat-Middleware-Workshops/cloud-native-workshop-v2-labs-solutions/blob/c32daed7aa7c803b1a29fbe56be350bf4a5e6be2/m4/payment-service/src/main/java/com/redhat/cloudnative/PaymentResource.java#L61)
@@ -232,6 +249,16 @@
 	* Switch to the `coolstore-a` OpenShift Console tab, click on the topology view - show how the `payment` service is deployed and spun up
 
 	* After about a minute, the `payment` service should be up - switch back to the `coolstore-ui` browser tab, open up the orders screen, and watch the orders complete the payment phase
+
+
+### Cleaning Up
+
+Before you destroy the clusters,
+
+* Uninstall submariner from `coolstore-a` and `coolstore-b`
+* Remove them from the `coolstore` clusterset
+
+If you don't do the above, the clusters may be stuck inthe detaching phase. If this happens to you, [refer to this article](https://access.redhat.com/solutions/6243371).
 
 
 ## Single Cluster Installation
