@@ -16,45 +16,7 @@
 
 01. Create a cluster set named `coolstore`
 
-	* [Register managed clusters to OpenShift GitOps](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.6/html/applications/managing-applications#register-gitops)
-
-		* Create a namespace binding to `openshift-gitops`
-
-		* Import the following resources to the hub cluster
-
-				cat <<EOF | oc apply -f -
-				# copied from https://github.com/stolostron/multicloud-integrations/blob/main/examples/placement.yaml
-				apiVersion: cluster.open-cluster-management.io/v1beta1
-				kind: Placement
-				metadata:
-				  name: all-openshift-clusters
-				  namespace: openshift-gitops
-				spec:
-				  predicates:
-				  - requiredClusterSelector:
-				      labelSelector:
-				        matchExpressions:
-				        - key: vendor
-				          operator: "In"
-				          values:
-				          - OpenShift
-				---
-				# copied from https://github.com/stolostron/multicloud-integrations/blob/main/examples/gitopscluster.yaml
-				apiVersion: apps.open-cluster-management.io/v1beta1
-				kind: GitOpsCluster
-				metadata:
-				  name: argo-acm-importer
-				  namespace: openshift-gitops
-				spec:
-				  argoServer:
-				    cluster: notused
-				    argoNamespace: openshift-gitops
-				  placementRef:
-				    kind: Placement
-				    apiVersion: cluster.open-cluster-management.io/v1beta1
-				    name: all-openshift-clusters
-				    namespace: openshift-gitops
-				EOF
+	* Create a namespace binding to `openshift-gitops`
 
 01. Create an AWS cluster in the `coolstore` cluster set named `coolstore-a`
 
@@ -73,46 +35,6 @@
 01. After both clusters have been provisioned, edit the `coolstore` clusterset and install Submariner add-ons in both clusters
 
 01. Wait for the submariner add-ons to complete installation on both nodes
-
-01. Check if `coolstore-a-cluster-secret` and `coolstore-b-cluster-secret` have been created in the `openshift-gitops` namespace; if it hasn't, create them manually
-
-		apiVersion: v1
-		kind: Secret
-		metadata:
-		  name: coolstore-a-cluster-secret
-		  namespace: openshift-gitops
-		  labels:
-		    argocd.argoproj.io/secret-type: cluster
-		type: Opaque
-		stringData:
-		  name: coolstore-a
-		  server: https://api.coolstore-a.DOMAIN:6443
-		  config: |
-		    {
-		      "bearerToken": "CHANGE_ME",
-		      "tlsClientConfig": {
-		        "insecure": true
-		      }
-		    }
-		---
-		apiVersion: v1
-		kind: Secret
-		metadata:
-		  name: coolstore-b-cluster-secret
-		  namespace: openshift-gitops
-		  labels:
-		    argocd.argoproj.io/secret-type: cluster
-		type: Opaque
-		stringData:
-		  name: coolstore-b
-		  server: https://api.coolstore-b.DOMAIN:6443
-		  config: |
-		    {
-		      "bearerToken": "CHANGE_ME",
-		      "tlsClientConfig": {
-		        "insecure": true
-		      }
-		    }
 
 01. The coolstore services are provisioned based on labels
 
@@ -147,8 +69,6 @@
 		  secret/coolstore-b-cluster-secret \
 		  knative=true \
 		  payment=true
-
-01. Login to the `coolstore-a` OpenShift Console, edit the alert manager configuration and set `group_interval` and `group_wait` to `15s`
 
 01. Add banners to the OpenShift Consoles so you know which cluster you're on - do this for the hub cluster, `coolstore-a`, `coolstore-b`
 

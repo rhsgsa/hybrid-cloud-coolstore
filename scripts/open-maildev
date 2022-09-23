@@ -41,4 +41,4 @@ if [ -z "$MAILDEV" ]; then
   exit 1
 fi
 
-open "http://$MAILDEV"
+open "https://$MAILDEV"
