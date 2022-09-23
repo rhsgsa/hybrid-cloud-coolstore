@@ -18,14 +18,14 @@
 
 	* Create a namespace binding to `openshift-gitops`
 
-01. Create an AWS cluster in the `coolstore` cluster set named `coolstore-a`
+01. Create an AWS cluster in the `coolstore` clusterset named `coolstore-a`
 
 	|Network|CIDR|
 	|---|---|
 	|Cluster network|`10.128.0.0/14`|
 	|Service network|`172.30.0.0/16`|
 
-01. Create an AWS cluster in the `coolstore` cluster set named `coolstore-b`
+01. Create an AWS cluster in the `coolstore` clusterset named `coolstore-b`
 
 	|Network|CIDR|
 	|---|---|
