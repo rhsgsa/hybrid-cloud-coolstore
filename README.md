@@ -102,6 +102,8 @@
 	* `coolstore-ui` - `make coolstore-ui` to open a browser
 
 	* `maildev` - `make email`
+		* Turn on notifications so you see the alert email coming in
+		* If you are using Google Chrome, you may need to view site information and explicitly allow notifications - don't forget to reload the page after enabling notifications
 
 	* Hub cluster OpenShift Console secrets screen in the `openshift-gitops` project
 
