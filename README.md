@@ -69,14 +69,14 @@
 
 	* `coolstore-b` OpenShift Console topology view in the `demo` project
 
-	* `coolstore-ui` - `make coolstore-ui` to open a browser
+	* `coolstore-ui` - `make coolstore-ui` to open a browser; note that we're using HTTP to access `coolstore-ui` - if your browser don't recognize the OpenShift Router's certificate and you try to access `coolstore-ui` over HTTPS, then you won't be able to access some services
 
 	* `maildev` - `make email`
 		* Turn on notifications so you see the alert email coming in
 		* If you are using Google Chrome, you may need to view site information and explicitly allow notifications - don't forget to reload the page after enabling notifications
 
 
-### Multicluster Demo Part 1
+### Multicluster Demo
 
 01. Switch to the ArgoCD browser tab - walk through all the services deployed to the `coolstore-a` cluster in the Applications screen
 
@@ -100,57 +100,13 @@
 
 01. Switch to the QR code tab, and invite the audience to submit their own orders
 
-	
-### Meanwhile in the background - this is to be performed by someone else
+01. Explain how the strategy has changed from a single cloud to multi-cloud
 
-01. Make sure you're logged into the hub cluster with `oc login`
-
-01. After the order's payment status has been set to `COMPLETED`, remove the `payment` service
-
-	* Either shutdown the `coolstore-b` cluster
-	* Or undeploy `payment` from `coolstore-b`
-
-		* Open `gitea` in a browser (`make gitea`), login as `demo` / `password`
-
-		* Edit `argocd/payment.yaml`
-
-			* Comment `.spec.generators.list.elements[0]`
-
-			* Set `.spec.generators.list.elements` to `[]`
-
-					...
-					spec
-					  generators:
-					  - list:
-					      elements: []
-					      # - cluster: coolstore-b
-					      #   values:
-					      #     namespace: demo
-
-		* Login to the ArgoCD web UI and refresh the `coolstore` application
-
-01. Generate a few orders
-
-		make generate-orders
-
-01. This should trigger the high consumer lag alert in a few minutes
-
-
-### Multicluster Demo Part 2
-
-01. Switch to the `coolstore-ui` orders screen and show how the number of orders are increasing, but the order status is stuck at `PROCESSING` - talk about how something's happened to the `payment` service
- 
-01. After about a minute, the high consumer lag alert should be triggered - switch to the maildev browser tab; you should receive an email notifying you of the alert
-
-01. Switch to the `coolstore-a` OpenShift Console tab, click on Observe / Alerts and show how the alert has been triggered
-
-01. Switch to the Metrics tab / Custom query / `kafka_consumergroup_lag_sum` - show how the value has spiked, showing a lag between producers and consumers, indicating that something has gone wrong with the `payment` service
-
-01. Move the `payment` service to `coolstore-a`
+01. Spin up an additional `payment` service on `coolstore-b`
 
 	* Switch to the `gitea` browser tab
 
-	* Edit `argocd/yaml/payment.yaml`, set `.spec.generators[0].list.elements[0].cluster` to `coolstore-a`
+	* Edit `argocd/yaml/payment.yaml`, duplicate `.spec.generators[0].list.elements[0]`, with the new element's `cluster` set to `coolstore-b`
 
 			...
 			spec
@@ -160,8 +116,11 @@
 			       - cluster: coolstore-a
 			         values:
 			           namespace: demo
+			       - cluster: coolstore-b
+			         values:
+			           namespace: demo
 
-01. Switch to the `coolstore-a` OpenShift Console topology view - you should see the `payment` service spinning up; if you don't see the `payment` service coming up on `coolstore-a`, switch to the ArgoCD web UI and refresh the `coolstore` application
+01. Switch to the `coolstore-b` OpenShift Console topology view - you should see the `payment` service spinning up; if you don't see the `payment` service coming up on `coolstore-b`, switch to the ArgoCD web UI and refresh the `coolstore` application
 
 01. Switch to the `coolstore-ui` orders screen - you should see the orders being processed
 

@@ -9,7 +9,7 @@ spec:
   generators:
   - list:
       elements:
-      - cluster: coolstore-b
+      - cluster: coolstore-a
         values:
           namespace: demo
   template:
