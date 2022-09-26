@@ -36,39 +36,9 @@
 
 01. Wait for the submariner add-ons to complete installation on both nodes
 
-01. The coolstore services are provisioned based on labels
+01. Setup ArgoCD `ApplicationSet`s
 
-	|Components|Label|
-	|---|---|
-	|`amq-streams`, `kafka`|`kafka: "true"`|
-	|`cart`|`cart: "true"`|
-	|`catalog`|`catalog: "true"`|
-	|`coolstore-ui`|`coolstore-ui: "true"`|
-	|`inventory`|`inventory: "true"`|
-	|`knative`, `openshift-serverless`|`knative: "true"`|
-	|`order`|`order: "true"`|
-	|`payment`|`payment: "true"`|
-
-01. Provision all services (except `payment`) to `coolstore-a`
-
-		oc label \
-		  -n openshift-gitops \
-		  secret/coolstore-a-cluster-secret \
-		  kafka=true \
-		  cart=true \
-		  catalog=true \
-		  coolstore-ui=true \
-		  inventory=true \
-		  knative=true \
-		  order=true
-
-01. Provision OpenShift Serverless and the `payment` service to `coolstore-b`
-
-		oc label \
-		  -n openshift-gitops \
-		  secret/coolstore-b-cluster-secret \
-		  knative=true \
-		  payment=true
+		oc apply -f yaml/argocd/coolstore.yaml
 
 01. Add banners to the OpenShift Consoles so you know which cluster you're on - do this for the hub cluster, `coolstore-a`, `coolstore-b`
 
@@ -105,8 +75,6 @@
 		* Turn on notifications so you see the alert email coming in
 		* If you are using Google Chrome, you may need to view site information and explicitly allow notifications - don't forget to reload the page after enabling notifications
 
-	* Hub cluster OpenShift Console secrets screen in the `openshift-gitops` project
-
 
 ### Multicluster Demo Part 1
 
@@ -142,10 +110,24 @@
 	* Either shutdown the `coolstore-b` cluster
 	* Or undeploy `payment` from `coolstore-b`
 
-			oc label \
-			  -n openshift-gitops \
-			  secret/coolstore-b-cluster-secret \
-			  payment-
+		* Open `gitea` in a browser (`make gitea`), login as `demo` / `password`
+
+		* Edit `argocd/payment.yaml`
+
+			* Comment `.spec.generators.list.elements[0]`
+
+			* Set `.spec.generators.list.elements` to `[]`
+
+					...
+					spec
+					  generators:
+					  - list:
+					      elements: []
+					      # - cluster: coolstore-b
+					      #   values:
+					      #     namespace: demo
+
+		* Login to the ArgoCD web UI and refresh the `coolstore` application
 
 01. Generate a few orders
 
@@ -166,19 +148,27 @@
 
 01. Move the `payment` service to `coolstore-a`
 
-	* Switch to the hub cluster OpenShift Console secrets screen, edit the `coolstore-a-cluster-secret` secret, add `payment=true` as a label
+	* Switch to the `gitea` browser tab
 
-	* Switch to the `coolstore-a` OpenShift Console tab, click on the topology view - show how the `payment` service is deployed and spun up
+	* Edit `argocd/yaml/payment.yaml`, set `.spec.generators[0].list.elements[0].cluster` to `coolstore-a`
 
-	* After about a minute, the `payment` service should be up - switch back to the `coolstore-ui` browser tab, open up the orders screen, and watch the orders complete the payment phase
+			...
+			spec
+			  generators:
+			  - list:
+			      elements:
+			       - cluster: coolstore-a
+			         values:
+			           namespace: demo
+
+01. Switch to the `coolstore-a` OpenShift Console topology view - you should see the `payment` service spinning up
+
+01. Switch to the `coolstore-ui` orders screen - you should see the orders being processed
 
 
 ### Cleaning Up
 
-Before you destroy the clusters,
-
-* Uninstall submariner from `coolstore-a` and `coolstore-b`
-* Remove them from the `coolstore` clusterset
+Before you destroy the clusters, uninstall submariner from `coolstore-a` and `coolstore-b`
 
 If you don't do the above, the clusters may be stuck inthe detaching phase. If this happens to you, [refer to this article](https://access.redhat.com/solutions/6243371).
 

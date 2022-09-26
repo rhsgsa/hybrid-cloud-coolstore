@@ -7,21 +7,20 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   generators:
-  - clusters:
-      selector:
-        matchLabels:
-          kafka: "true"
-      values:
-        namespace: demo
+  - list:
+      elements:
+      - cluster: coolstore-a
+        values:
+          namespace: demo
   template:
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "50"
-      name: "{{name}}-monitoring"
+      name: "{{cluster}}-monitoring"
     spec:
       destination:
         namespace: "{{values.namespace}}"
-        name: "{{name}}"
+        name: "{{cluster}}"
       project: default
       source:
         directory:

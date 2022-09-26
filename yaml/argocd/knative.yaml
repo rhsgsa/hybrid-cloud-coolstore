@@ -7,18 +7,18 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   generators:
-  - clusters:
-      selector:
-        matchLabels:
-          knative: "true"
+  - list:
+      elements:
+      - cluster: coolstore-a
+      - cluster: coolstore-b
   template:
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "20"
-      name: "{{name}}-knative"
+      name: "{{cluster}}-knative"
     spec:
       destination:
-        name: "{{name}}"
+        name: "{{cluster}}"
       project: default
       source:
         directory:

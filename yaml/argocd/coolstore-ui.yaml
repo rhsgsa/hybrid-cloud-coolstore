@@ -7,21 +7,20 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   generators:
-  - clusters:
-      selector:
-        matchLabels:
-          coolstore-ui: "true"
-      values:
-        namespace: demo
+  - list:
+      elements:
+      - cluster: coolstore-a
+        values:
+          namespace: demo
   template:
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "30"
-      name: "{{name}}-coolstore-ui"
+      name: "{{cluster}}-coolstore-ui"
     spec:
       destination:
         namespace: "{{values.namespace}}"
-        name: "{{name}}"
+        name: "{{cluster}}"
       project: default
       source:
         directory:

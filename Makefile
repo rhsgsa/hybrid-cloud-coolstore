@@ -9,7 +9,6 @@ install:
 	$(BASE)/scripts/clean-gitea
 	$(BASE)/scripts/deploy-gitea
 	$(BASE)/scripts/init-gitea $(GIT_PROJ) gitea $(GIT_ADMIN) $(GIT_PASSWORD) $(GIT_ADMIN)@example.com yaml coolstore 'Demo App'
-	$(BASE)/scripts/configure-gitops
 
 	# this will fail if installing on a non-ACM cluster - ignore any errors
 	-oc apply -f $(BASE)/yaml/acm-gitops/acm-gitops.yaml

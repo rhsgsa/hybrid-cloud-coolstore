@@ -7,18 +7,22 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   generators:
-  - clusters:
-      selector:
-        matchLabels:
-          knative: "true"
+  - list:
+      elements:
+      - cluster: coolstore-a
+        values:
+          namespace: demo
+      - cluster: coolstore-b
+        values:
+          namespace: demo
   template:
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "10"
-      name: "{{name}}-openshift-serverless"
+      name: "{{cluster}}-openshift-serverless"
     spec:
       destination:
-        name: "{{name}}"
+        name: "{{cluster}}"
       project: default
       source:
         directory:

@@ -7,22 +7,21 @@ metadata:
   - resources-finalizer.argocd.argoproj.io
 spec:
   generators:
-  - clusters:
-      selector:
-        matchLabels:
-          payment: "true"
-      values:
-        namespace: demo
+  - list:
+      elements:
+      - cluster: coolstore-b
+        values:
+          namespace: demo
   template:
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "30"
         argocd.argoproj.io/sync-options: Prune=true
-      name: "{{name}}-payment"
+      name: "{{cluster}}-payment"
     spec:
       destination:
         namespace: "{{values.namespace}}"
-        name: "{{name}}"
+        name: "{{cluster}}"
       project: default
       source:
         path: helm
