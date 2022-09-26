@@ -161,7 +161,7 @@
 			         values:
 			           namespace: demo
 
-01. Switch to the `coolstore-a` OpenShift Console topology view - you should see the `payment` service spinning up
+01. Switch to the `coolstore-a` OpenShift Console topology view - you should see the `payment` service spinning up; if you don't see the `payment` service coming up on `coolstore-a`, switch to the ArgoCD web UI and refresh the `coolstore` application
 
 01. Switch to the `coolstore-ui` orders screen - you should see the orders being processed
 
