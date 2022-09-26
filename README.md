@@ -80,13 +80,9 @@
 
 01. Switch to the ArgoCD browser tab - walk through all the services deployed to the `coolstore-a` cluster in the Applications screen
 
-01. Show how `payment` is deployed to `coolstore-b`
-
 01. Switch to the `gitea` browser tab - walk through the manifests in gitea, starting with the `argocd` directory
 
-01. Switch to the `coolstore-a` OpenShift Console browser tab and open the `demo` project's  topology view
-
-01. Switch to the browser tab showing `coolstore-b`'s OpenShift Console `demo` project topology view - point out how the `payment` service is deployed as a serverless component
+01. Switch to the `coolstore-a` OpenShift Console browser tab and open the `demo` project's  topology view; point out how `payment` is deployed as a serverless component
 
 01. Test the demo app
 
