@@ -127,6 +127,7 @@ Before you destroy the clusters, uninstall submariner from `coolstore-a` and `co
 
 If you don't do the above, the clusters may be stuck inthe detaching phase. If this happens to you, [refer to this article](https://access.redhat.com/solutions/6243371).
 
+---
 
 ## Single Cluster Installation
 
@@ -138,47 +139,35 @@ If you don't do the above, the clusters may be stuck inthe detaching phase. If t
 
 		make install
 
-01. Open a browser to `gitea`
+01. ArgoCD will be installing operators in the connected cluster, so we will need to assign it the proper privileges
 
-		make gitea
-
-01. Select the `coolstore` repo
-
-01. Edit `argocd/kafka.yaml` and set `.kafka.serviceexport` in `.spec.template.spec.source.helm` to `false`
-
-01. Edit `argocd/payment.yaml` and set `.payment.kafka.bootstrapServers` in `.spec.template.spec.source.helm` to `my-cluster-kafka-bootstrap.demo.svc.cluster.local:9092`
-
-01. Create a cluster secret for the `in-cluster` cluster
-
-		cat << EOF | oc apply -f -
-		apiVersion: v1
-		kind: Secret
+		cat <<EOF | oc apply -f -
+		apiVersion: rbac.authorization.k8s.io/v1
+		kind: ClusterRoleBinding
 		metadata:
-		  name: in-cluster-secret
+		  name: argocd-cluster-admin
+		roleRef:
+		  apiGroup: rbac.authorization.k8s.io
+		  kind: ClusterRole
+		  name: cluster-admin
+		subjects:
+		- kind: ServiceAccount
+		  name: openshift-gitops-argocd-application-controller
 		  namespace: openshift-gitops
-		  labels:
-		    argocd.argoproj.io/secret-type: cluster
-		    cart: "true"
-		    catalog: "true"
-		    coolstore-ui: "true"
-		    inventory: "true"
-		    kafka: "true"
-		    knative: "true"
-		    order: "true"
-		    payment: "true"
-		type: Opaque
-		stringData:
-		  name: in-cluster
-		  server: https://kubernetes.default.svc
-		  config: |
-		    {
-		      "bearerToken": "$(oc whoami -t)",
-		      "tlsClientConfig": {
-		        "insecure": true
-		      }
-		    }
 		EOF
----
+
+01. Add the `Application` resource
+
+		oc apply -f yaml/single-cluster/coolstore.yaml
+
+The manifests in the `single-cluster` folder differ from the manifests in the `argocd` folder in the following ways:
+
+* The `Application` destination names (`.spec.destination.name`) have been set to `in-cluster` instead of `coolstore-a` and `coolstore-b`
+
+* `kafka.yaml` has been modified - `.kafka.serviceexport` in `.spec.template.spec.source.helm` is set to `false`
+
+* `payment.yaml` has been modified - `.payment.kafka.bootstrapServers` in `.spec.template.spec.source.helm` is set to `my-cluster-kafka-bootstrap.demo.svc.cluster.local:9092`
+
 
 ## Updating Helm Charts
 

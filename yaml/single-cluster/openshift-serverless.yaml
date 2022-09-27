@@ -1,0 +1,38 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: openshift-serverless
+  namespace: openshift-gitops
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  generators:
+  - list:
+      elements:
+      - cluster: in-cluster
+        values:
+          namespace: demo
+  template:
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "10"
+      name: "{{cluster}}-openshift-serverless"
+    spec:
+      destination:
+        name: "{{cluster}}"
+      project: default
+      source:
+        directory:
+          jsonnet: {}
+          recurse: true
+        path: knative/serverless
+        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
+        targetRevision: HEAD
+      syncPolicy:
+        automated: {}
+        retry:
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m0s
+          limit: 100

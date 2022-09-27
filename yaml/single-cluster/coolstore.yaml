@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+  name: coolstore
+  namespace: openshift-gitops
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  destination:
+    name: in-cluster
+  project: default
+  source:
+    directory:
+      jsonnet: {}
+      recurse: true
+    path: single-cluster
+    repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
+    targetRevision: HEAD
+  syncPolicy:
+    automated:
+      prune: true
+    retry:
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m0s
+      limit: 100

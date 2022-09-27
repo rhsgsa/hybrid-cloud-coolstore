@@ -1,0 +1,58 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: payment
+  namespace: openshift-gitops
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
+spec:
+  generators:
+  - list:
+      elements:
+      - cluster: in-cluster
+        values:
+          namespace: demo
+  template:
+    metadata:
+      annotations:
+        argocd.argoproj.io/sync-wave: "30"
+        argocd.argoproj.io/sync-options: Prune=true
+      name: "{{cluster}}-payment"
+    spec:
+      destination:
+        namespace: "{{values.namespace}}"
+        name: "{{cluster}}"
+      project: default
+      source:
+        path: helm
+        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore/raw/branch/master/helm/
+        targetRevision: "0.1.0"
+        chart: payment
+        helm:
+          values: |
+            payment:
+              kafka:
+                bootstrapServers:
+                - my-cluster-kafka-bootstrap.demo.svc.cluster.local:9092
+                topics:
+                  incoming: orders
+                  outgoing: payments
+      syncPolicy:
+        syncOptions:
+        - RespectIgnoreDifferences=true
+        - CreateNamespace=true
+        automated:
+          prune: true
+        retry:
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m0s
+          limit: 100
+      ignoreDifferences:
+      - group: image.openshift.io
+        kind: ImageStream
+        jqPathExpressions:
+        - .spec.tags[].referencePolicy.type
+        - .spec.tags[].generation
+        - .status.dockerImageRepository
