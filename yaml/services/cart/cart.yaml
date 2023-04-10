@@ -1,136 +1,3 @@
-apiVersion: image.openshift.io/v1
-kind: ImageStream
-metadata:
-  annotations:
-    openshift.io/generated-by: OpenShiftNewApp
-  creationTimestamp: null
-  labels:
-    app: datagrid-service
-    app.kubernetes.io/component: datagrid-service
-    app.kubernetes.io/instance: datagrid-service
-  name: datagrid-service
-spec:
-  lookupPolicy:
-    local: false
-  tags:
-  - annotations:
-      openshift.io/imported-from: quay.io/openshiftlabs/ccn-infinispan:12.0.0.Final-1
-    from:
-      kind: DockerImage
-      name: quay.io/openshiftlabs/ccn-infinispan:12.0.0.Final-1
-    generation: null
-    importPolicy: {}
-    name: 12.0.0.Final-1
-    referencePolicy:
-      type: ""
----
-apiVersion: apps.openshift.io/v1
-kind: DeploymentConfig
-metadata:
-  annotations:
-    openshift.io/generated-by: OpenShiftNewApp
-  creationTimestamp: null
-  labels:
-    app: datagrid-service
-    app.kubernetes.io/component: datagrid-service
-    app.kubernetes.io/instance: datagrid-service
-    app.kubernetes.io/part-of: cart
-    app.openshift.io/runtime: datagrid
-  name: datagrid-service
-spec:
-  replicas: 1
-  selector:
-    deploymentconfig: datagrid-service
-  strategy:
-    resources: {}
-  template:
-    metadata:
-      annotations:
-        openshift.io/generated-by: OpenShiftNewApp
-      creationTimestamp: null
-      labels:
-        deploymentconfig: datagrid-service
-    spec:
-      containers:
-      - env:
-        - name: PASS
-          value: pass
-        - name: USER
-          value: user
-        image: quay.io/openshiftlabs/ccn-infinispan:12.0.0.Final-1
-        name: datagrid-service
-        ports:
-        - containerPort: 2157
-          protocol: TCP
-        - containerPort: 46655
-          protocol: TCP
-        - containerPort: 57600
-          protocol: TCP
-        - containerPort: 7800
-          protocol: TCP
-        - containerPort: 7900
-          protocol: TCP
-        - containerPort: 11221
-          protocol: TCP
-        - containerPort: 11222
-          protocol: TCP
-        resources: {}
-  test: false
-  triggers:
-  - type: ConfigChange
-  - imageChangeParams:
-      automatic: true
-      containerNames:
-      - datagrid-service
-      from:
-        kind: ImageStreamTag
-        name: datagrid-service:12.0.0.Final-1
-    type: ImageChange
----
-apiVersion: v1
-kind: Service
-metadata:
-  annotations:
-    openshift.io/generated-by: OpenShiftNewApp
-  creationTimestamp: null
-  labels:
-    app: datagrid-service
-    app.kubernetes.io/component: datagrid-service
-    app.kubernetes.io/instance: datagrid-service
-  name: datagrid-service
-spec:
-  ports:
-  - name: 2157-tcp
-    port: 2157
-    protocol: TCP
-    targetPort: 2157
-  - name: 7800-tcp
-    port: 7800
-    protocol: TCP
-    targetPort: 7800
-  - name: 7900-tcp
-    port: 7900
-    protocol: TCP
-    targetPort: 7900
-  - name: 11221-tcp
-    port: 11221
-    protocol: TCP
-    targetPort: 11221
-  - name: 11222-tcp
-    port: 11222
-    protocol: TCP
-    targetPort: 11222
-  - name: 46655-tcp
-    port: 46655
-    protocol: TCP
-    targetPort: 46655
-  - name: 57600-tcp
-    port: 57600
-    protocol: TCP
-    targetPort: 57600
-  selector:
-    deploymentconfig: datagrid-service
----
 apiVersion: v1
 kind: Service
 metadata:
@@ -153,7 +20,7 @@ apiVersion: apps.openshift.io/v1
 kind: DeploymentConfig
 metadata:
   annotations:
-    app.openshift.io/connects-to: my-cluster,datagrid-service
+    app.openshift.io/connects-to: my-cluster,example-infinispan
   labels:
     app.kubernetes.io/version: 1.0-SNAPSHOT
     app.kubernetes.io/name: cart
@@ -174,6 +41,8 @@ spec:
     spec:
       containers:
         - env:
+            - name: QUARKUS_INFINISPAN_CLIENT_SERVER_LIST
+              value: example-infinispan:11222
             - name: KUBERNETES_NAMESPACE
               valueFrom:
                 fieldRef:

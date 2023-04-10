@@ -3,6 +3,8 @@
 # Creates an admin user in gitea and clones a few repos.
 # Note that the username cannot be "admin".
 
+DEFAULT_BRANCH=main
+
 if [ "$#" -lt 5 ]; then
   echo "Usage: $0 PROJECT APP_NAME GIT_USER GIT_PASSWORD GIT_EMAIL [clone_dir project_name project_description]..."
   exit 1
@@ -51,12 +53,12 @@ function clone_repo {
     -H "accept: application/json" \
     -H "Content-Type: application/json" \
     -H "Authorization: token $TOKEN" \
-    -d '{"auto_init":false, "default_branch":"master", "description":"'"$repoDescription"'", "gitignores":"", "issue_labels":"", "license":"", "name":"'"$repoName"'", "private":false, "readme":"", "template":false, "trust_model":"default"}' \
+    -d '{"auto_init":false, "default_branch":"'"$DEFAULT_BRANCH"'", "description":"'"$repoDescription"'", "gitignores":"", "issue_labels":"", "license":"", "name":"'"$repoName"'", "private":false, "readme":"", "template":false, "trust_model":"default"}' \
     https://${ROUTE_HOST}/api/v1/user/repos
 
   cd ${BASE}/${repoDir}
   rm -rf .git
-  git init
+  git init --initial-branch=$DEFAULT_BRANCH
   git add .
   git commit -m 'Initial commit'
   git push --mirror http://${GIT_USER}:${GIT_PASSWORD}@${ROUTE_HOST}/${GIT_USER}/${repoName}.git

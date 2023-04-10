@@ -24,7 +24,7 @@ spec:
       project: default
       source:
         path: helm
-        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore/raw/branch/master/helm/
+        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore/raw/branch/main/helm/
         targetRevision: "0.1.0"
         chart: amq-streams
       syncPolicy:

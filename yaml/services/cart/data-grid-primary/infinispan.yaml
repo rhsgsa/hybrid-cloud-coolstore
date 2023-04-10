@@ -1,0 +1,146 @@
+apiVersion: v1 
+kind: Secret
+metadata:
+  name: data-grid-identities
+stringData:
+  identities.yaml: |
+    credentials:
+    - username: user
+      password: pass
+      roles:
+        - application
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+   name: data-grid-config
+data:
+  infinispan-config.yaml: |
+    infinispan:
+      server:
+        endpoints:
+          # https://infinispan.org/docs/stable/titles/security/security.html#configuring-server-authentication_endpoint-authentication
+          endpoint:
+            socketBinding: "default"
+            securityRealm: "default"
+            hotrodConnector:
+              authentication:
+                sasl:
+                  serverName: "infinispan"
+                  mechanisms:
+                  - "SCRAM-SHA-512"
+                  - "SCRAM-SHA-384"
+                  - "SCRAM-SHA-256"
+                  - "SCRAM-SHA-1"
+                  - "DIGEST-SHA-512"
+                  - "DIGEST-SHA-384"
+                  - "DIGEST-SHA-256"
+                  - "DIGEST-SHA"
+                  - "DIGEST-MD5"
+                  - "PLAIN"
+                  qop:
+                  - "auth"
+            restConnector:
+              authentication:
+                mechanisms:
+                - "DIGEST"
+                - "BASIC"
+                securityRealm: "default"
+---
+apiVersion: infinispan.org/v1
+kind: Infinispan
+metadata:
+  name: example-infinispan
+  annotations:
+    infinispan.org/monitoring: 'true'
+spec:
+  replicas: 1
+  version: 8.4.1-1
+  upgrades:
+    type: Shutdown
+  service:
+    type: DataGrid
+    container:
+      storage: 2Gi
+      storageClassName: gp3-csi
+    sites:
+      local:
+        name: PRIMARY
+        expose:
+          type: ClusterIP
+          port: 7900
+        maxRelayNodes: 999
+      locations:
+      - name: SECONDARY
+        url: infinispan+xsite://secondary-site.demo.svc.clusterset.local:7900
+  security:
+    endpointSecretName: data-grid-identities
+    endpointEncryption:
+        type: None
+  container:
+    extraJvmOpts: "-XX:NativeMemoryTracking=summary"
+    cpu: "2000m:1000m"
+    memory: "2Gi:1Gi"
+  logging:
+    categories:
+      org.infinispan: debug
+      org.jgroups: debug
+      org.jgroups.protocols.TCP: error
+      org.jgroups.protocols.relay.RELAY2: error
+  configMapName: "data-grid-config"
+  configListener:
+    enabled: true
+  #affinity:
+  #  podAntiAffinity:
+  #    preferredDuringSchedulingIgnoredDuringExecution:
+  #    - weight: 100
+  #      podAffinityTerm:
+  #        labelSelector:
+  #          matchLabels:
+  #            app: infinispan-pod
+  #            clusterName: infinispan
+  #            infinispan_cr: infinispan
+  #        topologyKey: "kubernetes.io/hostname"
+---
+kind: Cache
+apiVersion: infinispan.org/v2alpha1
+metadata:
+  name: cart
+spec:
+  clusterName: example-infinispan
+  name: cart
+  template: |
+    distributedCache:
+      mode: "SYNC"
+      # https://infinispan.org/docs/stable/titles/xsite/xsite.html#cross-site-automatic-offline_cross-site-replication
+      backups:
+        SECONDARY:
+          backup:
+            strategy: "SYNC"
+            timeout: "10000"
+---
+# this is a mirror of example-infinispan-site meant for the ServiceExport
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: infinispan-service-xsite
+    clusterName: example-infinispan
+    infinispan_cr: example-infinispan
+  name: primary-site
+spec:
+  ports:
+  - port: 7900
+    protocol: TCP
+    targetPort: 7900
+  selector:
+    app: infinispan-router-pod
+    clusterName: example-infinispan
+    infinispan_cr: example-infinispan
+  sessionAffinity: None
+  type: ClusterIP
+---
+apiVersion: multicluster.x-k8s.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: primary-site

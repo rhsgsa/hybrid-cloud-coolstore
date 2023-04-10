@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: amq-streams
+  name: data-grid-operator
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -10,26 +10,23 @@ spec:
   - list:
       elements:
       - cluster: in-cluster
-        values:
-          namespace: demo
   template:
     metadata:
       annotations:
-        argocd.argoproj.io/sync-wave: "10"
-      name: "{{cluster}}-amq-streams"
+        argocd.argoproj.io/sync-wave: "20"
+      name: "{{cluster}}-data-grid-operator"
     spec:
       destination:
-        namespace: "{{values.namespace}}"
         name: "{{cluster}}"
       project: default
       source:
-        path: helm
-        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore/raw/branch/main/helm/
-        targetRevision: "0.1.0"
-        chart: amq-streams
+        directory:
+          jsonnet: {}
+          recurse: true
+        path: data-grid-operator
+        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
+        targetRevision: HEAD
       syncPolicy:
-        syncOptions:
-        - CreateNamespace=true
         automated: {}
         retry:
           backoff:

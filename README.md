@@ -131,7 +131,7 @@ If you don't do the above, the clusters may be stuck inthe detaching phase. If t
 
 ## Single Cluster Installation
 
-01. Provision an OpenShift 4.10 workshop cluster on RHPDS
+01. Provision an OpenShift 4.12 workshop cluster on `demo.redhat.com`
 
 01. Login to the cluster as a `cluster-admin`
 
