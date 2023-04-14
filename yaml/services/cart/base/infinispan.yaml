@@ -65,14 +65,11 @@ spec:
       storageClassName: gp3-csi
     sites:
       local:
-        name: SECONDARY
+        name: PRIMARY
         expose:
           type: ClusterIP
           port: 7900
         maxRelayNodes: 999
-      locations:
-      - name: PRIMARY
-        url: infinispan+xsite://primary-site.demo.svc.clusterset.local:7900
   security:
     endpointSecretName: data-grid-identities
     endpointEncryption:
@@ -90,17 +87,6 @@ spec:
   configMapName: "data-grid-config"
   configListener:
     enabled: true
-  #affinity:
-  #  podAntiAffinity:
-  #    preferredDuringSchedulingIgnoredDuringExecution:
-  #    - weight: 100
-  #      podAffinityTerm:
-  #        labelSelector:
-  #          matchLabels:
-  #            app: infinispan-pod
-  #            clusterName: infinispan
-  #            infinispan_cr: infinispan
-  #        topologyKey: "kubernetes.io/hostname"
 ---
 kind: Cache
 apiVersion: infinispan.org/v2alpha1
@@ -112,35 +98,3 @@ spec:
   template: |
     distributedCache:
       mode: "SYNC"
-      # https://infinispan.org/docs/stable/titles/xsite/xsite.html#cross-site-automatic-offline_cross-site-replication
-      backups:
-        PRIMARY:
-          backup:
-            strategy: "SYNC"
-            timeout: "10000"
----
-# this is a mirror of example-infinispan-site meant for the ServiceExport
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    app: infinispan-service-xsite
-    clusterName: example-infinispan
-    infinispan_cr: example-infinispan
-  name: secondary-site
-spec:
-  ports:
-  - port: 7900
-    protocol: TCP
-    targetPort: 7900
-  selector:
-    app: infinispan-router-pod
-    clusterName: example-infinispan
-    infinispan_cr: example-infinispan
-  sessionAffinity: None
-  type: ClusterIP
----
-apiVersion: multicluster.x-k8s.io/v1alpha1
-kind: ServiceExport
-metadata:
-  name: secondary-site

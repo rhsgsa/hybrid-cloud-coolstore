@@ -4,17 +4,17 @@
 
 ### Multicluster Installation
 
-01. Provision an ACM Hub cluster in RHPDS - All Services / OpenShift Workshop / OCP4 ACM Hub
+01. Provision an `OCP4 ACM Hub` cluster on `demo.redhat.com`
 
-01. Login to the ACM Hub Cluster as `cluster-admin` using `oc login`
+01. Login to the ACM Hub Cluster as a `cluster-admin` using `oc login`
 
 01. Install services to the ACM Hub Cluster - this will: install the OpenShift GitOps operator, install `gitea`, upload manifests to `gitea`, setup a `coolstore` Application that points to the manifests in `gitea` (app-of-apps pattern)
 
 		make install
 
-01. Create credentials for AWS named `aws` in the `open-cluster-management` namespece in the ACM console
+01. Create credentials for AWS named `aws` in the `open-cluster-management` namespace in the OpenShift Console - All Clusters / Credentials / Add credential
 
-01. Create a cluster set named `coolstore`
+01. Create a cluster set named `coolstore` - All Clusters / Infrastructure / Clusters / Cluster sets
 
 	* Create a namespace binding to `openshift-gitops`
 
@@ -48,7 +48,7 @@
 		  name: my-banner
 		spec:
 		  text: Hub Cluster
-		  location: BannerTop 
+		  location: BannerTop
 
 01. Modify the `coolstore-a` alert manager settings so that alert emails are sent quicker
 
@@ -168,6 +168,8 @@ The manifests in the `single-cluster` folder differ from the manifests in the `a
 
 * `payment.yaml` has been modified - `.payment.kafka.bootstrapServers` in `.spec.template.spec.source.helm` is set to `my-cluster-kafka-bootstrap.demo.svc.cluster.local:9092`
 
+* Cart's Infinispan is setup to deploy a single instance without cross-site replication
+
 
 ## Updating Helm Charts
 
@@ -208,8 +210,34 @@ If you wish to make any changes to the Helm Charts,
 
 ## Resources
 
-* [Solution git repo](https://github.com/RedHat-Middleware-Workshops/cloud-native-workshop-v2-labs-solutions/tree/ocp-4.9/m4)
+*   [Solution git repo](https://github.com/RedHat-Middleware-Workshops/cloud-native-workshop-v2-labs-solutions/tree/ocp-4.9/m4)
 
-* [Lab instructions](http://guides-m4-labs-infra.6923.rh-us-east-1.openshiftapps.com/workshop/cloudnative/lab/high-performing-cache-services)
+*   [Lab instructions](http://guides-m4-labs-infra.6923.rh-us-east-1.openshiftapps.com/workshop/cloudnative/lab/high-performing-cache-services)
 
-* [Strimzi advertised addresses](https://strimzi.io/docs/operators/latest/configuring.html#property-listener-config-broker-reference)
+*   [Strimzi advertised addresses](https://strimzi.io/docs/operators/latest/configuring.html#property-listener-config-broker-reference)
+
+*   Access cart swagger UI at `/q/swagger-ui`
+
+*   Access cart contents
+
+		curl -i http://cart.url.com/api/cart/id-0.0038...
+
+*   List keys in Infinispan
+
+		curl \
+		  -i \
+		  -u user:pass \
+		  -H "Accept: application/json" \
+		  http://localhost:11222/rest/v2/caches/cart?action=keys \
+		&& \
+		echo
+
+*   Get all entries in Infinispan
+
+		curl \
+		  -i \
+		  -u user:pass \
+		  -H "Accept: application/json" \
+		  http://localhost:11222/rest/v2/caches/cart?action=entries \
+		&& \
+		echo

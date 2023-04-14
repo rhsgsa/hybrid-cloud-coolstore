@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: data-grid-primary
+  name: cart-primary
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -16,21 +16,20 @@ spec:
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "30"
-      name: "{{cluster}}-data-grid-primary"
+      name: "{{cluster}}-cart"
     spec:
       destination:
         namespace: "{{values.namespace}}"
         name: "{{cluster}}"
       project: default
       source:
-        directory:
-          jsonnet: {}
-          recurse: true
-        path: services/cart/data-grid-primary
+        kustomize: {}
+        path: services/cart/overlays/primary
         repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
         targetRevision: HEAD
       syncPolicy:
         syncOptions:
+        - CreateNamespace=true
         - RespectIgnoreDifferences=true
         automated: {}
         retry:
@@ -39,3 +38,19 @@ spec:
             factor: 2
             maxDuration: 3m0s
           limit: 100
+      ignoreDifferences:
+      - group: image.openshift.io
+        kind: ImageStream
+        jqPathExpressions:
+        - .spec.tags[].referencePolicy.type
+        - .spec.tags[].generation
+        - .status.dockerImageRepository
+      - group: apps.openshift.io
+        kind: DeploymentConfig
+        jqPathExpressions:
+        - .spec.template.spec.containers[].image
+        - .status
+      - group: build.openshift.io
+        kind: BuildConfig
+        jqPathExpressions:
+        - .status
