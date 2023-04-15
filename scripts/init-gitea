@@ -39,6 +39,14 @@ echo "token is $TOKEN"
 
 ROUTE_HOST="$(oc get route/$APP_NAME -n $PROJ -o jsonpath='{.spec.host}')"
 
+# wait till gitea API is up
+echo -n "waiting for gitea API to come up..."
+while [ "$(curl -s -o /dev/null -w "%{http_code}" http://${ROUTE_HOST}/api/v1/version 2>/dev/null)" -ne 200 ]; do
+  echo -n "."
+  sleep 5
+done
+echo "done"
+
 function clone_repo {
   local repoDir="$1"
   local repoName="$2"

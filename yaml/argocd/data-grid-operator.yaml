@@ -19,6 +19,7 @@ spec:
     spec:
       destination:
         name: "{{cluster}}"
+        namespace: data-grid-operator
       project: default
       source:
         directory:
@@ -28,6 +29,8 @@ spec:
         repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
         targetRevision: HEAD
       syncPolicy:
+        syncOptions:
+        - CreateNamespace=true
         automated: {}
         retry:
           backoff:

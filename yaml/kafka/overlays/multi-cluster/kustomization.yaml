@@ -1,0 +1,25 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base/
+- serviceexport.yaml
+
+patches:
+- patch: |-
+    - op: add
+      path: "/spec/kafka/listeners/0/configuration"
+      value:
+        brokers:
+        - broker: 0
+          advertisedHost: my-cluster-kafka-0.demo.svc.clusterset.local
+          advertisedPort: 9092
+        - broker: 1
+          advertisedHost: my-cluster-kafka-1.demo.svc.clusterset.local
+          advertisedPort: 9092
+        - broker: 2
+          advertisedHost: my-cluster-kafka-2.demo.svc.clusterset.local
+          advertisedPort: 9092
+  target:
+    kind: Kafka
+    name: my-cluster

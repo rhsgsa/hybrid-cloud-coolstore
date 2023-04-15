@@ -2,14 +2,20 @@ BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 include $(BASE)/config.sh
 
-.PHONY: install demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag
+.PHONY: install install-gitops deploy-gitea register-managed-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag
 
-install:
+install: install-gitops deploy-gitea register-managed-clusters
+	@echo "done"
+
+install-gitops:
 	$(BASE)/scripts/install-gitops
+
+deploy-gitea:
 	$(BASE)/scripts/clean-gitea
 	$(BASE)/scripts/deploy-gitea
 	$(BASE)/scripts/init-gitea $(GIT_PROJ) gitea $(GIT_ADMIN) $(GIT_PASSWORD) $(GIT_ADMIN)@example.com yaml coolstore 'Demo App'
 
+register-managed-clusters:
 	# this will fail if installing on a non-ACM cluster - ignore any errors
 	-oc apply -f $(BASE)/yaml/acm-gitops/acm-gitops.yaml
 

@@ -11,7 +11,7 @@ spec:
       elements:
       - cluster: in-cluster
         values:
-          namespace: demo
+          namespace: amq-streams-operator
   template:
     metadata:
       annotations:
@@ -23,10 +23,10 @@ spec:
         name: "{{cluster}}"
       project: default
       source:
-        path: helm
-        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore/raw/branch/main/helm/
-        targetRevision: "0.1.0"
-        chart: amq-streams
+        directory: {}
+        path: amq-streams
+        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
+        targetRevision: HEAD
       syncPolicy:
         syncOptions:
         - CreateNamespace=true

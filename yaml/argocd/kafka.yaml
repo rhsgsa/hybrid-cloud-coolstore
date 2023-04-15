@@ -23,15 +23,10 @@ spec:
         name: "{{cluster}}"
       project: default
       source:
-        path: helm
-        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore/raw/branch/main/helm/
-        targetRevision: "0.1.0"
-        chart: kafka
-        helm:
-          values: |
-            kafka:
-              name: my-cluster
-              serviceexport: true
+        kustomize: {}
+        path: kafka/overlays/multi-cluster
+        repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
+        targetRevision: HEAD
       syncPolicy:
         automated: {}
         retry:

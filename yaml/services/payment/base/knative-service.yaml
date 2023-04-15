@@ -1,0 +1,42 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: payment
+  annotations:
+    argocd.argoproj.io/sync-options: Prune=true
+  labels:
+    app.kubernetes.io/name: payment
+    app.kubernetes.io/version: 1.0-SNAPSHOT
+    app.openshift.io/runtime: quarkus
+spec:
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app.kubernetes.io/name: payment
+        app.kubernetes.io/version: 1.0-SNAPSHOT
+      namespace: demo
+    spec:
+      containerConcurrency: 0
+      containers:
+        - image: ghcr.io/rhsgsa/payment-native:1.0-SNAPSHOT
+          name: payment
+          env:
+          - name: MP_MESSAGING_OUTGOING_PAYMENTS_BOOTSTRAP_SERVERS
+            value: my-cluster-kafka-bootstrap.demo.svc.cluster.local:9092
+          - name: MP_MESSAGING_OUTGOING_PAYMENTS_TOPIC
+            value: payments
+          ports:
+            - containerPort: 8080
+              name: http1
+              protocol: TCP
+          readinessProbe:
+            successThreshold: 1
+            tcpSocket:
+              port: 0
+          resources: {}
+      enableServiceLinks: false
+      timeoutSeconds: 300
+  traffic:
+    - latestRevision: true
+      percent: 100
