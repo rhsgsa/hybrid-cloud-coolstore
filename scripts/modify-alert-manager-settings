@@ -1,0 +1,46 @@
+#!/bin/bash
+
+TMP_KUBECONFIG=/tmp/kubeconfig
+
+TOKEN="$(oc get -n openshift-gitops secret coolstore-a-cluster-secret -o jsonpath='{.data.config}' | base64 -d | jq -r '.bearerToken')"
+API_SERVER="$(oc get -n openshift-gitops secret coolstore-a-cluster-secret -o jsonpath='{.data.server}' | base64 -d)"
+
+echo "token = $TOKEN"
+echo "api = $API_SERVER"
+
+if [ -z "$TOKEN" ]; then
+  echo "could not get coolstore-a token"
+  exit 1
+fi
+
+if [ -z "$API_SERVER" ]; then
+  echo "could not get coolstore-a API server"
+  exit 1
+fi
+
+export KUBECONFIG=$TMP_KUBECONFIG
+rm -f $KUBECONFIG
+touch $KUBECONFIG
+
+oc login $API_SERVER --token=$TOKEN --insecure-skip-tls-verify
+
+set -e
+
+oc get secret/alertmanager-main \
+  -n openshift-monitoring \
+  -o jsonpath='{.data.alertmanager\.yaml}' \
+| \
+base64 -d \
+| \
+sed \
+  -e 's/"group_interval".*/"group_interval": "15s"/' \
+  -e 's/"group_wait".*/"group_wait": "15s"/' \
+> /tmp/alertmanager.yaml
+
+oc set data secret/alertmanager-main \
+  -n openshift-monitoring \
+  --from-file=alertmanager.yaml=/tmp/alertmanager.yaml
+
+rm -f /tmp/alertmanager.yaml
+
+rm -f $KUBECONFIG

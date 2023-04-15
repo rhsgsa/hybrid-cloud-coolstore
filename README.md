@@ -52,10 +52,7 @@
 
 01. Modify the `coolstore-a` alert manager settings so that alert emails are sent quicker
 
-	* Open a browser to the `coolstore-a` OpenShift Console
-	* Administrator / Administration / Cluster Settings / Configuration / Alertmanager / YAML
-	* Change `group_interval` to `15s`
-	* Change `group_wait` to `15s`
+		./scripts/modify-alert-manager-settings
 
 01. Open the following browser tabs
 
