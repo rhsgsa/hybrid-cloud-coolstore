@@ -16,12 +16,13 @@ spec:
     app.kubernetes.io/version: 1.0-SNAPSHOT
   type: ClusterIP
 ---
-apiVersion: apps.openshift.io/v1
-kind: DeploymentConfig
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   annotations:
     app.openshift.io/connects-to: my-cluster,example-infinispan
   labels:
+    app: cart
     app.kubernetes.io/version: 1.0-SNAPSHOT
     app.kubernetes.io/name: cart
     app.openshift.io/runtime: quarkus
@@ -30,30 +31,35 @@ metadata:
 spec:
   replicas: 1
   selector:
-    app.kubernetes.io/name: cart
-    app.kubernetes.io/version: 1.0-SNAPSHOT
+    matchLabels:
+      app: cart
+  strategy: {}
   template:
     metadata:
+      creationTimestamp: null
       labels:
+        app: cart
         app.kubernetes.io/version: 1.0-SNAPSHOT
         app.kubernetes.io/name: cart
         app.openshift.io/runtime: quarkus
     spec:
       containers:
-        - env:
-            - name: QUARKUS_INFINISPAN_CLIENT_SERVER_LIST
-              value: example-infinispan:11222
-            - name: KUBERNETES_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-          image: "ghcr.io/rhsgsa/cart:1.0-SNAPSHOT"
-          imagePullPolicy: IfNotPresent
-          name: cart
-          ports:
-            - containerPort: 8080
-              name: http
-              protocol: TCP
+      - image: ghcr.io/rhsgsa/cart:1.0-SNAPSHOT
+        name: cart
+        env:
+        - name: QUARKUS_INFINISPAN_CLIENT_SERVER_LIST
+          value: example-infinispan:11222
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+        imagePullPolicy: IfNotPresent
+        resources: {}
+status: {}
 ---
 apiVersion: route.openshift.io/v1
 kind: Route

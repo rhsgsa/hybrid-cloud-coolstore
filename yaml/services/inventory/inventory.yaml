@@ -17,12 +17,13 @@ spec:
     app.kubernetes.io/version: 1.0-SNAPSHOT
   type: ClusterIP
 ---
-apiVersion: apps.openshift.io/v1
-kind: DeploymentConfig
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   annotations:
-    app.openshift.io/connects-to: '["inventory-database",{"apiVersion":"apps.openshift.io/v1","kind":"DeploymentConfig","name":"inventory-database"}]'
+    app.openshift.io/connects-to: '["inventory-database",{"apiVersion":"apps/v1","kind":"Deployment","name":"inventory-database"}]'
   labels:
+    app: inventory
     app.kubernetes.io/name: inventory
     app.kubernetes.io/version: 1.0-SNAPSHOT
     app.openshift.io/runtime: quarkus
@@ -31,28 +32,33 @@ metadata:
 spec:
   replicas: 1
   selector:
-    app.kubernetes.io/version: 1.0-SNAPSHOT
-    app.kubernetes.io/name: inventory
+    matchLabels:
+      app.kubernetes.io/version: 1.0-SNAPSHOT
+      app.kubernetes.io/name: inventory
+  strategy: {}
   template:
     metadata:
       labels:
+        app: inventory
         app.kubernetes.io/name: inventory
         app.kubernetes.io/version: 1.0-SNAPSHOT
         app.openshift.io/runtime: quarkus
     spec:
       containers:
-        - env:
-            - name: KUBERNETES_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-          image: "ghcr.io/rhsgsa/inventory:1.0-SNAPSHOT"
-          imagePullPolicy: IfNotPresent
-          name: inventory
-          ports:
-            - containerPort: 8080
-              name: http
-              protocol: TCP
+      - image: ghcr.io/rhsgsa/inventory:1.0-SNAPSHOT
+        name: inventory
+        env:
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        imagePullPolicy: IfNotPresent
+        resources: {}
+status: {}
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
@@ -135,38 +141,31 @@ spec:
     requests:
       storage: 1Gi
 ---
-apiVersion: apps.openshift.io/v1
-kind: DeploymentConfig
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  annotations:
-    openshift.io/generated-by: OpenShiftNewApp
-    template.alpha.openshift.io/wait-for-ready: "true"
-  creationTimestamp: null
   labels:
     app: postgresql-persistent
     app.kubernetes.io/component: postgresql-persistent
     app.kubernetes.io/instance: postgresql-persistent
-    template: postgresql-persistent-template
     app.kubernetes.io/part-of: inventory
     app.openshift.io/runtime: postgresql
   name: inventory-database
 spec:
   replicas: 1
   selector:
-    name: inventory-database
-  strategy:
-    resources: {}
-    type: Recreate
+    matchLabels:
+      name: inventory-database
+  strategy: {}
   template:
     metadata:
-      annotations:
-        openshift.io/generated-by: OpenShiftNewApp
-      creationTimestamp: null
       labels:
         name: inventory-database
     spec:
       containers:
-      - env:
+      - image: image-registry.openshift-image-registry.svc:5000/openshift/postgresql:10-el8
+        name: postgresql
+        env:
         - name: POSTGRESQL_USER
           valueFrom:
             secretKeyRef:
@@ -182,7 +181,6 @@ spec:
             secretKeyRef:
               key: database-name
               name: inventory-database
-        image: ' '
         imagePullPolicy: IfNotPresent
         livenessProbe:
           exec:
@@ -191,23 +189,21 @@ spec:
             - --live
           initialDelaySeconds: 120
           timeoutSeconds: 10
-        name: postgresql
-        ports:
-        - containerPort: 5432
-          protocol: TCP
         readinessProbe:
           exec:
             command:
             - /usr/libexec/check-container
           initialDelaySeconds: 5
           timeoutSeconds: 1
+        ports:
+        - containerPort: 5432
+          protocol: TCP
         resources:
           limits:
             memory: 512Mi
         securityContext:
           capabilities: {}
           privileged: false
-        terminationMessagePath: /dev/termination-log
         volumeMounts:
         - mountPath: /var/lib/pgsql/data
           name: inventory-database-data
@@ -217,15 +213,4 @@ spec:
       - name: inventory-database-data
         persistentVolumeClaim:
           claimName: inventory-database
-  test: false
-  triggers:
-  - imageChangeParams:
-      automatic: true
-      containerNames:
-      - postgresql
-      from:
-        kind: ImageStreamTag
-        name: postgresql:10-el8
-        namespace: openshift
-    type: ImageChange
-  - type: ConfigChange
+status: {}

@@ -16,12 +16,14 @@ spec:
     app.kubernetes.io/version: 1.0-SNAPSHOT
   type: ClusterIP
 ---
-apiVersion: apps.openshift.io/v1
-kind: DeploymentConfig
+apiVersion: apps/v1
+kind: Deployment
 metadata:
   annotations:
-    app.openshift.io/connects-to: my-cluster,order-database
+    app.openshift.io/connects-to: >-
+      ["my-cluster","order-database",{"apiVersion":"apps/v1","kind":"Deployment","name":"order-database"}]
   labels:
+    app: order
     app.kubernetes.io/name: order
     app.kubernetes.io/version: 1.0-SNAPSHOT
     app.openshift.io/runtime: quarkus
@@ -30,30 +32,35 @@ metadata:
 spec:
   replicas: 1
   selector:
-    app.kubernetes.io/version: 1.0-SNAPSHOT
-    app.kubernetes.io/name: order
+    matchLabels:
+      app.kubernetes.io/version: 1.0-SNAPSHOT
+      app.kubernetes.io/name: order
+  strategy: {}
   template:
     metadata:
       labels:
+        app: order
         app.kubernetes.io/name: order
         app.kubernetes.io/version: 1.0-SNAPSHOT
         app.openshift.io/runtime: quarkus
     spec:
       containers:
-        - env:
-            - name: QUARKUS_MONGODB_DATABASE
-              value: orders
-            - name: KUBERNETES_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-          image: "ghcr.io/rhsgsa/order:1.0-SNAPSHOT"
-          imagePullPolicy: IfNotPresent
-          name: order
-          ports:
-            - containerPort: 8080
-              name: http
-              protocol: TCP
+      - image: ghcr.io/rhsgsa/order:1.0-SNAPSHOT
+        name: order
+        env:
+        - name: QUARKUS_MONGODB_DATABASE
+          value: orders
+        - name: KUBERNETES_NAMESPACE
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.namespace
+        ports:
+          - containerPort: 8080
+            name: http
+            protocol: TCP
+        imagePullPolicy: IfNotPresent
+        resources: {}
+status: {}
 ---
 apiVersion: route.openshift.io/v1
 kind: Route
@@ -73,38 +80,9 @@ spec:
     kind: Service
     name: order
 ---
-apiVersion: image.openshift.io/v1
-kind: ImageStream
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  annotations:
-    openshift.io/generated-by: OpenShiftNewApp
-  creationTimestamp: null
-  labels:
-    app: order-database
-    app.kubernetes.io/component: order-database
-    app.kubernetes.io/instance: order-database
-  name: order-database
-spec:
-  lookupPolicy:
-    local: false
-  tags:
-  - annotations:
-      openshift.io/imported-from: quay.io/openshiftlabs/ccn-mongo:4.0
-    from:
-      kind: DockerImage
-      name: quay.io/openshiftlabs/ccn-mongo:4.0
-    generation: null
-    importPolicy: {}
-    name: "4.0"
-    referencePolicy:
-      type: "Source"
----
-apiVersion: apps.openshift.io/v1
-kind: DeploymentConfig
-metadata:
-  annotations:
-    openshift.io/generated-by: OpenShiftNewApp
-  creationTimestamp: null
   labels:
     app: order-database
     app.kubernetes.io/component: order-database
@@ -115,45 +93,33 @@ metadata:
 spec:
   replicas: 1
   selector:
-    deploymentconfig: order-database
-  strategy:
-    resources: {}
+    matchLabels:
+      app: order-database
+  strategy: {}
   template:
     metadata:
-      annotations:
-        openshift.io/generated-by: OpenShiftNewApp
       creationTimestamp: null
       labels:
-        deploymentconfig: order-database
+        app: order-database
     spec:
       containers:
       - image: quay.io/openshiftlabs/ccn-mongo:4.0
-        name: order-database
+        name: ccn-mongo
         ports:
         - containerPort: 27017
           protocol: TCP
-        resources: {}
         volumeMounts:
         - mountPath: /data/configdb
           name: order-database-volume-1
         - mountPath: /data/db
           name: order-database-volume-2
+        resources: {}
       volumes:
       - emptyDir: {}
         name: order-database-volume-1
       - emptyDir: {}
         name: order-database-volume-2
-  test: false
-  triggers:
-  - type: ConfigChange
-  - imageChangeParams:
-      automatic: true
-      containerNames:
-      - order-database
-      from:
-        kind: ImageStreamTag
-        name: order-database:4.0
-    type: ImageChange
+status: {}
 ---
 apiVersion: v1
 kind: Service
@@ -173,4 +139,4 @@ spec:
     protocol: TCP
     targetPort: 27017
   selector:
-    deploymentconfig: order-database
+    app: order-database

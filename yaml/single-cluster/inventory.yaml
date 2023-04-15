@@ -40,18 +40,7 @@ spec:
             maxDuration: 3m0s
           limit: 100
       ignoreDifferences:
-      - group: image.openshift.io
-        kind: ImageStream
-        jqPathExpressions:
-        - .spec.tags[].referencePolicy.type
-        - .spec.tags[].generation
-        - .status.dockerImageRepository
-      - group: apps.openshift.io
-        kind: DeploymentConfig
-        jqPathExpressions:
-        - .spec.template.spec.containers[].image
-        - .status
-      - group: build.openshift.io
-        kind: BuildConfig
+      - group: apps
+        kind: Deployment
         jqPathExpressions:
         - .status

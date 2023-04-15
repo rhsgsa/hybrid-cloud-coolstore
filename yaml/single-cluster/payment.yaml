@@ -49,10 +49,3 @@ spec:
             factor: 2
             maxDuration: 3m0s
           limit: 100
-      ignoreDifferences:
-      - group: image.openshift.io
-        kind: ImageStream
-        jqPathExpressions:
-        - .spec.tags[].referencePolicy.type
-        - .spec.tags[].generation
-        - .status.dockerImageRepository

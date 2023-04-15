@@ -41,5 +41,5 @@ patches:
         name: MP_MESSAGING_OUTGOING_ORDERS_BOOTSTRAP_SERVERS
         value: my-cluster-kafka-bootstrap.demo.svc.clusterset.local:9092
   target:
-    kind: DeploymentConfig
+    kind: Deployment
     name: cart
