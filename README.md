@@ -168,19 +168,6 @@ The manifests in the `single-cluster` folder differ from the manifests in the `a
 * Cart's Infinispan is setup to deploy a single instance without cross-site replication
 
 
-## Updating Helm Charts
-
-The `amq-streams` operator installation manifests and the `payment` service have been packaged as Helm Charts in the `yaml/helm` directory.
-
-If you wish to make any changes to the Helm Charts,
-
-01. Extract the `.tgz` file, make any necessary changes
-
-01. Package up the chart - e.g. `helm package payment`
-
-01. Regenerate `index.yaml`: `helm repo index .`
-
-
 ## Troubleshooting
 
 *   If you have trouble connecting to Kafka from the remote cluster, spin up a test Kafka pod to access `my-cluster-kafka-bootstrap.demo.svc.clusterset.local`
