@@ -42,13 +42,7 @@
 
 01. Add banners to the OpenShift Consoles so you know which cluster you're on - do this for the hub cluster, `coolstore-a`, `coolstore-b`
 
-		apiVersion: console.openshift.io/v1
-		kind: ConsoleNotification
-		metadata:
-		  name: my-banner
-		spec:
-		  text: Hub Cluster
-		  location: BannerTop
+		./scripts/setup-console-banners
 
 01. Modify the `coolstore-a` alert manager settings so that alert emails are sent quicker
 

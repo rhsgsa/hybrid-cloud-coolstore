@@ -1,0 +1,71 @@
+#!/bin/bash
+
+TMP_KUBECONFIG=/tmp/kubeconfig
+
+TOKEN_A="$(oc get -n openshift-gitops secret coolstore-a-cluster-secret -o jsonpath='{.data.config}' | base64 -d | jq -r '.bearerToken')"
+API_SERVER_A="$(oc get -n openshift-gitops secret coolstore-a-cluster-secret -o jsonpath='{.data.server}' | base64 -d)"
+TOKEN_B="$(oc get -n openshift-gitops secret coolstore-b-cluster-secret -o jsonpath='{.data.config}' | base64 -d | jq -r '.bearerToken')"
+API_SERVER_B="$(oc get -n openshift-gitops secret coolstore-b-cluster-secret -o jsonpath='{.data.server}' | base64 -d)"
+
+echo "coolstore-a token = $TOKEN_A"
+echo "coolstore-a api = $API_SERVER_A"
+echo "coolstore-b token = $TOKEN_B"
+echo "coolstore-b api = $API_SERVER_B"
+
+if [ -z "$TOKEN_A" ]; then
+  echo "could not get coolstore-a token"
+  exit 1
+fi
+
+if [ -z "$API_SERVER_A" ]; then
+  echo "could not get coolstore-a API server"
+  exit 1
+fi
+
+if [ -z "$TOKEN_B" ]; then
+  echo "could not get coolstore-b token"
+  exit 1
+fi
+
+if [ -z "$API_SERVER_B" ]; then
+  echo "could not get coolstore-b API server"
+  exit 1
+fi
+
+function login {
+  local token="$1"
+  local api="$2"
+
+  export KUBECONFIG=$TMP_KUBECONFIG
+  rm -f $KUBECONFIG
+  touch $KUBECONFIG
+
+  echo "logging in to $api"
+  oc login $api --token=$token --insecure-skip-tls-verify
+}
+
+function apply_banner {
+  local bannertext="$1"
+
+  cat <<EOF | oc apply -f -
+apiVersion: console.openshift.io/v1
+kind: ConsoleNotification
+metadata:
+  name: my-banner
+spec:
+  text: $bannertext
+  location: BannerTop
+EOF
+}
+
+set -e
+
+apply_banner "Hub Cluster"
+
+login $TOKEN_A $API_SERVER_A
+apply_banner "coolstore-a"
+
+login $TOKEN_B $API_SERVER_B
+apply_banner "coolstore-b"
+
+rm -f $KUBECONFIG
