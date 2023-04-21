@@ -32,3 +32,12 @@ patches:
               backup:
                 strategy: "SYNC"
                 timeout: "10000"
+- patch: |-
+    - op: add
+      path: "/spec/template/spec/containers/0/env/-"
+      value:
+        name: CART_CLUSTER_NAME
+        value: primary
+  target:
+    kind: Deployment
+    name: cart

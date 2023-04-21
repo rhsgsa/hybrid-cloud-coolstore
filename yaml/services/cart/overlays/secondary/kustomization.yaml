@@ -40,6 +40,11 @@ patches:
       value:
         name: MP_MESSAGING_OUTGOING_ORDERS_BOOTSTRAP_SERVERS
         value: my-cluster-kafka-bootstrap.demo.svc.clusterset.local:9092
+    - op: add
+      path: "/spec/template/spec/containers/0/env/-"
+      value:
+        name: CART_CLUSTER_NAME
+        value: secondary
   target:
     kind: Deployment
     name: cart
