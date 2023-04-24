@@ -1,0 +1,42 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base/
+- service.yaml
+
+patches:
+- patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: mongodb-config
+    data:
+      MONGODB_ADVERTISED_HOSTNAME: mongodb-arbiter.demo.svc.clusterset.local
+      MONGODB_REPLICA_SET_MODE: arbiter
+      MONGODB_INITIAL_PRIMARY_HOST: mongodb-primary.demo.svc.clusterset.local
+      MONGODB_INITIAL_PRIMARY_PORT_NUMBER: "27017"
+      MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD: password123
+- target:
+    kind: ConfigMap
+    name: mongodb-config
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: mongodb-config-arbiter
+- target:
+    kind: Deployment
+    name: order-database
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: order-database-arbiter
+    - op: replace
+      path: /spec/template/metadata/labels/app
+      value: mongodb-arbiter
+    - op: replace
+      path: /spec/selector/matchLabels/app
+      value: mongodb-arbiter
+    - op: replace
+      path: /spec/template/spec/containers/0/envFrom/0/configMapRef/name
+      value: mongodb-config-arbiter

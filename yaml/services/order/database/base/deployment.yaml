@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: order-database
+    app.kubernetes.io/component: order-database
+    app.kubernetes.io/instance: order-database
+    app.kubernetes.io/part-of: order
+    app.openshift.io/runtime: mongodb
+  name: order-database
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: mongodb
+    spec:
+      containers:
+      - image: docker.io/bitnami/mongodb:5.0.16
+        name: mongodb
+        ports:
+        - name: mongodb
+          containerPort: 27017
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: mongodb-config
+        volumeMounts:
+        - name: data
+          mountPath: /bitnami/mongodb
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        resources: {}
+      volumes:
+      - name: data
+        emptyDir: {}

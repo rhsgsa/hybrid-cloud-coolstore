@@ -1,0 +1,46 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base/
+- service.yaml
+
+patches:
+- patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: mongodb-config
+    data:
+      MONGODB_ADVERTISED_HOSTNAME: mongodb-primary.demo.svc.clusterset.local
+      MONGODB_REPLICA_SET_MODE: primary
+      MONGODB_ROOT_PASSWORD: password123
+      MONGODB_USERNAME: orders
+      MONGODB_PASSWORD: password123
+      MONGODB_DATABASE: order-database
+- target:
+    kind: ConfigMap
+    name: mongodb-config
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: mongodb-config-primary
+- target:
+    kind: Deployment
+    name: order-database
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: order-database-primary
+    - op: replace
+      path: /spec/replicas
+      value: 0
+    - op: replace
+      path: /spec/template/metadata/labels/app
+      value: mongodb-primary
+    - op: replace
+      path: /spec/selector/matchLabels/app
+      value: mongodb-primary
+    - op: replace
+      path: /spec/template/spec/containers/0/envFrom/0/configMapRef/name
+      value: mongodb-config-primary

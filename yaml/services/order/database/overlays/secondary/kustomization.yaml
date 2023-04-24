@@ -1,0 +1,45 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base/
+- service.yaml
+
+patches:
+- patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: mongodb-config
+    data:
+      MONGODB_ADVERTISED_HOSTNAME: mongodb-secondary.demo.svc.clusterset.local
+      MONGODB_REPLICA_SET_MODE: secondary
+      MONGODB_INITIAL_PRIMARY_HOST:  mongodb-primary.demo.svc.clusterset.local
+      MONGODB_INITIAL_PRIMARY_PORT_NUMBER: "27017"
+      MONGODB_INITIAL_PRIMARY_ROOT_PASSWORD: password123
+- target:
+    kind: ConfigMap
+    name: mongodb-config
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: mongodb-config-secondary
+- target:
+    kind: Deployment
+    name: order-database
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: order-database-secondary
+    - op: replace
+      path: /spec/replicas
+      value: 1
+    - op: replace
+      path: /spec/template/metadata/labels/app
+      value: mongodb-secondary
+    - op: replace
+      path: /spec/selector/matchLabels/app
+      value: mongodb-secondary
+    - op: replace
+      path: /spec/template/spec/containers/0/envFrom/0/configMapRef/name
+      value: mongodb-config-secondary
