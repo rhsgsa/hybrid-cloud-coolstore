@@ -186,6 +186,21 @@ The manifests in the `single-cluster` folder differ from the manifests in the `a
 		  restartPolicy: Always
 
 
+## Checkout Process
+
+```mermaid
+
+sequenceDiagram
+	CartService ->> OrdersTopic: order event
+	OrdersTopic ->> OrderService: order event
+	OrderService ->> OrderDatabase: order record status=PROCESSING
+	OrdersTopic ->> PaymentService: order event
+	PaymentService ->> PaymentsTopic: payment successful status=COMPLETED
+	PaymentsTopic ->> OrderService: payment successful status=COMPLETED
+	OrderService ->> OrderDatabase: order record status=COMPLETED
+```
+
+
 ## Resources
 
 *   [Solution git repo](https://github.com/RedHat-Middleware-Workshops/cloud-native-workshop-v2-labs-solutions/tree/ocp-4.9/m4)
