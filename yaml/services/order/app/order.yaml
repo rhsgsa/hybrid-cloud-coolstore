@@ -50,6 +50,9 @@ spec:
         env:
         - name: QUARKUS_MONGODB_DATABASE
           value: orders
+        - name: QUARKUS_MONGODB_CONNECTION_STRING
+          value: >-
+            mongodb://root:password123@mongodb-primary.demo.svc.clusterset.local,mongodb-secondary.demo.svc.clusterset.local,mongodb-arbiter.demo.svc.clusterset.local/?replicaSet=replicaset&w=1
         - name: KUBERNETES_NAMESPACE
           valueFrom:
             fieldRef:
