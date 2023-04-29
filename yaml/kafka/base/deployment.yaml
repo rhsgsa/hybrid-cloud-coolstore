@@ -4,6 +4,8 @@ metadata:
   labels:
     app: kafka
     app.kubernetes.io/part-of: my-cluster
+    app.kubernetes.io/component: my-cluster
+    app.kubernetes.io/instance: my-cluster
     app.openshift.io/runtime: java
   name: kafka
 spec:

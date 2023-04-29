@@ -7,9 +7,6 @@ resources:
 patches:
 - patch: |-
     - op: replace
-      path: '/metadata/annotations/app.openshift.io~1connects-to'
-      value: '[{"apiVersion":"apps/v1","kind":"Deployment","name":"kafka-1"},{"apiVersion":"apps/v1","kind":"Deployment","name":"kafka-2"},{"apiVersion":"apps/v1","kind":"Deployment","name":"order-database-secondary"}]'
-    - op: replace
       path: '/spec/template/spec/containers/0/env/0/value'
       value: "mongodb://mongodb-primary.demo.svc.clusterset.local:27017,mongodb-secondary.demo.svc.clusterset.local:27017,mongodb-arbiter.demo.svc.clusterset.local:27017/?replicaSet=replicaset&w=1&retryReads=true&retryWrites=true"
     - op: add

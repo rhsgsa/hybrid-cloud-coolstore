@@ -20,7 +20,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    app.openshift.io/connects-to: '["example-infinispan",{"apiVersion":"apps/v1","kind":"Deployment","name":"kafka"}]'
+    app.openshift.io/connects-to: '["example-infinispan","my-cluster"]'
   labels:
     app: cart
     app.kubernetes.io/version: 1.0-SNAPSHOT

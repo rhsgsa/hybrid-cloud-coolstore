@@ -43,9 +43,6 @@ patches:
       value:
         name: MP_MESSAGING_OUTGOING_ORDERS_BOOTSTRAP_SERVERS
         value: my-cluster-kafka-bootstrap.demo.svc.clusterset.local:9092
-    - op: replace
-      path: '/metadata/annotations/app.openshift.io~1connects-to'
-      value: '["example-infinispan",{"apiVersion":"apps/v1","kind":"Deployment","name":"kafka-0"}]'
   target:
     kind: Deployment
     name: cart

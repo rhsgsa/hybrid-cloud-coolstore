@@ -30,3 +30,18 @@ spec:
   source: redhat-operators
   sourceNamespace: openshift-marketplace
 EOF
+
+echo -n "waiting for argocd/openshift-gitops to appear..."
+until oc get -n openshift-gitops argocd/openshift-gitops > /dev/null 2>&1; do
+  echo -n "."
+  sleep 5
+done
+echo "done"
+
+# This is needed because we don't want ArgoCD to overwrite
+# app.kubernetes.io/instance (used for the topology view)
+oc patch \
+  -n openshift-gitops \
+  argocd/openshift-gitops \
+  -p '{"spec":{"applicationInstanceLabelKey":"argocd.argoproj.io/instance"}}' \
+  --type merge

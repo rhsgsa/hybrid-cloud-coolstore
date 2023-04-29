@@ -20,8 +20,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   annotations:
-    app.openshift.io/connects-to: >-
-      [{"apiVersion":"apps/v1","kind":"Deployment","name":"kafka"},{"apiVersion":"apps/v1","kind":"Deployment","name":"order-database"}]
+    app.openshift.io/connects-to: "order-database,my-cluster"
   labels:
     app: order
     app.kubernetes.io/name: order

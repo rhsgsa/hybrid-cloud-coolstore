@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: order-primary
+  name: order
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -12,11 +12,14 @@ spec:
       - cluster: coolstore-a
         values:
           namespace: demo
+      - cluster: coolstore-b
+        values:
+          namespace: demo
   template:
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "30"
-      name: "{{cluster}}-order-primary"
+      name: "{{cluster}}-order"
     spec:
       destination:
         namespace: "{{values.namespace}}"
@@ -24,7 +27,7 @@ spec:
       project: default
       source:
         kustomize: {}
-        path: services/order/app/overlays/primary
+        path: services/order/app/overlays/multi-cluster
         repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
         targetRevision: HEAD
       syncPolicy:
