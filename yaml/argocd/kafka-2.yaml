@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: order
+  name: kafka-2
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -9,29 +9,27 @@ spec:
   generators:
   - list:
       elements:
-      - cluster: coolstore-a
+      - cluster: coolstore-b
         values:
           namespace: demo
   template:
     metadata:
       annotations:
-        argocd.argoproj.io/sync-wave: "30"
-      name: "{{cluster}}-order"
+        argocd.argoproj.io/sync-wave: "20"
+      name: "{{cluster}}-kafka-2"
     spec:
       destination:
         namespace: "{{values.namespace}}"
         name: "{{cluster}}"
       project: default
       source:
-        directory:
-          jsonnet: {}
-          recurse: true
-        path: services/order/app
+        kustomize: {}
+        path: kafka/overlays/2
         repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
         targetRevision: HEAD
       syncPolicy:
         syncOptions:
-        - RespectIgnoreDifferences=true
+        - CreateNamespace=true
         automated: {}
         retry:
           backoff:

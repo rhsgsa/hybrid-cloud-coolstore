@@ -1,0 +1,43 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base/
+- service.yaml
+
+patches:
+- patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: kafka-config
+    data:
+      KAFKA_CFG_ADVERTISED_LISTENERS: "PLAINTEXT://my-cluster-kafka-0.demo.svc.clusterset.local:9092"
+      KAFKA_CFG_CONTROLLER_QUORUM_VOTERS: 0@my-cluster-kafka-0.demo.svc.clusterset.local:9093,1@my-cluster-kafka-1.demo.svc.clusterset.local:9093,2@my-cluster-kafka-2.demo.svc.clusterset.local:9093
+      KAFKA_CFG_NODE_ID: "0"
+- target:
+    kind: ConfigMap
+    name: kafka-config
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: kafka-config-0
+- target:
+    kind: Deployment
+    name: kafka
+  patch: |-
+    - op: replace
+      path: /metadata/name
+      value: kafka-0
+    - op: add
+      path: /metadata/labels/kafka-instance
+      value: "0"
+    - op: add
+      path: /spec/selector/matchLabels/kafka-instance
+      value: "0"
+    - op: add
+      path: /spec/template/metadata/labels/kafka-instance
+      value: "0"
+    - op: replace
+      path: /spec/template/spec/containers/0/envFrom/0/configMapRef/name
+      value: kafka-config-0

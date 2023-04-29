@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: kafka
+    app.kubernetes.io/part-of: my-cluster
+    app.openshift.io/runtime: java
+  name: kafka
+spec:
+  selector:
+    matchLabels:
+      app: kafka
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: kafka
+    spec:
+      terminationGracePeriodSeconds: 10
+      containers:
+      - name: kafka
+        image: docker.io/bitnami/kafka:3.4.0-debian-11-r24
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9092
+          name: kafka
+        - containerPort: 9093
+          name: controller
+        envFrom:
+        - configMapRef:
+            name: kafka-config
+        livenessProbe:
+          tcpSocket:
+            port: kafka
+        readinessProbe:
+          tcpSocket:
+            port: kafka
+        volumeMounts:
+        - name: data
+          mountPath: /bitnami/kafka
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          limits:
+            memory: "8Gi"
+            cpu: "1"
+      volumes:
+      - name: data
+        emptyDir: {}

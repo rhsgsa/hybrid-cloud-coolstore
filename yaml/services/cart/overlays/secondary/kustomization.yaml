@@ -35,6 +35,9 @@ patches:
                 strategy: "SYNC"
                 timeout: "10000"
 - patch: |-
+    - op: replace
+      path: '/metadata/annotations/app.openshift.io~1connects-to'
+      value: '["example-infinispan",{"apiVersion":"apps/v1","kind":"Deployment","name":"kafka-1"},{"apiVersion":"apps/v1","kind":"Deployment","name":"kafka-2"}]'
     - op: add
       path: "/spec/template/spec/containers/0/env/-"
       value:

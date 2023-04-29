@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base/
+- service.yaml
+
+patches:
+- patch: |-
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: mongodb-config
+    data:
+      MONGODB_ROOT_PASSWORD: password123
+      MONGODB_USERNAME: orders
+      MONGODB_PASSWORD: password123
+      MONGODB_DATABASE: order-database
+  target:
+    kind: ConfigMap
+    name: mongodb-config
