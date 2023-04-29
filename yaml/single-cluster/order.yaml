@@ -23,14 +23,13 @@ spec:
         name: "{{cluster}}"
       project: default
       source:
-        directory:
-          jsonnet: {}
-          recurse: true
-        path: services/order
+        kustomize: {}
+        path: services/order/app/base
         repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
         targetRevision: HEAD
       syncPolicy:
         syncOptions:
+        - CreateNamespace=true
         - RespectIgnoreDifferences=true
         automated: {}
         retry:

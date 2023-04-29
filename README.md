@@ -116,7 +116,7 @@
 
 Before you destroy the clusters, uninstall submariner from `coolstore-a` and `coolstore-b`
 
-If you don't do the above, the clusters may be stuck inthe detaching phase. If this happens to you, [refer to this article](https://access.redhat.com/solutions/6243371).
+If you don't do the above, the clusters may be stuck in the detaching phase. If this happens to you, [refer to this article](https://access.redhat.com/solutions/6243371).
 
 ---
 

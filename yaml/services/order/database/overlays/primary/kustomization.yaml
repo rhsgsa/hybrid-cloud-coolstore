@@ -32,9 +32,9 @@ patches:
     - op: replace
       path: /metadata/name
       value: order-database-primary
-    - op: replace
-      path: /spec/replicas
-      value: 0
+    #- op: replace
+    #  path: /spec/replicas
+    #  value: 0
     - op: replace
       path: /spec/template/metadata/labels/app
       value: mongodb-primary

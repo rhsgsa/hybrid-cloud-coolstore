@@ -21,7 +21,7 @@ kind: Deployment
 metadata:
   annotations:
     app.openshift.io/connects-to: >-
-      ["my-cluster","order-database",{"apiVersion":"apps/v1","kind":"Deployment","name":"order-database"}]
+      [{"apiVersion":"apps/v1","kind":"Deployment","name":"kafka"},{"apiVersion":"apps/v1","kind":"Deployment","name":"order-database"}]
   labels:
     app: order
     app.kubernetes.io/name: order
@@ -48,8 +48,14 @@ spec:
       - image: ghcr.io/rhsgsa/order:1.0-SNAPSHOT
         name: order
         env:
+        - name: QUARKUS_MONGODB_CONNECTION_STRING
+          value: "mongodb://mongodb:27017/?retryReads=true&retryWrites=true"
         - name: QUARKUS_MONGODB_DATABASE
+          value: "order-database"
+        - name: QUARKUS_MONGODB_CREDENTIALS_USERNAME
           value: orders
+        - name: QUARKUS_MONGODB_CREDENTIALS_PASSWORD
+          value: password123
         - name: KUBERNETES_NAMESPACE
           valueFrom:
             fieldRef:
@@ -79,64 +85,3 @@ spec:
   to:
     kind: Service
     name: order
----
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  labels:
-    app: order-database
-    app.kubernetes.io/component: order-database
-    app.kubernetes.io/instance: order-database
-    app.kubernetes.io/part-of: order
-    app.openshift.io/runtime: mongodb
-  name: order-database
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: order-database
-  strategy: {}
-  template:
-    metadata:
-      creationTimestamp: null
-      labels:
-        app: order-database
-    spec:
-      containers:
-      - image: quay.io/openshiftlabs/ccn-mongo:4.0
-        name: ccn-mongo
-        ports:
-        - containerPort: 27017
-          protocol: TCP
-        volumeMounts:
-        - mountPath: /data/configdb
-          name: order-database-volume-1
-        - mountPath: /data/db
-          name: order-database-volume-2
-        resources: {}
-      volumes:
-      - emptyDir: {}
-        name: order-database-volume-1
-      - emptyDir: {}
-        name: order-database-volume-2
-status: {}
----
-apiVersion: v1
-kind: Service
-metadata:
-  annotations:
-    openshift.io/generated-by: OpenShiftNewApp
-  creationTimestamp: null
-  labels:
-    app: order-database
-    app.kubernetes.io/component: order-database
-    app.kubernetes.io/instance: order-database
-  name: order-database
-spec:
-  ports:
-  - name: 27017-tcp
-    port: 27017
-    protocol: TCP
-    targetPort: 27017
-  selector:
-    app: order-database

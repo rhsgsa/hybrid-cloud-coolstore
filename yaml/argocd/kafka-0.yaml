@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: amq-streams
+  name: kafka-0
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -11,20 +11,20 @@ spec:
       elements:
       - cluster: coolstore-a
         values:
-          namespace: amq-streams-operator
+          namespace: demo
   template:
     metadata:
       annotations:
-        argocd.argoproj.io/sync-wave: "10"
-      name: "{{cluster}}-amq-streams"
+        argocd.argoproj.io/sync-wave: "20"
+      name: "{{cluster}}-kafka-0"
     spec:
       destination:
         namespace: "{{values.namespace}}"
         name: "{{cluster}}"
       project: default
       source:
-        directory: {}
-        path: amq-streams
+        kustomize: {}
+        path: kafka/overlays/0
         repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
         targetRevision: HEAD
       syncPolicy:
