@@ -32,6 +32,13 @@
 	|Cluster network|`10.132.0.0/14`|
 	|Service network|`172.31.0.0/16`|
 
+01. Create an AWS cluster in the `coolstore` clusterset named `coolstore-c`
+
+	|Network|CIDR|
+	|---|---|
+	|Cluster network|`10.140.0.0/14`|
+	|Service network|`172.32.0.0/16`|
+
 01. After both clusters have been provisioned, edit the `coolstore` clusterset and install Submariner add-ons in both clusters
 
 01. Wait for the submariner add-ons to complete installation on both nodes
@@ -234,3 +241,22 @@ sequenceDiagram
 		  http://localhost:11222/rest/v2/caches/cart?action=entries \
 		&& \
 		echo
+
+*   Force remove all Applications and ApplicationSets from ArgoCD
+
+		oc patch \
+		  -n openshift-gitops \
+		  --type=json \
+		  -p '[{"op":"remove","path":"/metadata/finalizers"}]' \
+		  application/coolstore
+
+		oc delete -n openshift-gitops application/coolstore
+
+		for r in $(oc get -n openshift-gitops applicationsets,applications -o name); do
+		  oc patch \
+		    -n openshift-gitops \
+		    --type=json \
+		    -p '[{"op":"remove","path":"/metadata/finalizers"}]' \
+		    $r
+		  oc delete -n openshift-gitops $r --wait=false
+		done

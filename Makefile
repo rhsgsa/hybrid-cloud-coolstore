@@ -2,7 +2,7 @@ BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 include $(BASE)/config.sh
 
-.PHONY: install install-gitops deploy-gitea register-managed-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag
+.PHONY: install install-gitops deploy-gitea register-managed-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag login-a login-b login-c
 
 install: install-gitops deploy-gitea register-managed-clusters
 	@echo "done"
@@ -107,3 +107,12 @@ email:
 
 remove-lag:
 	@oc rsh -n $(PROJ) my-cluster-kafka-0 bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --group knative-group --topic orders --timeout-ms 10000
+
+login-a:
+	@echo "oc login --insecure-skip-tls-verify `oc get -n openshift-gitops secret/coolstore-a-cluster-secret -o jsonpath='{.data.server}' | base64 -d` --token `oc get -n openshift-gitops secret/coolstore-a-cluster-secret -o jsonpath='{.data.config}' | base64 -d | jq -r '.bearerToken'`"
+
+login-b:
+	@echo "oc login --insecure-skip-tls-verify `oc get -n openshift-gitops secret/coolstore-b-cluster-secret -o jsonpath='{.data.server}' | base64 -d` --token `oc get -n openshift-gitops secret/coolstore-b-cluster-secret -o jsonpath='{.data.config}' | base64 -d | jq -r '.bearerToken'`"
+
+login-c:
+	@echo "oc login --insecure-skip-tls-verify `oc get -n openshift-gitops secret/coolstore-c-cluster-secret -o jsonpath='{.data.server}' | base64 -d` --token `oc get -n openshift-gitops secret/coolstore-c-cluster-secret -o jsonpath='{.data.config}' | base64 -d | jq -r '.bearerToken'`"

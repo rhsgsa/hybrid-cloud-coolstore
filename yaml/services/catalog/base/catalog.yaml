@@ -1,0 +1,106 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    app.openshift.io/connects-to: "yugabyte,inventory"
+  labels:
+    app: catalog
+    app.kubernetes.io/component: catalog
+    app.kubernetes.io/instance: catalog
+    app.kubernetes.io/name: catalog
+    app.kubernetes.io/part-of: catalog
+    app.openshift.io/runtime: rh-spring-boot
+  name: catalog
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: catalog
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: catalog
+    spec:
+      containers:
+      - image: ghcr.io/rhsgsa/catalog:1.0-SNAPSHOT
+        name: catalog
+        env:
+        - name: JAVA_OPTS_APPEND
+          value: -Dspring.profiles.active=openshift
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://yb-tserver-service:5433/catalog"
+        - name: SPRING_DATASOURCE_USERNAME
+          value: yugabyte
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: yugabyte
+        ports:
+        - containerPort: 8778
+          protocol: TCP
+        - containerPort: 8080
+          protocol: TCP
+        - containerPort: 8443
+          protocol: TCP
+        resources:
+          limits:
+            cpu: "1"
+            memory: 4Gi
+          requests:
+            cpu: "0.5"
+            memory: 2Gi
+status: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  annotations:
+    openshift.io/generated-by: OpenShiftNewApp
+  creationTimestamp: null
+  labels:
+    app: catalog
+    app.kubernetes.io/component: catalog
+    app.kubernetes.io/instance: catalog
+    app.kubernetes.io/name: catalog
+  name: catalog
+spec:
+  ports:
+  - name: 8080-tcp
+    port: 8080
+    protocol: TCP
+    targetPort: 8080
+  - name: 8443-tcp
+    port: 8443
+    protocol: TCP
+    targetPort: 8443
+  - name: 8778-tcp
+    port: 8778
+    protocol: TCP
+    targetPort: 8778
+  selector:
+    app: catalog
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  annotations:
+    openshift.io/host.generated: "true"
+  creationTimestamp: null
+  labels:
+    app: catalog
+    app.kubernetes.io/component: catalog
+    app.kubernetes.io/instance: catalog
+    app.kubernetes.io/name: catalog
+  name: catalog
+spec:
+  port:
+    targetPort: 8080-tcp
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow
+  to:
+    kind: Service
+    name: catalog
+    weight: 100
+  wildcardPolicy: None

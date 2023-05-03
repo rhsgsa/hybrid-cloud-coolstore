@@ -20,25 +20,23 @@ apiVersion: multicluster.x-k8s.io/v1alpha1
 kind: ServiceExport
 metadata:
   name: my-cluster-kafka-2
-
-# commented out because we are deploying 1 and 2 on the same cluster
-#---
-#apiVersion: v1
-#kind: Service
-#metadata:
-#  labels:
-#    app: kafka
-#  name: my-cluster-kafka-bootstrap
-#spec:
-#  ports:
-#    - name: kafka
-#      port: 9092
-#      targetPort: 9092
-#  selector:
-#    app: kafka
-#  type: ClusterIP
-#---
-#apiVersion: multicluster.x-k8s.io/v1alpha1
-#kind: ServiceExport
-#metadata:
-#  name: my-cluster-kafka-bootstrap
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: kafka
+  name: my-cluster-kafka-bootstrap
+spec:
+  ports:
+    - name: kafka
+      port: 9092
+      targetPort: 9092
+  selector:
+    app: kafka
+  type: ClusterIP
+---
+apiVersion: multicluster.x-k8s.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: my-cluster-kafka-bootstrap

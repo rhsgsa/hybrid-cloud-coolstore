@@ -1,0 +1,51 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: create-databases
+  annotations:
+    argocd.argoproj.io/hook: PostSync
+spec:
+  template:
+    spec:
+      containers:
+      - name: create-databases
+        image: "docker.io/yugabytedb/yugabyte:2.17.2.0-b216"
+        command:
+        - /bin/bash
+        - "-c"
+        - |
+          echo -n "waiting for tserver to come up..."
+          until ysqlsh -h yb-tservers < /dev/null; do
+            echo -n "."
+            sleep 5
+          done
+          echo "done"
+          for d in $DATABASES; do
+            exists=$(ysqlsh -h yb-tservers -t -A -c '\l '"$d" | wc -l)
+            if [ $exists -lt 1 ]; then
+              echo "creating $d"
+              ysqlsh -h yb-tservers -c "create database $d"
+            else
+              echo "$d exists"
+            fi
+          done
+        env:
+        - name: DATABASES
+          value: "catalog inventory"
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 1Gi
+          requests:
+            cpu: "0.5"
+            memory: 1Gi
+      restartPolicy: Never
+  backoffLimit: 2

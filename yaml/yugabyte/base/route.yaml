@@ -1,0 +1,16 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: null
+  labels:
+    app: yb-master
+    service-type: endpoint
+  name: yb-master-ui
+spec:
+  port:
+    targetPort: http-ui
+  to:
+    kind: "Service"
+    name: yb-master-ui
+    weight: null
+status: {}

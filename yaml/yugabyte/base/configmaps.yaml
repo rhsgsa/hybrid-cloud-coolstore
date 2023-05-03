@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yb-demo-0-yugabyte-master-hooks
+data:
+  yb-master-0-pre_debug_hook.sh: "echo 'hello-from-pre' "
+  yb-master-0-post_debug_hook.sh: "echo 'hello-from-post' "
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: yb-demo-0-yugabyte-tserver-hooks
+data:
+  yb-tserver-0-pre_debug_hook.sh: "echo 'hello-from-pre' "
+  yb-tserver-0-post_debug_hook.sh: "echo 'hello-from-post' "

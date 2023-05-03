@@ -1,0 +1,28 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../common/
+- ../../../create-databases/
+
+patches:
+- target:
+    kind: StatefulSet
+    name: yb-master
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/env/5/value
+      value: "yb-master-0.coolstore-a.yb-masters.demo.svc.clusterset.local"
+    - op: replace
+      path: /spec/template/spec/containers/0/env/6/value
+      value: "coolstore-a"
+- target:
+    kind: StatefulSet
+    name: yb-tserver
+  patch: |-
+    - op: replace
+      path: /spec/template/spec/containers/0/env/5/value
+      value: "yb-tserver-0.coolstore-a.yb-tservers.demo.svc.clusterset.local"
+    - op: replace
+      path: /spec/template/spec/containers/0/env/6/value
+      value: "coolstore-a"

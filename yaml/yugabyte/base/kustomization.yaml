@@ -1,0 +1,9 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- configmaps.yaml
+- services.yaml
+- statefulset-master.yaml
+- statefulset-tserver.yaml
+- route.yaml

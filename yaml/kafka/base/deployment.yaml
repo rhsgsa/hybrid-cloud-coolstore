@@ -50,7 +50,7 @@ spec:
             type: RuntimeDefault
         resources:
           limits:
-            memory: "8Gi"
+            memory: "4Gi"
             cpu: "1"
       volumes:
       - name: data
