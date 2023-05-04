@@ -34,7 +34,13 @@ spec:
             successThreshold: 1
             tcpSocket:
               port: 0
-          resources: {}
+          resources:
+            limits:
+              cpu: "1"
+              memory: 2Gi
+            requests:
+              cpu: 100m
+              memory: 512Mi
       enableServiceLinks: false
       timeoutSeconds: 300
   traffic:

@@ -64,7 +64,13 @@ spec:
             name: http
             protocol: TCP
         imagePullPolicy: IfNotPresent
-        resources: {}
+        resources:
+          limits:
+            cpu: "1"
+            memory: 2Gi
+          requests:
+            cpu: 100m
+            memory: 512Mi
 status: {}
 ---
 apiVersion: route.openshift.io/v1

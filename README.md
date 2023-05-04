@@ -18,36 +18,39 @@
 
 	* Create a namespace binding to `openshift-gitops`
 
-01. Create an AWS cluster in the `coolstore` clusterset named `coolstore-a`
+01. Create 3 AWS clusters in the `coolstore` clusterset - ensure that all 3 clusters are in the same AWS region
 
-	|Network|CIDR|
-	|---|---|
-	|Cluster network|`10.128.0.0/14`|
-	|Service network|`172.30.0.0/16`|
+	*   Create an AWS cluster in the `coolstore` clusterset named `coolstore-a`
 
-01. Create an AWS cluster in the `coolstore` clusterset named `coolstore-b`
+		|Network|CIDR|
+		|---|---|
+		|Node pools / Worker pool 1 / Node count|`4`|
+		|Cluster network|`10.128.0.0/14`|
+		|Service network|`172.30.0.0/16`|
 
-	|Network|CIDR|
-	|---|---|
-	|Cluster network|`10.132.0.0/14`|
-	|Service network|`172.31.0.0/16`|
+	*   Create an AWS cluster in the `coolstore` clusterset named `coolstore-b`
 
-01. Create an AWS cluster in the `coolstore` clusterset named `coolstore-c`
+		|Network|CIDR|
+		|---|---|
+		|Cluster network|`10.132.0.0/14`|
+		|Service network|`172.31.0.0/16`|
 
-	|Network|CIDR|
-	|---|---|
-	|Cluster network|`10.140.0.0/14`|
-	|Service network|`172.32.0.0/16`|
+	*   Create an AWS cluster in the `coolstore` clusterset named `coolstore-c`
 
-01. After both clusters have been provisioned, edit the `coolstore` clusterset and install Submariner add-ons in both clusters
+		|Network|CIDR|
+		|---|---|
+		|Cluster network|`10.140.0.0/14`|
+		|Service network|`172.32.0.0/16`|
 
-01. Wait for the submariner add-ons to complete installation on both nodes
+01. After all 3 clusters have been provisioned, edit the `coolstore` clusterset and install Submariner add-ons in all clusters
+
+01. Wait for the submariner add-ons to complete installation on all nodes
 
 01. Setup ArgoCD `ApplicationSet`s
 
 		oc apply -f yaml/argocd/coolstore.yaml
 
-01. Add banners to the OpenShift Consoles so you know which cluster you're on - do this for the hub cluster, `coolstore-a`, `coolstore-b`
+01. Add banners to the OpenShift Consoles so you know which cluster you're on - do this for the hub cluster, `coolstore-a`, `coolstore-b`, `coolstore-c`
 
 		./scripts/setup-console-banners
 
@@ -260,3 +263,17 @@ sequenceDiagram
 		    $r
 		  oc delete -n openshift-gitops $r --wait=false
 		done
+
+*   Test postgresql
+
+		oc run psql \
+		  --image image-registry.openshift-image-registry.svc:5000/openshift/postgresql:10-el8 \
+		  --command -- tail -f /dev/null
+
+		oc rsh psql \
+		  psql \
+		    -h yb-tserver-0.coolstore-a.yb-tservers.demo.svc.clusterset.local \
+		    -p 5433 \
+		    -U yugabyte \
+		    -c 'select * from catalog' \
+		    catalog

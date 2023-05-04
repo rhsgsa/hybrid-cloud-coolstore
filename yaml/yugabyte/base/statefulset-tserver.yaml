@@ -98,8 +98,8 @@ spec:
             cpu: "1"
             memory: 4Gi
           requests:
-            cpu: "1"
-            memory: 4Gi
+            cpu: 200m
+            memory: 1Gi
         # core dumps are collected to workingDir if
         # kernel.core_pattern is set to a relative path like
         # core.%e.%p.%t ref:
@@ -231,6 +231,13 @@ spec:
           runAsNonRoot: true
           seccompProfile:
             type: RuntimeDefault
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: 100m
+            memory: 128Mi
       volumes:
       - name: debug-hooks-volume
         configMap:
