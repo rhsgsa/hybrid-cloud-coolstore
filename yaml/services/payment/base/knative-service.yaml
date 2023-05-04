@@ -3,7 +3,8 @@ kind: Service
 metadata:
   name: payment
   annotations:
-    argocd.argoproj.io/sync-options: Prune=true
+    argocd.argoproj.io/sync-options: Prune=false
+    argocd.argoproj.io/compare-options: IgnoreExtraneous
   labels:
     app.kubernetes.io/name: payment
     app.kubernetes.io/version: 1.0-SNAPSHOT
