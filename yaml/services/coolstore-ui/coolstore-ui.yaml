@@ -5,6 +5,7 @@ metadata:
     app.openshift.io/connects-to: order-cart,catalog,inventory,order
   labels:
     app: coolstore-ui
+    app.openshift.io/runtime: nodejs
     app.kubernetes.io/component: coolstore-ui
     app.kubernetes.io/instance: coolstore-ui
     app.kubernetes.io/part-of: coolstore

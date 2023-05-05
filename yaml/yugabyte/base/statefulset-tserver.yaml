@@ -4,6 +4,7 @@ metadata:
   name: "yb-tserver"
   labels:
     app: "yb-tserver"
+    app.openshift.io/runtime: "postgresql"
 spec:
   serviceName: "yb-tservers"
   podManagementPolicy: Parallel
