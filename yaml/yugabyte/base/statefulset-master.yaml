@@ -51,7 +51,7 @@ spec:
       terminationGracePeriodSeconds: 300
       containers:
       - name: "yb-master"
-        image: "docker.io/yugabytedb/yugabyte:2.17.2.0-b216"
+        image: "docker.io/yugabytedb/yugabyte:2.17.3.0-b152"
         imagePullPolicy: IfNotPresent
         lifecycle:
           postStart:
@@ -97,11 +97,15 @@ spec:
         - name: BIND_ADDRESSES
           value: "yb-master-0.yb-masters.yb-demo-0.svc.cluster.local"
         - name: PLACEMENT_ZONE
-          value: rack1
+          value: region-1a
         - name: REPLICATION_FACTOR
           value: "3"
         - name: LEADER_FAILURE_MAX_MISSED_HEARTBEAT_PERIODS
           value: "10"
+        - name: PLACEMENT_REGION
+          value: region-1
+        - name: PLACEMENT_CLOUD
+          value: ocp
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -168,6 +172,8 @@ spec:
             --undefok=num_cpus,enable_ysql \
             --default_memory_limit_to_ram_ratio="0.85" \
             --leader_failure_max_missed_heartbeat_periods="$(LEADER_FAILURE_MAX_MISSED_HEARTBEAT_PERIODS)" \
+            --placement_cloud="$(PLACEMENT_CLOUD)" \
+            --placement_region="$(PLACEMENT_REGION)" \
             --placement_zone="$(PLACEMENT_ZONE)" \
             --rpc_bind_addresses=$(BIND_ADDRESSES) \
             --server_broadcast_addresses=$(BIND_ADDRESSES):7100 \
@@ -185,7 +191,7 @@ spec:
         - name: datadir1
           mountPath: /mnt/disk1
       - name: yb-cleanup
-        image: "docker.io/yugabytedb/yugabyte:2.17.2.0-b216"
+        image: "docker.io/yugabytedb/yugabyte:2.17.3.0-b152"
         imagePullPolicy: IfNotPresent
         env:
         - name: USER

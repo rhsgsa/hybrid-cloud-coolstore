@@ -9,7 +9,7 @@ spec:
     spec:
       containers:
       - name: create-databases
-        image: "docker.io/yugabytedb/yugabyte:2.17.2.0-b216"
+        image: "docker.io/yugabytedb/yugabyte:2.17.3.0-b152"
         command:
         - /bin/bash
         - "-c"

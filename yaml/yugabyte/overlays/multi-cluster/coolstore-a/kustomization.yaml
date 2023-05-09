@@ -1,3 +1,5 @@
+# Note that the region and zone has been set to ap-southeast-1 / 1a for coolstore-a
+# Please make the appropriate changes, if need be, accordingly
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
@@ -15,7 +17,10 @@ patches:
       value: "yb-master-0.coolstore-a.yb-masters.demo.svc.clusterset.local"
     - op: replace
       path: /spec/template/spec/containers/0/env/6/value
-      value: "coolstore-a"
+      value: "ap-southeast-1a"
+    - op: replace
+      path: /spec/template/spec/containers/0/env/9/value
+      value: "ap-southeast-1"
 - target:
     kind: StatefulSet
     name: yb-tserver
@@ -25,4 +30,7 @@ patches:
       value: "yb-tserver-0.coolstore-a.yb-tservers.demo.svc.clusterset.local"
     - op: replace
       path: /spec/template/spec/containers/0/env/6/value
-      value: "coolstore-a"
+      value: "ap-southeast-1a"
+    - op: replace
+      path: /spec/template/spec/containers/0/env/7/value
+      value: "ap-southeast-1"

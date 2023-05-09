@@ -47,7 +47,7 @@ spec:
       terminationGracePeriodSeconds: 300
       containers:
       - name: "yb-tserver"
-        image: "docker.io/yugabytedb/yugabyte:2.17.2.0-b216"
+        image: "docker.io/yugabytedb/yugabyte:2.17.3.0-b152"
         imagePullPolicy: IfNotPresent
         lifecycle:
           postStart:
@@ -93,7 +93,11 @@ spec:
         - name: BIND_ADDRESSES
           value: "yb-tserver-0.yb-tservers.yb-demo-0.svc.cluster.local"
         - name: PLACEMENT_ZONE
-          value: rack1
+          value: region-1a
+        - name: PLACEMENT_REGION
+          value: region-1
+        - name: PLACEMENT_CLOUD
+          value: ocp
         resources:
           limits:
             cpu: "1"
@@ -161,6 +165,8 @@ spec:
             --num_cpus=2 \
             --undefok=num_cpus,enable_ysql \
             --use_node_hostname_for_local_tserver=true \
+            --placement_cloud="$(PLACEMENT_CLOUD)" \
+            --placement_region="$(PLACEMENT_REGION)" \
             --placement_zone="$(PLACEMENT_ZONE)" \
             --rpc_bind_addresses=$(BIND_ADDRESSES) \
             --server_broadcast_addresses=$(BIND_ADDRESSES):9100 \
@@ -201,7 +207,7 @@ spec:
         - name: datadir1
           mountPath: /mnt/disk1
       - name: yb-cleanup
-        image: "docker.io/yugabytedb/yugabyte:2.17.2.0-b216"
+        image: "docker.io/yugabytedb/yugabyte:2.17.3.0-b152"
         imagePullPolicy: IfNotPresent
         env:
         - name: USER
