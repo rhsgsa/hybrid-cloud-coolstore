@@ -14,30 +14,34 @@
 
 01. Create credentials for AWS named `aws` in the `open-cluster-management` namespace in the OpenShift Console - All Clusters / Credentials / Add credential
 
-01. Create a `clusterset` named `coolstore` - All Clusters / Infrastructure / Clusters / Cluster sets
+01. Create a `clusterset` named `coolstore` - All Clusters / Infrastructure / Clusters / Cluster sets / Create cluster set
 
-	* Create a namespace binding to `openshift-gitops`
-            ```
-            ---
-            apiVersion: cluster.open-cluster-management.io/v1beta2
-            kind: ManagedClusterSetBinding
-            metadata:
-              name: coolstore
-              namespace: openshift-gitops
-            spec:
-              clusterSet: coolstore
-            ```
+	*   Create a namespace binding to `openshift-gitops`
+
+		*   All Clusters / Infrastructure / Clusters / Cluster sets / `coolstore` / Actions / Edit namespace bindings
+
+		*   or
+
+				cat <<EOF | oc apply -f -
+				apiVersion: cluster.open-cluster-management.io/v1beta2
+				kind: ManagedClusterSetBinding
+				metadata:
+				  name: coolstore
+				  namespace: openshift-gitops
+				spec:
+				  clusterSet: coolstore
+				EOF
 
 01. Create 3 AWS clusters in the `coolstore` clusterset
 
 	*   NOTE: Cluster creation documentation can be found at `https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.7/html/clusters/cluster_mce_overview#creating-a-cluster`
 
 	*   Create an AWS cluster in the `coolstore` clusterset named `coolstore-a`
+
 	*   Cluster `coolstore-a` should be in the AWS region `ap-southeast-1` and has at least 1 worker node deployed in `ap-southeast-1a`
 
 		|Network|CIDR|
 		|---|---|
-		|Node pools / Worker pool 1 / Node count|`4`|
 		|Cluster network|`10.128.0.0/14`|
 		|Service network|`172.30.0.0/16`|
 
@@ -54,7 +58,7 @@
 
 		|Network|CIDR|
 		|---|---|
-		|Cluster network|`10.140.0.0/14`|
+		|Cluster network|`10.136.0.0/14`|
 		|Service network|`172.32.0.0/16`|
 
 01. After all 3 clusters have been provisioned, edit the `coolstore` clusterset and install Submariner add-ons in all clusters
@@ -64,12 +68,12 @@
 01. NOTE: If you have deployed the clusters in other AWS regions, or have deployed them on other public cloud providers such as Azure and GCP, then you will need to update the overlays folders in gitea
 
 	*   For instance, if `coolstore-a` is deployed in `ap-southeast-2` instead of `ap-southeast-1`, then you will need to
-		* Update `coolstore/yugabyte/overlays/multi-cluster/coolstore-a/kustomization.yaml`
-	        	* Perform search and replace of the value `ap-southeast-1` with `ap-southeast-2`
-	        	* Make the required changes to the availability zone, if need be
-	        	* Note that changes can either be done from the Gitea UI or via git commands
-	        	* Note that the default login credentials for Gitea is `demo / password`
-	        	* Commit and push all changes to Gitea
+		*   Update `coolstore/yugabyte/overlays/multi-cluster/coolstore-a/kustomization.yaml`
+			*   Perform search and replace of the value `ap-southeast-1` with `ap-southeast-2`
+			*   Make the required changes to the availability zone, if need be
+			*   Note that changes can either be done from the Gitea UI or via git commands
+			*   Note that the default login credentials for Gitea is `demo / password`
+			*   Commit and push all changes to Gitea
 	*   Ensure appropriate changes are made to the override YAML files for the other clusters, if need be
 
 01. Setup ArgoCD `ApplicationSet`s
