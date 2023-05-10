@@ -12,6 +12,12 @@ spec:
       - cluster: coolstore-a
         values:
           namespace: demo
+      - cluster: coolstore-b
+        values:
+          namespace: demo
+      - cluster: coolstore-c
+        values:
+          namespace: demo
   template:
     metadata:
       annotations:

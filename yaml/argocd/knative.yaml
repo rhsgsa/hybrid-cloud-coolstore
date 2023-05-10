@@ -11,6 +11,7 @@ spec:
       elements:
       - cluster: coolstore-a
       - cluster: coolstore-b
+      - cluster: coolstore-c
   template:
     metadata:
       annotations:
