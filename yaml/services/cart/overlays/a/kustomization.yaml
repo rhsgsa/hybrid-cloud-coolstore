@@ -15,10 +15,12 @@ patches:
       service:
         sites:
           local:
-            name: SECONDARY
+            name: INFINISPAN-A
           locations:
-          - name: PRIMARY
-            url: infinispan+xsite://primary-site.demo.svc.clusterset.local:7900
+          - name: INFINISPAN-B
+            url: infinispan+xsite://infinispan-b.demo.svc.clusterset.local:7900
+          - name: INFINISPAN-C
+            url: infinispan+xsite://infinispan-c.demo.svc.clusterset.local:7900
 - patch: |-
     kind: Cache
     apiVersion: infinispan.org/v2alpha1
@@ -30,7 +32,11 @@ patches:
           mode: "SYNC"
           # https://infinispan.org/docs/stable/titles/xsite/xsite.html#cross-site-automatic-offline_cross-site-replication
           backups:
-            PRIMARY:
+            INFINISPAN-B:
+              backup:
+                strategy: "SYNC"
+                timeout: "10000"
+            INFINISPAN-C:
               backup:
                 strategy: "SYNC"
                 timeout: "10000"
@@ -38,13 +44,13 @@ patches:
     - op: add
       path: "/spec/template/spec/containers/0/env/-"
       value:
-        name: MP_MESSAGING_OUTGOING_ORDERS_BOOTSTRAP_SERVERS
-        value: my-cluster-kafka-bootstrap.demo.svc.clusterset.local:9092
+        name: CART_CLUSTER_NAME
+        value: coolstore-a
     - op: add
       path: "/spec/template/spec/containers/0/env/-"
       value:
-        name: CART_CLUSTER_NAME
-        value: secondary
+        name: MP_MESSAGING_OUTGOING_ORDERS_BOOTSTRAP_SERVERS
+        value: my-cluster-kafka-bootstrap.demo.svc.clusterset.local:9092
   target:
     kind: Deployment
     name: cart
