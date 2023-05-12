@@ -34,30 +34,29 @@
 
 01. Create 3 AWS clusters in the `coolstore` clusterset
 
-	*   NOTE: Cluster creation documentation can be found at `https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.7/html/clusters/cluster_mce_overview#creating-a-cluster`
+	*   NOTE: Cluster creation documentation can be found at [here](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.7/html/clusters/cluster_mce_overview#creating-a-cluster)
 
 	*   Create an AWS cluster in the `coolstore` clusterset named `coolstore-a`
 
-	*   Cluster `coolstore-a` should be in the AWS region `ap-southeast-1` and has at least 1 worker node deployed in `ap-southeast-1a`
-
-		|Network|CIDR|
+		|Field|Value|
 		|---|---|
+		|AWS region|`ap-southeast-1`|
 		|Cluster network|`10.128.0.0/14`|
 		|Service network|`172.30.0.0/16`|
 
 	*   Create an AWS cluster in the `coolstore` clusterset named `coolstore-b`
-	*   Cluster `coolstore-b` should be in the AWS region `eu-central-1` and has at least 1 worker node deployed in `eu-central-1a`
 
-		|Network|CIDR|
+		|Field|Value|
 		|---|---|
+		|AWS region|`eu-central-1`|
 		|Cluster network|`10.132.0.0/14`|
 		|Service network|`172.31.0.0/16`|
 
 	*   Create an AWS cluster in the `coolstore` clusterset named `coolstore-c`
-	*   Cluster `coolstore-c` should be in the AWS region `us-east-1` and has at least 1 worker node deployed in `us-east-1a`
 
-		|Network|CIDR|
+		|Field|Value|
 		|---|---|
+		|AWS region|`us-east-1`|
 		|Cluster network|`10.136.0.0/14`|
 		|Service network|`172.32.0.0/16`|
 
