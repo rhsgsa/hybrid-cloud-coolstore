@@ -83,6 +83,13 @@
 
 		./scripts/setup-console-banners
 
+01. Configure Let's Encrypt for all the cool stores. You will need `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` credentials.
+
+		export AWS_ACCESS_KEY_ID=xxx
+		export AWS_SECRET_ACCESS_KEY=xxx
+		
+		./scripts/setup-letsencrypt
+
 01. Modify the `coolstore-a` alert manager settings so that alert emails are sent quicker
 
 		./scripts/modify-alert-manager-settings

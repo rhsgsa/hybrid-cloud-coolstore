@@ -1,0 +1,100 @@
+#!/bin/bash
+
+TMP_KUBECONFIG=/tmp/kubeconfig
+
+CLUSTERS="coolstore-a coolstore-b coolstore-c"
+CONFIG=""
+
+for cluster in $CLUSTERS; do
+  secret="$(oc get -n openshift-gitops secret/${cluster}-cluster-secret -o jsonpath='{.data}')"
+  token="$(echo -n $secret | jq -r '.config' | base64 -d | jq -r '.bearerToken')"
+  apiserver="$(echo -n $secret | jq -r '.server' | base64 -d)"
+
+  if [ -z "$token" ]; then
+    echo "could not extract token for $cluster"
+    exit 1
+  fi
+
+  if [ -z "$apiserver" ]; then
+    echo "could not extract API server for $cluster"
+    exit 1
+  fi
+
+  CONFIG="$CONFIG $cluster $token $apiserver"
+done
+
+function git_clone_acme {
+  local gitcheckoutdir=$1  
+
+  rm -rf  $gitcheckoutdir/acme.sh
+  git clone https://github.com/acmesh-official/acme.sh.git $gitcheckoutdir/acme.sh
+}
+
+function check_aws_cred {
+  [[ -z "$AWS_ACCESS_KEY_ID" ]] && { echo "Error: AWS_ACCESS_KEY_ID not found!"; exit 1; }
+  [[ -z "$AWS_SECRET_ACCESS_KEY" ]] && { echo "Error: AWS_SECRET_ACCESS_KEY not found!"; exit 1; }
+}
+
+function login {
+  local token="$1"
+  local api="$2"
+
+  export KUBECONFIG=$TMP_KUBECONFIG
+  rm -f $KUBECONFIG
+  touch $KUBECONFIG
+
+  echo "logging in to $api"
+  oc login $api --token=$token --insecure-skip-tls-verify
+}
+
+function gen_apply_cert {
+  local clustername="$1"
+  local gitcheckoutdir=$2
+  local certdir=$gitcheckoutdir/$clustername
+
+  mkdir -p $certdir
+
+  export LE_API=$(oc whoami --show-server | cut -f 2 -d ':' | cut -f 3 -d '/' | sed 's/-api././')
+  export LE_WILDCARD=$(oc get ingresscontroller default -n openshift-ingress-operator -o jsonpath='{.status.domain}')
+
+  $gitcheckoutdir/acme.sh/acme.sh --issue -d "${LE_API}" -d "*.${LE_WILDCARD}" --dns dns_aws --server letsencrypt --force 
+
+  $gitcheckoutdir/acme.sh/acme.sh --install-cert -d "${LE_API}" -d "*.${LE_WILDCARD}" --cert-file ${certdir}/cert.pem --key-file ${certdir}/key.pem --fullchain-file ${certdir}/fullchain.pem --ca-file ${certdir}/ca.cer
+
+  oc create secret tls router-certs --cert=${certdir}/fullchain.pem --key=${certdir}/key.pem -n openshift-ingress
+  
+  oc patch ingresscontroller default -n openshift-ingress-operator --type=merge --patch='{"spec": { "defaultCertificate": { "name": "router-certs" }}}'
+}
+
+function login_and_apply_cert {
+  local clustername
+  local token
+  local apiserver
+
+  local gitcheckoutdir=/tmp/coolstore-cert
+  
+  #rm -rf $gitcheckoutdir
+  mkdir -p gitcheckoutdir
+
+  git_clone_acme $gitcheckoutdir
+
+  while [ $# -gt 0 ]; do
+    clustername="$1"
+    token="$2"
+    apiserver="$3"
+    shift
+    shift
+    shift
+    echo "$clustername $apiserver"
+    login $token $apiserver
+    gen_apply_cert $clustername $gitcheckoutdir
+  done
+}
+
+check_aws_cred;
+
+set -e
+
+login_and_apply_cert $CONFIG
+
+rm -f $KUBECONFIG
