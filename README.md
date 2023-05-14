@@ -90,6 +90,10 @@
 		
 		./scripts/setup-letsencrypt
 
+	The OpenShift ingress operator will notice the change in router CR and will re-deploy the router pods.
+
+		oc get po -n openshift-ingress
+
 01. Modify the `coolstore-a` alert manager settings so that alert emails are sent quicker
 
 		./scripts/modify-alert-manager-settings
