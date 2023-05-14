@@ -62,8 +62,10 @@ function gen_apply_cert {
   $gitcheckoutdir/acme.sh/acme.sh --install-cert -d "${LE_API}" -d "*.${LE_WILDCARD}" --cert-file ${certdir}/cert.pem --key-file ${certdir}/key.pem --fullchain-file ${certdir}/fullchain.pem --ca-file ${certdir}/ca.cer
 
   oc create secret tls router-certs --cert=${certdir}/fullchain.pem --key=${certdir}/key.pem -n openshift-ingress
-  
   oc patch ingresscontroller default -n openshift-ingress-operator --type=merge --patch='{"spec": { "defaultCertificate": { "name": "router-certs" }}}'
+
+  oc create secret tls api-certs --cert=${certdir}/fullchain.pem --key=${certdir}/key.pem -n openshift-config
+  oc patch apiserver cluster --type merge --patch="{\"spec\": {\"servingCerts\": {\"namedCertificates\": [ { \"names\": [  \"$LE_API\"  ], \"servingCertificate\": {\"name\": \"api-certs\" }}]}}}"
 }
 
 function login_and_apply_cert {
