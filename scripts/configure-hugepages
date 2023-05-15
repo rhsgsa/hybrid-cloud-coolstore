@@ -1,0 +1,30 @@
+#!/bin/bash -e
+# Set up huge pages
+# Be sure to run this BEFORE configuring Submariner.  Don't configure for Submainer gateways!
+
+for context in login-a login-b login-c
+do
+	echo ================================
+	echo Configure for cluster context $context ...
+
+	for w in `oc --context=$context get node -oname -l node-role.kubernetes.io/worker=`
+	do
+		# Exclude any submariner gateway nodes
+		oc --context=$context get $w --show-labels | grep -q submariner.io/gateway=true && continue
+
+		echo oc --context=$context label $w node-role.kubernetes.io/worker-hp=
+	done
+	
+	oc --context=$context create -f yaml/hugepages/ || true
+	
+done
+
+echo
+echo -n Verifying huge pages [this can take some time] ...
+while ! scripts/verify-hugepages >/dev/null 2>&1
+do
+	echo -n .
+	sleep 5
+done
+
+echo done
