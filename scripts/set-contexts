@@ -1,0 +1,31 @@
+#!/bin/bash -e
+# Set the contexts for the three clusters 
+
+echo Checking the current context is a ACM Hub cluster
+if ! oc get project open-cluster-management; then echo "Error: Please log into the ACM hub cluster and try again!"; exit 1; fi
+
+CURRENT_CONTEXT=`oc config current-context`
+
+for c in a b c
+do
+	set -x
+
+	oc config use-context $CURRENT_CONTEXT
+
+	oc config delete-context login-$c 2>/dev/null || true
+
+	# Login into the cluster
+	oc login --insecure-skip-tls-verify `oc get -n openshift-gitops secret/coolstore-$c-cluster-secret -o jsonpath='{.data.server}' | base64 -d` --token `oc get -n openshift-gitops secret/coolstore-$c-cluster-secret -o jsonpath='{.data.config}' | base64 -d | jq -r '.bearerToken'`
+
+	oc config rename-context $(oc config current-context) login-$c
+done
+
+set +x
+
+echo
+echo "Contexts created! Success!"
+echo Example usage:
+echo oc config use-context login-a
+echo Or
+echo oc --context=login-a get pod -n demo
+	

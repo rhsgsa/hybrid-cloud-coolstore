@@ -116,3 +116,7 @@ login-b:
 
 login-c:
 	@echo "oc login --insecure-skip-tls-verify `oc get -n openshift-gitops secret/coolstore-c-cluster-secret -o jsonpath='{.data.server}' | base64 -d` --token `oc get -n openshift-gitops secret/coolstore-c-cluster-secret -o jsonpath='{.data.config}' | base64 -d | jq -r '.bearerToken'`"
+
+contexts:
+	@scripts/set-contexts
+
