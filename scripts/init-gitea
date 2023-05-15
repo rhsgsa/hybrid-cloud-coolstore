@@ -28,16 +28,23 @@ cd - >> /dev/null
 
 set -e
 
-TOKEN=$(oc rsh -n $PROJ statefulset/$APP_NAME gitea admin user create --admin --username "$GIT_USER" --password "$GIT_PASSWORD" --email "$GIT_EMAIL" --access-token true | grep "Access token was successfully created..." | sed 's/.* \([^ ]*\)$/\1/' | sed $'s/\r//g')
+echo "creating admin user..."
+oc rsh -n $PROJ statefulset/$APP_NAME \
+  gitea admin user create \
+    --admin \
+    --username "$GIT_USER" \
+    --password "$GIT_PASSWORD" \
+    --email "$GIT_EMAIL"
 
-if [ -z "$TOKEN" ]; then
-  echo "could not get access token"
-  exit 1
-fi
-
-echo "token is $TOKEN"
+oc rsh -n $PROJ statefulset/$APP_NAME \
+  gitea admin user must-change-password --unset "$GIT_USER"
 
 ROUTE_HOST="$(oc get route/$APP_NAME -n $PROJ -o jsonpath='{.spec.host}')"
+
+if [ -z "$ROUTE_HOST" ]; then
+  echo "could not get route for gitea"
+  exit 1
+fi
 
 # wait till gitea API is up
 echo -n "waiting for gitea API to come up..."
@@ -60,7 +67,7 @@ function clone_repo {
     -X POST \
     -H "accept: application/json" \
     -H "Content-Type: application/json" \
-    -H "Authorization: token $TOKEN" \
+    -u "${GIT_USER}:${GIT_PASSWORD}" \
     -d '{"auto_init":false, "default_branch":"'"$DEFAULT_BRANCH"'", "description":"'"$repoDescription"'", "gitignores":"", "issue_labels":"", "license":"", "name":"'"$repoName"'", "private":false, "readme":"", "template":false, "trust_model":"default"}' \
     https://${ROUTE_HOST}/api/v1/user/repos
 
