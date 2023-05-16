@@ -75,8 +75,8 @@ function login_and_apply_cert {
 
   local gitcheckoutdir=/tmp/coolstore-cert
   
-  #rm -rf $gitcheckoutdir
-  mkdir -p gitcheckoutdir
+  rm -rf $gitcheckoutdir
+  mkdir -p $gitcheckoutdir
 
   git_clone_acme $gitcheckoutdir
 
