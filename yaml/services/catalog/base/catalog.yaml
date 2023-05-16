@@ -36,6 +36,8 @@ spec:
           value: yugabyte
         - name: SPRING_DATASOURCE_PASSWORD
           value: yugabyte
+        - name: SPRING_DATASOURCE_INITIALIZE
+          value: "false"
         ports:
         - containerPort: 8778
           protocol: TCP

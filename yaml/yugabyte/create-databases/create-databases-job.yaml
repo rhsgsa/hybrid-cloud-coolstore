@@ -7,6 +7,10 @@ metadata:
 spec:
   template:
     spec:
+      volumes:
+      - name: schema
+        configMap:
+          name: schema
       containers:
       - name: create-databases
         image: "docker.io/yugabytedb/yugabyte:2.17.3.0-b152"
@@ -29,6 +33,11 @@ spec:
               echo "$d exists"
             fi
           done
+          for s in /schema/*.sql; do
+            database=$(basename $s .sql)
+            echo "importing file $s to $database database..."
+            ysqlsh -h yb-tservers -d $database -f $s
+          done
         env:
         - name: DATABASES
           value: "catalog inventory"
@@ -40,6 +49,10 @@ spec:
           runAsNonRoot: true
           seccompProfile:
             type: RuntimeDefault
+        volumeMounts:
+        - name: schema
+          mountPath: "/schema"
+          readOnly: true
         resources:
           limits:
             cpu: "0.5"
