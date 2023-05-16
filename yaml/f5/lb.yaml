@@ -1,0 +1,73 @@
+metadata:
+  annotations: {}
+  description: Hybrid Cloud Demo Global Loadbalancer
+  disable: false
+  labels: {}
+  name: lb-{{ ingress }}-{{ domain_readable }}
+  namespace: multi-cloud-openshift
+spec:
+  add_location: true
+  advertise_on_public_default_vip: {}
+  api_protection_rules: null
+  auto_cert_info:
+    auto_cert_expiry: null
+    auto_cert_issuer: ""
+    auto_cert_state: AutoCertNotApplicable
+    auto_cert_subject: ""
+    dns_records: []
+    state_start_time: null
+  blocked_clients: []
+  cors_policy: null
+  csrf_policy: null
+  data_guard_rules: []
+  ddos_mitigation_rules: []
+  default_route_pools:
+  - endpoint_subsets: {}
+    pool:
+      name: op-{{ ingress }}
+      namespace: multi-cloud-openshift
+    priority: 1
+    weight: 1
+  disable_api_definition: {}
+  disable_api_discovery: {}
+  disable_bot_defense: {}
+  disable_client_side_defense: {}
+  disable_ddos_detection: {}
+  disable_ip_reputation: {}
+  disable_malicious_user_detection: {}
+  disable_rate_limit: {}
+  disable_trust_client_ip_headers: {}
+  disable_waf: {}
+  domains:
+  - '{{ ingress }}.{{ domain }}'
+  downstream_tls_certificate_expiration_timestamps: []
+  graphql_rules: []
+  https_auto_cert:
+    add_hsts: true
+    connection_idle_timeout: 120000
+    default_header: {}
+    enable_path_normalize: {}
+    header_transformation_type:
+      default_header_transformation: {}
+    http_redirect: true
+    no_mtls: {}
+    non_default_loadbalancer: {}
+    port: 443
+    tls_config:
+      default_security: {}
+#  http:
+#    dns_volterra_managed: true
+#    port: 80
+  internet_vip_info: []
+  malicious_user_mitigation: null
+  more_option: null
+  no_challenge: {}
+  protected_cookies: []
+  round_robin: {}
+  routes: []
+  service_policies_from_namespace: {}
+  state: VIRTUAL_HOST_READY
+  system_default_timeouts: {}
+  trusted_clients: []
+  user_id_client_ip: {}
+  waf_exclusion_rules: []

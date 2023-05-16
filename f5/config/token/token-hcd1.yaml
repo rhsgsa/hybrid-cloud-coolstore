@@ -1,0 +1,12 @@
+metadata:
+  annotations: {}
+  description: Hybrid Cloud Demo Token
+  disable: false
+  name: hcd1-token
+  namespace: system
+#  namespace: multi-cloud-openshift
+object: null
+#referring_objects: []
+replace_form: null
+spec:
+  state: VALID

@@ -1,0 +1,31 @@
+create_form: null
+metadata:
+  annotations: {}
+  disable: false
+  labels: {}
+  name: op-{{ ingress }}
+  namespace: multi-cloud-openshift
+object: null
+referring_objects: []
+replace_form: null
+spec:
+  advanced_options: null
+  endpoint_selection: LOCAL_PREFERRED
+  healthcheck:
+  - name: basic-healthcheck
+    namespace: multi-cloud-openshift
+  loadbalancer_algorithm: ROUND_ROBIN
+  no_tls: {}
+  origin_servers:
+  {% for site in sites -%}
+  - k8s_service:
+      outside_network: {}
+      service_name: {{ ingresses[ingress].service }}.{{ ingresses[ingress].namespace }}
+      site_locator:
+        site:
+          name: {{ site }}
+          namespace: system
+    labels: {}
+  {% endfor -%}
+  port: {{ ingresses[ingress].port }}
+  same_as_endpoint_port: {}

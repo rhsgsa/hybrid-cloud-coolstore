@@ -1,0 +1,12 @@
+metadata:
+  annotations: {}
+  description: ""
+  disable: false
+  labels: {}
+  name: hcd1.bylo.de
+  namespace: system
+referring_objects: []
+spec:
+  dnssec_mode: DNSSEC_DISABLE
+  domain: ""
+  volterra_managed: {}
