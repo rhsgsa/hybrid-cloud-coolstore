@@ -116,6 +116,19 @@
 		* Turn on notifications so you see the alert email coming in
 		* If you are using Google Chrome, you may need to view site information and explicitly allow notifications - don't forget to reload the page after enabling notifications
 
+01. Set up F5 Distributed Cloud Global Loadbalancer
+
+	Configure OpenShift contexts 
+
+		make contexts 
+
+	Configure Huge Pages 
+
+		make hugepages
+
+	Configure F5 Global Loadbalancer
+
+		make f5
 
 ### Multicluster Demo
 

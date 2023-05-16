@@ -19,12 +19,12 @@ do
 	
 done
 
-echo
-echo -n Verifying huge pages [this can take some time] ...
-while ! scripts/verify-hugepages >/dev/null 2>&1
-do
-	echo -n .
-	sleep 5
-done
+#echo
+#echo -n Verifying huge pages [this can take some time] ...
+#while ! scripts/verify-hugepages >/dev/null 2>&1
+#do
+#	echo -n .
+#	sleep 5
+#done
 
 echo done
