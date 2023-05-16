@@ -12,7 +12,7 @@ do
 		# Exclude any submariner gateway nodes
 		oc --context=$context get $w --show-labels | grep -q submariner.io/gateway=true && continue
 
-		echo oc --context=$context label $w node-role.kubernetes.io/worker-hp=
+		oc --context=$context label $w node-role.kubernetes.io/worker-hp=
 	done
 	
 	oc --context=$context create -f yaml/hugepages/ || true

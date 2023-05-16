@@ -3,7 +3,7 @@ metadata:
   annotations: {}
   disable: false
   labels: {}
-  name: op-{{ ingress }}
+  name: op-{{ ingress }}-{{ domain_readable }}
   namespace: multi-cloud-openshift
 object: null
 referring_objects: []

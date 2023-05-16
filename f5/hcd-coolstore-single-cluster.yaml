@@ -4,16 +4,16 @@ hcd:
   domain: hcd1.ltsai.com                       # Use either hcd1.ltsai.com, hcd2.ltsai.com or hcd3.ltsai.com
   namespace: multi-cloud-openshift             # This is the namespace to use in F5 XC
 sites: 
-  coolstore:         # name of cluster 
-    long: 103.845      # Ex. SIN: 103.845 1.314  LON: 0.1278 51.5074  TOK: 139.6917 35.689  DAL: 96.7970 32.7767
+  coolstore:                 # name of cluster 
+    long: 103.845            # Ex. SIN: 103.845 1.314  LON: 0.1278 51.5074  TOK: 139.6917 35.689  DAL: 96.7970 32.7767
     lat: 1.314
     context: coolstore-sno   # Cluster context 
-ingresses:              # List of kube services (ingress to these services)
-  coolstore-ui-demo:        # Service name
+ingresses:                   # List of kube services (ingress to these services)
+  coolstore-ui-demo:         # Service name
     service: coolstore-ui
     port: 8080        
     namespace: demo
-  catalog-demo:        # No service is defined for this, but it's still in use.
+  catalog-demo:
     service: catalog
     port: 8080
     namespace: demo
@@ -33,8 +33,3 @@ ingresses:              # List of kube services (ingress to these services)
     service: payment
     port: 80
     namespace: demo
-  yb-service-ui:             # Should be yb-master-ui
-    service: yb-service-ui
-    port: 7000
-    namespace: demo
-

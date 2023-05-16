@@ -1,7 +1,7 @@
 hcd:
   name: "Hybrid Cloud Demo 1"
   token: 78c1d1ad-2ef1-4d57-8fa2-4bc784bd4b8d  # Use this token or create a new one
-  domain: hcd2.ltsai.com                       # Use either hcd1.ltsai.com, hcd2.ltsai.com or hcd3.ltsai.com
+  domain: hcd1.ltsai.com                       # Use either hcd1.ltsai.com, hcd2.ltsai.com or hcd3.ltsai.com
   namespace: multi-cloud-openshift             # This is the namespace to use in F5 XC
 sites: 
   coolstore-a:         # name of cluster 
@@ -21,7 +21,7 @@ ingresses:                  # List of kube ingresses
     service: coolstore-ui   # Service obj name
     port: 8080        
     namespace: demo
-  catalog-demo:        # No service is defined for this, but it's still in use.
+  catalog-demo:
     service: catalog
     port: 8080
     namespace: demo

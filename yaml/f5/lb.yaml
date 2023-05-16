@@ -24,7 +24,7 @@ spec:
   default_route_pools:
   - endpoint_subsets: {}
     pool:
-      name: op-{{ ingress }}
+      name: op-{{ ingress }}-{{ domain_readable }}
       namespace: multi-cloud-openshift
     priority: 1
     weight: 1
