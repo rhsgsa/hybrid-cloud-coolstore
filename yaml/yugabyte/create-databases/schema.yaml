@@ -1,0 +1,48 @@
+apiVersion: v1
+data:
+  catalog.sql: |
+    DROP TABLE IF EXISTS catalog;
+
+    CREATE TABLE catalog (
+      itemId VARCHAR(256) NOT NULL PRIMARY KEY,
+      name VARCHAR(256),
+      description VARCHAR(2560),
+      price DOUBLE PRECISION
+    );
+
+
+    insert into catalog (itemId, name, description, price) values ('329299', 'Quarkus T-shirt', '', 10.00);
+    insert into catalog (itemId, name, description, price) values ('329199', 'Pronounced Kubernetes', '', 9.00);
+    insert into catalog (itemId, name, description, price) values ('165613', 'Knit socks', '',4.15);
+    insert into catalog (itemId, name, description, price) values ('165614', 'Quarkus H2Go water bottle', '', 14.45);
+    insert into catalog (itemId, name, description, price) values ('165954', 'Patagonia Refugio pack 28L', '', 6.00);
+    insert into catalog (itemId, name, description, price) values ('444434', 'Red Hat Impact T-shirt', '', 9.00);
+    insert into catalog (itemId, name, description, price) values ('444435', 'Quarkus twill cap', '',13.00 );
+    insert into catalog (itemId, name, description, price) values ('444437', 'Nanobloc Universal Webcam Cover', '', 2.75);
+  inventory.sql: |
+    DROP TABLE IF EXISTS inventory;
+
+    CREATE TABLE public.inventory (
+        id bigint NOT NULL,
+        itemid character varying(255),
+        link character varying(255),
+        location character varying(255),
+        quantity integer NOT NULL,
+        CONSTRAINT inventory_pkey PRIMARY KEY((id) HASH)
+    );
+
+    DROP SEQUENCE IF EXISTS hibernate_sequence;
+    CREATE SEQUENCE hibernate_sequence START 1;
+
+    INSERT INTO INVENTORY (id, itemId, link, location, quantity) values (nextval('hibernate_sequence'), '329299', 'http://maps.google.com/?q=Raleigh', 'Raleigh', 736);
+    INSERT INTO INVENTORY (id, itemId, link, location, quantity) values (nextval('hibernate_sequence'), '329199', 'http://maps.google.com/?q=Boston', 'Boston', 512);
+    INSERT INTO INVENTORY (id, itemId, link, location, quantity) values (nextval('hibernate_sequence'), '165613', 'http://maps.google.com/?q=Seoul', 'Seoul', 256);
+    INSERT INTO INVENTORY (id, itemId, link, location, quantity) values (nextval('hibernate_sequence'), '165614', 'http://maps.google.com/?q=Singapore', 'Singapore', 54);
+    INSERT INTO INVENTORY (id, itemId, link, location, quantity) values (nextval('hibernate_sequence'), '165954', 'http://maps.google.com/?q=London', 'London', 87);
+    INSERT INTO INVENTORY (id, itemId, link, location, quantity) values (nextval('hibernate_sequence'), '444434', 'http://maps.google.com/?q=NewYork', 'New York', 443);
+    INSERT INTO INVENTORY (id, itemId, link, location, quantity) values (nextval('hibernate_sequence'), '444435', 'http://maps.google.com/?q=Paris', 'Paris', 600);
+    INSERT INTO INVENTORY (id, itemId, link, location, quantity) values (nextval('hibernate_sequence'), '444437', 'http://maps.google.com/?q=Tokyo', 'Tokyo', 230);
+kind: ConfigMap
+metadata:
+  creationTimestamp: null
+  name: schema

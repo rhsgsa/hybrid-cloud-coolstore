@@ -60,6 +60,10 @@ spec:
           value: yugabyte
         - name: QUARKUS_DATASOURCE_PASSWORD
           value: yugabyte
+        - name: QUARKUS_HIBERNATE_ORM_DATABASE_GENERATION
+          value: none
+        - name: QUARKUS_HIBERNATE_ORM__PERSISTENCE_UNIT_NAME__SQL_LOAD_SCRIPT
+          value: "no-file"
         ports:
         - containerPort: 8080
           name: http
