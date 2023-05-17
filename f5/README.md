@@ -1,4 +1,4 @@
-# Set up F5 Volterra based HTTP Load Balancers
+# Set up F5 Volterra Global Load Balancers (work in progress)
 
 The below instructions were created from the following documents:
 
@@ -13,6 +13,8 @@ Note: The above instriuctions mention configuring "Huge Pages" support.  In test
 If interested, see this article about Volterra architecture:
 https://medium.com/volterra-io/managing-thousands-of-edge-kubernetes-clusters-with-gitops-82121f97dfeb
 
+**These notes are work-in-progess***
+
 # Overall Process to set up F5 Volterra
 
 One time tasks to set up the domains for each demo and the F5 UID
@@ -21,11 +23,12 @@ One time tasks to set up the domains for each demo and the F5 UID
 - hcd2.example.com
 - hcd3.example.com
 
-1 Install vecclt CLI 
-  1 See: https://gitlab.com/volterra.io/vesctl/blob/main/README.md
-1 Set up "$HOME/.vesconfig" by "Obtaining API Credentials from Volterra Console" using "API Certificate". Note, the cert has expiry date of 3 months! 
-1 Set up domain delegation e.g. for xxx1.example.com, xxx2.example.com, xxx3.example.com 
-1 Create the F5 UID
+1. Install vecclt CLI 
+  1. See: https://gitlab.com/volterra.io/vesctl/blob/main/README.md
+1. Set up "$HOME/.vesconfig" by "Obtaining API Credentials from Volterra Console" using "API Certificate". Note, the cert has expiry date of 3 months! 
+1. Set up domain delegation e.g. for xxx1.example.com, xxx2.example.com, xxx3.example.com 
+1. Create the F5 UID
+
 
 Check the available namespaces
 ```
@@ -45,13 +48,13 @@ export NS=multi-cloud-openshift
 
 ## Create all F5 sites (ingress points) 
 
-Once all clusters are up and their context (make contexts) properly set
+Once all clusters are up and their context (make contexts) properly set:
 
-1 Either run 'make contexts' ot log into all 3 clusters and rename the context (see below)
-1 For all 3 clusters, bring up the initial sites
-1 Wait for the site to register 
-1 Confirm the pending registration in the F5 UI
-1 Configure http load ballancers for all 3 sites 
+1. Either run 'make contexts' or log into all 3 clusters and rename the context (see below)
+1. For all 3 clusters, bring up the initial sites
+1. Wait for the site to register 
+1. Confirm the pending registration in the F5 UI
+1. Configure http load ballancers for all 3 sites 
 
 
 ```
