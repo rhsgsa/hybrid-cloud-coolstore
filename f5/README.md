@@ -57,6 +57,7 @@ volterra-ce-init-v85nw        1/1     Running   0              8m7s
 volterra-ce-init-w6pc4        1/1     Running   0              8m7s
 vp-manager-0                  1/1     Running   2 (112s ago)   7m34s
 ```
+
 Be sure all pods are in the ready state!
 
 Make sure there are no errors in:
@@ -66,7 +67,7 @@ oc logs vp-manager-0 -n ves-system
 ```
 
 
-# Enable Huge Pages support
+## Enable Huge Pages support
 
 If you see this huge pages (HP) error, set up huge pages:
 
