@@ -65,34 +65,33 @@ Make sure there are no errors in:
 oc logs vp-manager-0 -n ves-system
 ```
 
+
+# Enable Huge Pages support
+
 If you see this huge pages (HP) error, set up huge pages:
 
 ```
 Insufficient hugepages-2Mi
 ```
 
-# Label one or more workers for Huge Page support 
-
-Label workers 
+Label one or more workers for Huge Page support 
 
 ```
 for w in `oc get node -oname -l node-role.kubernetes.io/worker=`; do oc label $w node-role.kubernetes.io/worker-hp=; done
 # Note, DO NOT set HP for the Submainer gateway nodes, as they will fail to boot
 ```
 
-# Enable Huge Pages support
-
 ```
 oc create -f yaml/hugepages/
 ```
 
-Wait for all nodes to re-configure...
+Wait for all nodes to restart, re-configure and become ready:
 
 ```
 oc get nodes -w
 ```
 
-Verify HP has been set
+Verify HP has been set:
 
 ```
 for w in `oc get node -oname -l node-role.kubernetes.io/worker=`; do echo -n "$w: "; oc get $w -o jsonpath="{.status.allocatable.hugepages-2Mi}"; echo; done
@@ -117,4 +116,5 @@ Delete the limits
 ```
 oc delete limits ves-system-core-resource-limits -n 
 ```
+
 
