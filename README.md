@@ -119,6 +119,7 @@
 01. Set up F5 Distributed Cloud Global Loadbalancer
 
 	Configure OpenShift contexts 
+	    * Be sure to log into the hub cluster.
 
 		make contexts 
 
@@ -127,6 +128,7 @@
 		make hugepages
 
 	Configure F5 Global Loadbalancer
+	    * Note that you will need to install the following: yq, jinja2 and vesctl.
 
 		make f5
 
