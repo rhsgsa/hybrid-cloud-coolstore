@@ -1,0 +1,210 @@
+#!/bin/bash 
+
+[ $# -eq 0 ] && echo "Usage: `basename $0` <hcd config yaml file>" && exit 1
+
+HCD_CONF=$1
+
+# Check yq, jinja2 and vesctl are installed 
+if ! which yq > /dev/null; then
+	echo "Please install yq!"
+	echo "brew install yq"
+	echo "pip install yq"
+	exit 1
+fi
+
+if ! which jinja2 > /dev/null; then
+	echo "Please install jinja2!"
+	echo "pip install jinja2-cli"
+	exit 1
+fi
+
+if ! which vesctl > /dev/null; then
+	echo "Please install vesctl!"
+	echo "Get the CLI: https://gitlab.com/volterra.io/vesctl/blob/main/README.md"
+	echo "If using Linux, disable SELinux with setenforce 0"
+	exit 1
+fi
+
+
+TMP=/tmp/.tmp.$$
+rm -rf $TMP && mkdir $TMP
+OUT=/tmp/out
+rm -rf $OUT && mkdir $OUT
+
+mv f5/cleanup.sh f5/cleanup.sh.bak
+echo "f5/bin/remove_registrations.sh" >> f5/cleanup.sh
+
+wait_pod_exists()
+{
+	while ! oc --context=$CONTEXT get po $* --no-headers 2>/dev/null >&2
+	do
+		sleep 1
+	done
+}
+
+wait_all_pods_ready()
+{
+	while ! oc --context=$CONTEXT get po $* --no-headers 2>/dev/null  | awk '{print $2}' | awk -F/ '{if ($1 != $2) exit 1}'
+	do
+		sleep 1
+	done
+}
+
+# Fetch global config 
+
+BASE_DOMAIN=$(cat $HCD_CONF | yq .hcd.domain)
+BASE_DOMAIN_READABLE=$(echo $BASE_DOMAIN | tr "." "-")
+TOKEN=$(cat $HCD_CONF | yq .hcd.token)
+F5_NAMESPACE=$(cat $HCD_CONF | yq .hcd.namespace)
+
+# Fetch list of cluster contexts from config
+
+CLUSTER_CONTEXTS=`cat $HCD_CONF | yq .sites.*.context`
+> $TMP/.contexts
+
+
+echo Checking OCP contexts are configured ...
+for context in $CLUSTER_CONTEXTS
+do
+	echo -n "$context: "
+
+	SVR=`oc --context=$context whoami --show-server` || exit 1
+	echo "Server URL: $SVR"
+	grep $SVR $TMP/.contexts && echo "Context $context points to the same cluster.  Context overlap!" && exit 1
+	echo $SVR >> $TMP/.contexts
+done
+
+getContext()
+{
+	# Fetch the required OCP kube context for a site ($1)
+	echo $(cat $HCD_CONF | yq .sites.$1.context) 
+}
+
+SITE_LIST=$(cat $HCD_CONF | yq '.sites[] | key')
+
+# Set up the F5 Ingress (VER) on each site/cluster. 
+for site in $SITE_LIST
+do
+	CONTEXT=$(getContext $site) || exit 1
+
+	echo $CONTEXT: Launching F5 Ingress ...
+
+	# Create the F5 Ingress (VES) in OpenShift
+	cat $HCD_CONF | yq ".sites.$site" | jinja2 yaml/f5/site.yaml -Dsite=$site -Dtoken=$TOKEN > $OUT/site-$site.yaml
+	oc --context=$CONTEXT create -f $OUT/site-$site.yaml -n ves-system
+
+	echo "oc --context=$CONTEXT delete -f $OUT/site-$site.yaml" >> f5/cleanup.sh 
+done
+
+
+# Wait for F5 Ingress to come up
+
+for site in $SITE_LIST
+do
+	export CONTEXT=$(getContext $site) || exit 1
+
+	echo ==========================================================================
+	echo -n "$CONTEXT: Waiting for all initial pods to be ready in namespace ves-system ... "
+	#wait_all_pods_ready -n ves-system 
+	#CONTEXT=$(getContext $site) wait_all_pods_ready -n ves-system 
+	CONTEXT=$(getContext $site) wait_all_pods_ready -n ves-system 
+	echo done
+done
+
+echo 
+echo ==========================================================================
+echo "Please confirm pending registrations by clicking on the blue tick in the F5 UI under:"
+echo "Home -> Multi-Cloud Network Connect -> Manage -> Site Management -> Registrations"
+echo "https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-network-connect/manage/site_management/registrations;tab=pending"
+echo "About 2 to 3 mins after confirmation, the ver-0 pod will start."
+
+# Wait for F5 Ingress to come up ...
+
+for site in $SITE_LIST
+do
+	export CONTEXT=$(getContext $site) || exit 1
+
+	## echo -n "$CONTEXT: Waiting for the ver-0 pod to start in ves-system namespace on context $CONTEXT ... "
+	wait_pod_exists ver-0 -n ves-system
+	#echo done
+
+	echo -n "$CONTEXT: Waiting for all pods to be ready in ves-system namespace on context $CONTEXT ... "
+	#CONTEXT=$(getContext $site) wait_all_pods_ready -n ves-system 
+	wait_all_pods_ready -n ves-system 
+	echo done
+
+	#while ! vesctl configuration list registration -n system --outfmt=yaml| yq '.items[].name'
+	#do
+	#	sleep 3
+	#done
+done
+
+sleep 5  # Seems this is needed!
+
+# Check the sites are available 
+for site in $SITE_LIST
+do
+	echo -n "Checking if site [$site] is available ... "
+	if ! vesctl configuration get site $site -n system
+	then
+		echo 
+		echo "Site [$site] not yet available.  Be sure all pods in the project 'ver-system' are running/ready and run this script again."
+		exit 1
+	fi
+	echo done
+done
+
+
+########################################
+# Now, create the http load balancers ...
+########################################
+
+echo Creating basic health check config ...
+vesctl configuration create healthcheck -i yaml/f5/health.yaml || \
+	vesctl configuration replace healthcheck -i yaml/f5/health.yaml || exit 1
+echo "vesctl configuration delete healthcheck basic-healthcheck -n multi-cloud-openshift" >> f5/cleanup.sh
+
+
+INGRESS_LIST=$(cat $HCD_CONF  | yq '.ingresses[] | key')
+
+# Create the Origin Pools, one for each ingress
+for ingress in $INGRESS_LIST
+do
+	op_name=op-$ingress-$BASE_DOMAIN_READABLE
+	conffile=$OUT/$op_name.yaml
+
+	echo Creating Origin Pool [$op_name] ...
+
+	cat $HCD_CONF | jinja2 yaml/f5/op.yaml -Dingress=$ingress -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile || exit 1
+
+	vesctl configuration create origin_pool -i $conffile || \
+		vesctl configuration replace origin_pool -i $conffile || exit 1
+
+	echo "vesctl configuration delete origin_pool $op_name -n multi-cloud-openshift" >> f5/cleanup.sh
+done
+
+# Create the http load balancers, one for each ingress 
+for ingress in $INGRESS_LIST
+do
+	lb_name=lb-$ingress-$BASE_DOMAIN_READABLE
+	conffile=$OUT/$lb_name.yaml
+
+	echo Creating HTTP Load Balancer [$lb_name] ...
+
+	cat $HCD_CONF | yq ".ingresses.$ingress" | jinja2 yaml/f5/lb.yaml -Dingress=$ingress -Ddomain=$BASE_DOMAIN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
+
+	vesctl configuration create http_loadbalancer -i $conffile || \
+		vesctl configuration replace http_loadbalancer -i $conffile || exit 1
+	echo "vesctl configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift" >> f5/cleanup.sh
+done
+
+echo All done
+
+echo All applied F5 configurations can be found in the $OUT directory for reference. 
+echo
+echo 'set -x' >> f5/cleanup.sh
+echo 
+echo To clean up configurations, run one of the following commands:
+echo "tail -r f5/cleanup.sh | bash                         # to cleanup the f5 ingress and all f5 configurations"
+echo "grep -v \"oc \" f5/cleanup.sh | tail -r | bash         # to cleanup all f5 configurations only"
+
