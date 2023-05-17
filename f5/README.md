@@ -118,4 +118,11 @@ Delete the limits
 oc delete limits ves-system-core-resource-limits -n 
 ```
 
+## Vesctl CLI on Linux
+
+SELinux needs to be disabled, otherwise vesctl core dumps on start.
+
+```
+setenforce 0
+```
 
