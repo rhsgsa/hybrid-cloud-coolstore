@@ -32,8 +32,8 @@ rm -rf $TMP && mkdir $TMP
 OUT=/tmp/out
 rm -rf $OUT && mkdir $OUT
 
-[ -f f5/cleanup.sh ] && mv -f f5/cleanup.sh f5/cleanup.sh.bak
-echo "f5/bin/remove_registrations.sh" >> f5/cleanup.sh
+[ -f f5/cleanup-sites.sh ] && mv -f f5/cleanup-sites.sh f5/cleanup-sites.sh.prev
+[ -f f5/cleanup-f5xc.sh ]  && mv -f f5/cleanup-f5xc.sh  f5/cleanup-f5xc.sh.prev
 
 wait_pod_exists()
 {
@@ -94,7 +94,7 @@ do
 	cat $HCD_CONF | yq ".sites.$site" | jinja2 yaml/f5/site.yaml -Dsite=$site -Dtoken=$TOKEN > $OUT/site-$site.yaml
 	oc --context=$CONTEXT create -f $OUT/site-$site.yaml -n ves-system
 
-	echo "oc --context=$CONTEXT delete -f $OUT/site-$site.yaml" >> f5/cleanup.sh 
+	echo "oc --context=$CONTEXT delete -f $OUT/site-$site.yaml" >> $TMP/cleanup-sites.sh 
 done
 
 
@@ -114,7 +114,7 @@ done
 
 echo 
 echo  =====================================================================================
-echo "Please confirm pending registrations by clicking on the blue tick in the F5 UI under:"
+echo "Please confirm pending site registrations by clicking on the blue tick in the F5 UI under:"
 echo "  Home -> Multi-Cloud Network Connect -> Manage -> Site Management -> Registrations"
 echo "  https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-network-connect/manage/site_management/registrations;tab=pending"
 echo -n "  About 2 to 3 mins after confirmation, the ver-0 pod will start ... "
@@ -161,7 +161,7 @@ echo Creating basic health check config [healthcheck] ...
 cp yaml/f5/health.yaml $OUT
 vesctl configuration create healthcheck -i $OUT/health.yaml >/dev/null 2>&1|| \
 	vesctl configuration replace healthcheck -i $OUT/health.yaml >/dev/null || exit 1
-echo "vesctl configuration delete healthcheck basic-healthcheck -n multi-cloud-openshift" >> f5/cleanup.sh
+echo "vesctl configuration delete healthcheck basic-healthcheck -n multi-cloud-openshift" >> $TMP/cleanup-f5xc.sh
 
 
 INGRESS_LIST=$(cat $HCD_CONF  | yq '.ingresses[] | key')
@@ -179,7 +179,7 @@ do
 	vesctl configuration create origin_pool -i $conffile >/dev/null 2>&1 || \
 		vesctl configuration replace origin_pool -i $conffile >/dev/null || exit 1
 
-	echo "vesctl configuration delete origin_pool $op_name -n multi-cloud-openshift" >> f5/cleanup.sh
+	echo "vesctl configuration delete origin_pool $op_name -n multi-cloud-openshift" >> $TMP/cleanup-f5xc.sh
 done
 
 # Create the http load balancers, one for each ingress 
@@ -194,7 +194,7 @@ do
 
 	vesctl configuration create http_loadbalancer -i $conffile >/dev/null 2>&1 || \
 		vesctl configuration replace http_loadbalancer -i $conffile >/dev/null || exit 1
-	echo "vesctl configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift" >> f5/cleanup.sh
+	echo "vesctl configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift" >> $TMP/cleanup-f5xc.sh
 done
 
 echo
@@ -202,10 +202,15 @@ echo All done
 
 echo All applied F5 configurations can be found in the $OUT directory for reference. 
 
-echo 'set -x' >> f5/cleanup.sh
+echo 'set -x' >> $TMP/cleanup-f5xc.sh
+echo 'set -x' >> $TMP/cleanup-sites.sh
+
+tac $TMP/cleanup-f5xc.sh  > f5/cleanup-f5xc.sh;   chmod 700 f5/cleanup-f5xc.sh
+tac $TMP/cleanup-sites.sh > f5/cleanup-sites.sh;  chmod 700 f5/cleanup-sites.sh
 
 echo 
-echo To clean up configurations, run one of the following commands:
-echo "tac f5/cleanup.sh | bash                         # to cleanup the f5 ingress and all f5 configurations"
-echo "grep -v \"oc \" f5/cleanup.sh | tac | bash         # to cleanup all f5 configurations only"
+echo "To clean up configurations, run one of the following commands:"
+echo 
+echo "f5/cleanup-sites.sh    # Clean up all F5 Ingress pods in ves-system"
+echo "f5/cleanup-f5xc.sh     # Clean up only the loadbalacners and pools"
 
