@@ -6,7 +6,7 @@ HCD_CONF=$1
 
 # Check yq, jinja2 and vesctl are installed 
 if ! which yq > /dev/null; then
-	echo "Please install yq!"
+	echo "Please install 'yq' using the following!"
 	echo "sudo curl --location --silent --show-error https://github.com/mikefarah/yq/releases/download/v4.33.3/yq_linux_amd64 -o /usr/local/bin/yq && sudo chmod +x /usr/local/bin/yq"
 	echo "or brew install yq"
 	echo "Be sure the yq --version is version v4.33.3"
@@ -14,13 +14,13 @@ if ! which yq > /dev/null; then
 fi
 
 if ! which jinja2 > /dev/null; then
-	echo "Please install jinja2!"
+	echo "Please install 'jinja2'!"
 	echo "sudo pip install jinja2-cli"
 	exit 1
 fi
 
 if ! which vesctl > /dev/null; then
-	echo "Please install vesctl!"
+	echo "Please install 'vesctl'!"
 	echo "Install and configure the CLI: https://gitlab.com/volterra.io/vesctl/blob/main/README.md"
 	echo "If using Linux, disable SELinux with 'sudo setenforce 0'"
 	exit 1
@@ -32,7 +32,7 @@ rm -rf $TMP && mkdir $TMP
 OUT=/tmp/out
 rm -rf $OUT && mkdir $OUT
 
-mv f5/cleanup.sh f5/cleanup.sh.bak
+[ -f f5/cleanup.sh ] && mv -f f5/cleanup.sh f5/cleanup.sh.bak
 echo "f5/bin/remove_registrations.sh" >> f5/cleanup.sh
 
 wait_pod_exists()
@@ -64,7 +64,7 @@ CLUSTER_CONTEXTS=`cat $HCD_CONF | yq .sites.*.context`
 > $TMP/.contexts
 
 
-echo Checking OCP contexts are configured ...
+echo Checking OCP contexts are configured and unique ...
 for context in $CLUSTER_CONTEXTS
 do
 	echo -n "$context: "
@@ -108,7 +108,7 @@ do
 	echo -n "$CONTEXT: Waiting for all initial pods to be ready in namespace ves-system ... "
 	#wait_all_pods_ready -n ves-system 
 	#CONTEXT=$(getContext $site) wait_all_pods_ready -n ves-system 
-	CONTEXT=$(getContext $site) wait_all_pods_ready -n ves-system 
+	wait_all_pods_ready -n ves-system 
 	echo done
 done
 
@@ -135,11 +135,6 @@ do
 	#CONTEXT=$(getContext $site) wait_all_pods_ready -n ves-system 
 	wait_all_pods_ready -n ves-system 
 	echo done
-
-	#while ! vesctl configuration list registration -n system --outfmt=yaml| yq '.items[].name'
-	#do
-	#	sleep 3
-	#done
 done
 
 sleep 5  # Seems this is needed!
@@ -148,7 +143,7 @@ sleep 5  # Seems this is needed!
 for site in $SITE_LIST
 do
 	echo -n "Checking if site [$site] is available ... "
-	if ! vesctl configuration get site $site -n system
+	if ! vesctl configuration get site $site -n system >/dev/null
 	then
 		echo 
 		echo "Site [$site] not yet available.  Be sure all pods in the project 'ver-system' are running/ready and run this script again."
@@ -162,9 +157,10 @@ done
 # Now, create the http load balancers ...
 ########################################
 
-echo Creating basic health check config ...
-vesctl configuration create healthcheck -i yaml/f5/health.yaml || \
-	vesctl configuration replace healthcheck -i yaml/f5/health.yaml || exit 1
+echo Creating basic health check config [healthcheck] ...
+cp yaml/f5/health.yaml $OUT
+vesctl configuration create healthcheck -i $OUT/health.yaml >/dev/null 2>&1|| \
+	vesctl configuration replace healthcheck -i $OUT/health.yaml >/dev/null || exit 1
 echo "vesctl configuration delete healthcheck basic-healthcheck -n multi-cloud-openshift" >> f5/cleanup.sh
 
 
@@ -180,8 +176,8 @@ do
 
 	cat $HCD_CONF | jinja2 yaml/f5/op.yaml -Dingress=$ingress -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile || exit 1
 
-	vesctl configuration create origin_pool -i $conffile || \
-		vesctl configuration replace origin_pool -i $conffile || exit 1
+	vesctl configuration create origin_pool -i $conffile >/dev/null 2>&1 || \
+		vesctl configuration replace origin_pool -i $conffile >/dev/null || exit 1
 
 	echo "vesctl configuration delete origin_pool $op_name -n multi-cloud-openshift" >> f5/cleanup.sh
 done
@@ -192,22 +188,24 @@ do
 	lb_name=lb-$ingress-$BASE_DOMAIN_READABLE
 	conffile=$OUT/$lb_name.yaml
 
-	echo Creating HTTP Load Balancer [$lb_name] ...
+	echo Creating HTTP Loadbalancer [$lb_name] ...
 
 	cat $HCD_CONF | yq ".ingresses.$ingress" | jinja2 yaml/f5/lb.yaml -Dingress=$ingress -Ddomain=$BASE_DOMAIN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
 
-	vesctl configuration create http_loadbalancer -i $conffile || \
-		vesctl configuration replace http_loadbalancer -i $conffile || exit 1
+	vesctl configuration create http_loadbalancer -i $conffile >/dev/null 2>&1 || \
+		vesctl configuration replace http_loadbalancer -i $conffile >/dev/null || exit 1
 	echo "vesctl configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift" >> f5/cleanup.sh
 done
 
+echo
 echo All done
 
 echo All applied F5 configurations can be found in the $OUT directory for reference. 
-echo
+
 echo 'set -x' >> f5/cleanup.sh
+
 echo 
 echo To clean up configurations, run one of the following commands:
-echo "tail -r f5/cleanup.sh | bash                         # to cleanup the f5 ingress and all f5 configurations"
-echo "grep -v \"oc \" f5/cleanup.sh | tail -r | bash         # to cleanup all f5 configurations only"
+echo "tac f5/cleanup.sh | bash                         # to cleanup the f5 ingress and all f5 configurations"
+echo "grep -v \"oc \" f5/cleanup.sh | tac | bash         # to cleanup all f5 configurations only"
 
