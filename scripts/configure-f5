@@ -7,14 +7,15 @@ HCD_CONF=$1
 # Check yq, jinja2 and vesctl are installed 
 if ! which yq > /dev/null; then
 	echo "Please install yq!"
-	echo "pip install yq"
-	echo "brew install yq"
+	echo "sudo curl --location --silent --show-error https://github.com/mikefarah/yq/releases/download/v4.33.3/yq_linux_amd64 -o /usr/local/bin/yq && sudo chmod +x /usr/local/bin/yq"
+	echo "or brew install yq"
+	echo "Be sure the yq --version is version v4.33.3"
 	exit 1
 fi
 
 if ! which jinja2 > /dev/null; then
 	echo "Please install jinja2!"
-	echo "pip install jinja2-cli"
+	echo "sudo pip install jinja2-cli"
 	exit 1
 fi
 
@@ -116,7 +117,9 @@ echo ==========================================================================
 echo "Please confirm pending registrations by clicking on the blue tick in the F5 UI under:"
 echo "Home -> Multi-Cloud Network Connect -> Manage -> Site Management -> Registrations"
 echo "https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-network-connect/manage/site_management/registrations;tab=pending"
-echo "About 2 to 3 mins after confirmation, the ver-0 pod will start."
+echo -n "About 2 to 3 mins after confirmation, the ver-0 pod will start ... "
+wait_pod_exists ver-0 -n ves-system
+echo done
 
 # Wait for F5 Ingress to come up ...
 
