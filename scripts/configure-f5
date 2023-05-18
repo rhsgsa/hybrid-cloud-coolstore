@@ -113,11 +113,11 @@ do
 done
 
 echo 
-echo ==========================================================================
+echo  =====================================================================================
 echo "Please confirm pending registrations by clicking on the blue tick in the F5 UI under:"
-echo "Home -> Multi-Cloud Network Connect -> Manage -> Site Management -> Registrations"
-echo "https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-network-connect/manage/site_management/registrations;tab=pending"
-echo -n "About 2 to 3 mins after confirmation, the ver-0 pod will start ... "
+echo "  Home -> Multi-Cloud Network Connect -> Manage -> Site Management -> Registrations"
+echo "  https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-network-connect/manage/site_management/registrations;tab=pending"
+echo -n "  About 2 to 3 mins after confirmation, the ver-0 pod will start ... "
 wait_pod_exists ver-0 -n ves-system
 echo done
 
