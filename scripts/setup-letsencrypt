@@ -1,5 +1,8 @@
 #!/bin/bash
 
+AWS_CREDS_SECRET_NAME=aws
+AWS_CREDS_NS=open-cluster-management
+
 TMP_KUBECONFIG=/tmp/kubeconfig
 
 CLUSTERS="coolstore-a coolstore-b coolstore-c"
@@ -31,8 +34,8 @@ function git_clone_acme {
 }
 
 function check_aws_cred {
-  [[ -z "$AWS_ACCESS_KEY_ID" ]] && { echo "Error: AWS_ACCESS_KEY_ID not found!"; exit 1; }
-  [[ -z "$AWS_SECRET_ACCESS_KEY" ]] && { echo "Error: AWS_SECRET_ACCESS_KEY not found!"; exit 1; }
+  [[ -z "$AWS_ACCESS_KEY_ID" ]] && { echo "Error: AWS_ACCESS_KEY_ID not found in secret/${AWS_CREDS_SECRET_NAME} in the ${AWS_CREDS_NS} namespace"; exit 1; }
+  [[ -z "$AWS_SECRET_ACCESS_KEY" ]] && { echo "Error: AWS_SECRET_ACCESS_KEY not found in secret/${AWS_CREDS_SECRET_NAME} in the ${AWS_CREDS_NS} namespace"; exit 1; }
 }
 
 function login {
@@ -92,6 +95,9 @@ function login_and_apply_cert {
     gen_apply_cert $clustername $gitcheckoutdir
   done
 }
+
+export AWS_ACCESS_KEY_ID="$(oc get -n $AWS_CREDS_NS secret/${AWS_CREDS_SECRET_NAME} -o jsonpath='{.data.aws_access_key_id}' | base64 -d)"
+export AWS_SECRET_ACCESS_KEY="$(oc get -n $AWS_CREDS_NS secret/${AWS_CREDS_SECRET_NAME} -o jsonpath='{.data.aws_secret_access_key}' | base64 -d)"
 
 check_aws_cred;
 

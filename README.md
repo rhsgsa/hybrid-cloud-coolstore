@@ -12,7 +12,7 @@
 
 		make install
 
-01. Create credentials for AWS named `aws` in the `open-cluster-management` namespace in the OpenShift Console - All Clusters / Credentials / Add credential
+01. Create credentials for AWS named **`aws`** in the `open-cluster-management` namespace in the OpenShift Console - All Clusters / Credentials / Add credential
 
 01. Create a `clusterset` named `coolstore` - All Clusters / Infrastructure / Clusters / Cluster sets / Create cluster set
 
@@ -83,11 +83,8 @@
 
 		./scripts/setup-console-banners
 
-01. Configure Let's Encrypt for all the cool stores. You will need `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY` credentials.
+01. Configure Let's Encrypt for all the coolstore clusters
 
-		export AWS_ACCESS_KEY_ID=xxx
-		export AWS_SECRET_ACCESS_KEY=xxx
-		
 		./scripts/setup-letsencrypt
 
 	The OpenShift ingress operator will notice the change in router CR and will re-deploy the router pods.
@@ -229,6 +226,17 @@ The manifests in the `single-cluster` folder differ from the manifests in the `a
 
 ## Troubleshooting
 
+### `cart`
+
+*   Access cart swagger UI at `/q/swagger-ui`
+
+*   Access cart contents
+
+		curl -i http://cart.url.com/api/cart/id-0.0038...
+
+
+### Kafka
+
 *   If you have trouble connecting to Kafka from the remote cluster, spin up a test Kafka pod to access `my-cluster-kafka-bootstrap.demo.svc.clusterset.local`
 
 		apiVersion: v1
@@ -249,6 +257,46 @@ The manifests in the `single-cluster` folder differ from the manifests in the `a
 		    resources: {}
 		  dnsPolicy: ClusterFirst
 		  restartPolicy: Always
+
+
+### Yugabyte
+
+*   Spin up a postgresql pod
+
+		oc run psql \
+		  --image image-registry.openshift-image-registry.svc:5000/openshift/postgresql:10-el8 \
+		  --command -- tail -f /dev/null
+
+		oc rsh psql \
+		  psql \
+		    -h yb-tserver-0.coolstore-a.yb-tservers.demo.svc.clusterset.local \
+		    -p 5433 \
+		    -U yugabyte \
+		    -c 'select * from catalog' \
+		    catalog
+
+
+### Infinispan
+
+*   List keys in Infinispan
+
+		curl \
+		  -i \
+		  -u user:pass \
+		  -H "Accept: application/json" \
+		  http://localhost:11222/rest/v2/caches/cart?action=keys \
+		&& \
+		echo
+
+*   Get all entries in Infinispan
+
+		curl \
+		  -i \
+		  -u user:pass \
+		  -H "Accept: application/json" \
+		  http://localhost:11222/rest/v2/caches/cart?action=entries \
+		&& \
+		echo
 
 
 ## Checkout Process
@@ -274,32 +322,6 @@ sequenceDiagram
 
 *   [Strimzi advertised addresses](https://strimzi.io/docs/operators/latest/configuring.html#property-listener-config-broker-reference)
 
-*   Access cart swagger UI at `/q/swagger-ui`
-
-*   Access cart contents
-
-		curl -i http://cart.url.com/api/cart/id-0.0038...
-
-*   List keys in Infinispan
-
-		curl \
-		  -i \
-		  -u user:pass \
-		  -H "Accept: application/json" \
-		  http://localhost:11222/rest/v2/caches/cart?action=keys \
-		&& \
-		echo
-
-*   Get all entries in Infinispan
-
-		curl \
-		  -i \
-		  -u user:pass \
-		  -H "Accept: application/json" \
-		  http://localhost:11222/rest/v2/caches/cart?action=entries \
-		&& \
-		echo
-
 *   Force remove all Applications and ApplicationSets from ArgoCD
 
 		oc patch \
@@ -318,17 +340,3 @@ sequenceDiagram
 		    $r
 		  oc delete -n openshift-gitops $r --wait=false
 		done
-
-*   Test postgresql
-
-		oc run psql \
-		  --image image-registry.openshift-image-registry.svc:5000/openshift/postgresql:10-el8 \
-		  --command -- tail -f /dev/null
-
-		oc rsh psql \
-		  psql \
-		    -h yb-tserver-0.coolstore-a.yb-tservers.demo.svc.clusterset.local \
-		    -p 5433 \
-		    -U yugabyte \
-		    -c 'select * from catalog' \
-		    catalog
