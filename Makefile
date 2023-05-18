@@ -16,8 +16,12 @@ deploy-gitea:
 	$(BASE)/scripts/init-gitea $(GIT_PROJ) gitea $(GIT_ADMIN) $(GIT_PASSWORD) $(GIT_ADMIN)@example.com yaml coolstore 'Demo App'
 
 register-managed-clusters:
-	# this will fail if installing on a non-ACM cluster - ignore any errors
-	-oc apply -f $(BASE)/yaml/acm-gitops/acm-gitops.yaml
+	@if ! oc get project open-cluster-management 2>/dev/null >/dev/null; then \
+	  echo "this cluster does not have ACM installed"; \
+	else \
+	  echo "this cluster has ACM installed"; \
+	  oc apply -f $(BASE)/yaml/acm-gitops/acm-gitops.yaml; \
+	fi
 
 demo-manual-install:
 	# ensure we are logged into OpenShift
