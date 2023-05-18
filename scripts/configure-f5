@@ -7,8 +7,8 @@ HCD_CONF=$1
 # Check yq, jinja2 and vesctl are installed 
 if ! which yq > /dev/null; then
 	echo "Please install yq!"
-	echo "brew install yq"
 	echo "pip install yq"
+	echo "brew install yq"
 	exit 1
 fi
 
@@ -20,8 +20,8 @@ fi
 
 if ! which vesctl > /dev/null; then
 	echo "Please install vesctl!"
-	echo "Get the CLI: https://gitlab.com/volterra.io/vesctl/blob/main/README.md"
-	echo "If using Linux, disable SELinux with setenforce 0"
+	echo "Install and configure the CLI: https://gitlab.com/volterra.io/vesctl/blob/main/README.md"
+	echo "If using Linux, disable SELinux with 'sudo setenforce 0'"
 	exit 1
 fi
 
