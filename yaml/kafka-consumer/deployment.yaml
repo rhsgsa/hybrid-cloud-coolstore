@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    app.openshift.io/connects-to: "my-cluster"
+  labels:
+    app: kafka-consumer
+    app.openshift.io/runtime: golang
+  name: kafka-consumer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka-consumer
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: kafka-consumer
+    spec:
+      containers:
+      - image: ghcr.io/kwkoo/browser-kafka-consumer:latest
+        name: browser-kafka-consumer
+        ports:
+        - name: http
+          containerPort: 8080
+        env:
+        - name: BOOTSTRAPSERVER
+          value: my-cluster-kafka-bootstrap.demo.svc.cluster.local:9092
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          limits:
+            cpu: "1"
+            memory: "1Gi"
+          requests:
+            cpu: "50m"
+            memory: "32Mi"
+status: {}

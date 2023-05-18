@@ -1,0 +1,17 @@
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  creationTimestamp: null
+  labels:
+    app: kafka-consumer
+  name: kafka-consumer
+spec:
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Allow
+  port:
+    targetPort: 8080
+  to:
+    kind: "Service"
+    name: kafka-consumer
+    weight: null
