@@ -62,7 +62,7 @@ spec:
     type: DataGrid
     container:
       storage: 2Gi
-      storageClassName: gp3-csi
+      ephemeralStorage: true
     sites:
       local:
         name: PRIMARY

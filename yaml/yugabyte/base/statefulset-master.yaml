@@ -11,29 +11,29 @@ spec:
 
   replicas: 1
 
-  volumeClaimTemplates:
-  - metadata:
-      name: datadir0
-      labels:
-        app: "yb-master"
-    spec:
-      accessModes:
-      - "ReadWriteOnce"
-      storageClassName: gp3-csi
-      resources:
-        requests:
-          storage: 5Gi
-  - metadata:
-      name: datadir1
-      labels:
-        app: "yb-master"
-    spec:
-      accessModes:
-      - "ReadWriteOnce"
-      storageClassName: gp3-csi
-      resources:
-        requests:
-          storage: 5Gi
+  #volumeClaimTemplates:
+  #- metadata:
+  #    name: datadir0
+  #    labels:
+  #      app: "yb-master"
+  #  spec:
+  #    accessModes:
+  #    - "ReadWriteOnce"
+  #    storageClassName: gp3-csi
+  #    resources:
+  #      requests:
+  #        storage: 5Gi
+  #- metadata:
+  #    name: datadir1
+  #    labels:
+  #      app: "yb-master"
+  #  spec:
+  #    accessModes:
+  #    - "ReadWriteOnce"
+  #    storageClassName: gp3-csi
+  #    resources:
+  #      requests:
+  #        storage: 5Gi
   updateStrategy:
     type: RollingUpdate
     rollingUpdate:
@@ -214,7 +214,6 @@ spec:
         - name: datadir0
           mountPath: /var/yugabyte/cores
           subPath: cores
-
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -223,7 +222,6 @@ spec:
           runAsNonRoot: true
           seccompProfile:
             type: RuntimeDefault
-
         resources:
           limits:
             cpu: "1"
@@ -231,9 +229,12 @@ spec:
           requests:
             cpu: 100m
             memory: 128Mi
-
       volumes:
       - name: debug-hooks-volume
         configMap:
           name: yb-demo-0-yugabyte-master-hooks
           defaultMode: 0755
+      - name: datadir0
+        emptyDir: {}
+      - name: datadir1
+        emptyDir: {}

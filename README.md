@@ -258,6 +258,10 @@ The manifests in the `single-cluster` folder differ from the manifests in the `a
 		  dnsPolicy: ClusterFirst
 		  restartPolicy: Always
 
+*   Spin up a browser-based Kafka consumer on `coolstore-a` (if you want to deploy it on another cluster, edit `.spec.destination.name` in `yaml/kafka-consumer/application.yaml`
+
+		oc apply -f yaml/kafka-consumer/application.yaml
+
 
 ### Yugabyte
 
