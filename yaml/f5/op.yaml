@@ -23,7 +23,7 @@ spec:
       service_name: {{ ingresses[ingress].service }}.{{ ingresses[ingress].namespace }}
       site_locator:
         site:
-          name: {{ site }}
+          name: {{ site }}-{{ domain_readable }}
           namespace: system
     labels: {}
   {% endfor -%}
