@@ -4,10 +4,10 @@ hcd:
   domain: hcd1.ltsai.com                       # Use either hcd1.ltsai.com, hcd2.ltsai.com or hcd3.ltsai.com
   namespace: multi-cloud-openshift             # This is the namespace to use in F5 XC
 sites: 
-  coolstore-a:         # name of cluster 
-    long: 103.845      # Ex. SIN: 103.845 1.314  LON: 0.1278 51.5074  TOK: 139.6917 35.689  DAL: 96.7970 32.7767
+  coolstore-a:                                 # name of cluster 
+    long: 103.845                              # Ex. SIN: 103.845 1.314  LON: 0.1278 51.5074  TOK: 139.6917 35.689  DAL: 96.7970 32.7767
     lat: 1.314
-    context: login-a   # Cluster context 
+    context: login-a                           # Cluster context 
   coolstore-b:
     long: 0.1278
     lat: 51.5074
