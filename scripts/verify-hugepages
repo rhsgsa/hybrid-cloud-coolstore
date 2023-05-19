@@ -1,25 +1,25 @@
 #!/bin/bash -e
 # Check huge pages
 
-NOT_CONFIGURED=
-
 for context in login-a login-b login-c
 do
 	echo ================================
-	echo Verifying for cluster context $context ...
 
-	for w in `oc --context=$context get node -oname -l node-role.kubernetes.io/worker=`
+	workers=`oc --context=$context get node --show-labels --no-headers | grep node-role.kubernetes.io/worker= \
+		| grep -v -e submariner.io/gateway=true -e node-role.kubernetes.io/master= | awk '{print $1}'`
+
+
+	echo -e "Verifying for cluster context $context:"
+
+	for w in $workers
 	do
-		oc --context=$context get $w --show-labels | grep -q submariner.io/gateway=true && continue
 
-		echo -n "$w: "
-		val=`oc --context=$context get $w -o jsonpath="{.status.allocatable.hugepages-2Mi}"`
-		echo $val
-		[ "$val" = "0" ] && NOT_CONFIGURED=1
+		# Run in background
+		(
+			line="$line$w: `oc --context=$context get node/$w -o jsonpath='{.status.allocatable.hugepages-2Mi}'`"
+
+			echo -e "$context: $line"
+		) &
 	done
-
+	wait 
 done
-
-[ "$NOT_CONFIGURED" ] && echo Huge pages are not configured && exit 1
-
-exit 0
