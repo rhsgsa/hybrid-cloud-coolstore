@@ -6,13 +6,25 @@
 
 01. Provision an `OCP4 ACM Hub` cluster on `demo.redhat.com`
 
-01. Login to the ACM Hub Cluster as a `cluster-admin` using `oc login`
+01. Download the pull secret to the same directory as this README from the [Hybrid Cloud Console](https://console.redhat.com/openshift/install/pull-secret) - the pull secret should be named `pull-secret.txt`
+
+01. Execute the login script
+
+		./scripts/create-aws-credentials
+
+01. The script will ask you to paste the contents of the email containing the ACM hub cluster details from RHDP; alternatively, you can retrieve the details by
+
+	*   Logging into [demo.redhat.com](https://demo.redhat.com/)
+	*   Selecting Services / OCP4 ACM Hub / Details
+	*   Copy the contents of the `Provision Messages` row
+
+01. After you paste the cluster details, enter Ctrl-D on a new line
+
+01. The script will login to the ACM Hub Cluster using `oc login` and create the AWS credentials in the `open-cluster-management` namespace
 
 01. Install services to the ACM Hub Cluster - this will: install the OpenShift GitOps operator, install `gitea`, upload manifests to `gitea`, setup a `coolstore` Application that points to the manifests in `gitea` (app-of-apps pattern)
 
 		make install
-
-01. Create credentials for AWS named **`aws`** in the `open-cluster-management` namespace in the OpenShift Console - All Clusters / Credentials / Add credential
 
 01. Create a `clusterset` named `coolstore` - All Clusters / Infrastructure / Clusters / Cluster sets / Create cluster set
 

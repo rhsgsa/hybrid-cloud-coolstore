@@ -2,3 +2,5 @@ PROJ=demo
 GIT_PROJ=infra
 GIT_ADMIN=demo
 GIT_PASSWORD=password
+
+AWS_SECRET_NAME=aws
