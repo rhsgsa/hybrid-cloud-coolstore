@@ -35,11 +35,11 @@ patches:
             INFINISPAN-B:
               backup:
                 strategy: "SYNC"
-                timeout: "10000"
+                timeout: "60000"
             INFINISPAN-C:
               backup:
                 strategy: "SYNC"
-                timeout: "10000"
+                timeout: "60000"
 - patch: |-
     - op: add
       path: "/spec/template/spec/containers/0/env/-"
