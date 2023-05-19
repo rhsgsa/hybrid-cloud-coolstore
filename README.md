@@ -12,15 +12,15 @@
 
 		./scripts/create-aws-credentials
 
-01. The script will ask you to paste the contents of the email containing the ACM hub cluster details from RHDP; alternatively, you can retrieve the details by
+	*   The script will ask you to paste the contents of the email containing the ACM hub cluster details from RHDP; alternatively, you can retrieve the details by
 
-	*   Logging into [demo.redhat.com](https://demo.redhat.com/)
-	*   Selecting Services / OCP4 ACM Hub / Details
-	*   Copy the contents of the `Provision Messages` row
+		*   Logging into [demo.redhat.com](https://demo.redhat.com/)
+		*   Selecting Services / OCP4 ACM Hub / Details
+		*   Copy the contents of the `Provision Messages` row
 
-01. After you paste the cluster details, enter Ctrl-D on a new line
+	*   After you paste the cluster details, enter Ctrl-D on a new line
 
-01. The script will login to the ACM Hub Cluster using `oc login` and create the AWS credentials in the `open-cluster-management` namespace
+	*   The script will login to the ACM Hub Cluster using `oc login` and create the AWS credentials in the `open-cluster-management` namespace
 
 01. Install services to the ACM Hub Cluster - this will: install the OpenShift GitOps operator, install `gitea`, upload manifests to `gitea`, setup a `coolstore` Application that points to the manifests in `gitea` (app-of-apps pattern)
 
