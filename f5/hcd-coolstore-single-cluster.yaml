@@ -29,7 +29,3 @@ ingresses:                                     # List of kube services (ingress 
     service: inventory
     port: 80
     namespace: demo
-  payment:
-    service: payment
-    port: 80
-    namespace: demo
