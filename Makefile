@@ -21,13 +21,17 @@ deploy-gitea:
 create-clusters:
 	@if ! oc get project open-cluster-management 2>/dev/null >/dev/null; then \
 	  echo "this cluster does not have ACM installed"; \
+	  oc apply -f $(BASE)/yaml/single-cluster-rbac/clusterrolebinding.yaml; \
+	  oc apply -f $(BASE)/yaml/single-cluster/coolstore.yaml; \
 	else \
 	  echo "this cluster has ACM installed"; \
 	  oc apply -f $(BASE)/yaml/acm-gitops/acm-gitops.yaml; \
 	  $(BASE)/scripts/create-clusterset; \
 	  $(BASE)/scripts/create-clusters; \
-	  $(BASE)/scripts/wait-for-clusters; \
-	  $(BASE)/scripts/import-clusters; \
+	  $(BASE)/scripts/install-submariner; \
+	  $(BASE)/scripts/setup-console-banners; \
+	  $(BASE)/scripts/setup-letsencrypt; \
+	  oc apply -f $(BASE)/yaml/argocd/coolstore.yaml; \
 	fi
 
 demo-manual-install:

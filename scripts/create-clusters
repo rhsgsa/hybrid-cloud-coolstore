@@ -42,54 +42,6 @@ function create_aws_creds_secret {
     cluster.open-cluster-management.io/copiedFromSecretName="$AWS_SECRET_NAME"
 }
 
-function create_ssh_private_key_secret {
-  local clustername="$1"
-
-  if [ -z "$clustername" ]; then
-    echo "create_ssh_private_key_secret called without clustername"
-    exit 1
-  fi
-
-  local ssh_privatekey="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.ssh-privatekey}' | base64 -d)"
-
-  ensure_set ssh_privatekey
-
-  oc create secret generic ${clustername}-ssh-private-key \
-    -n $clustername \
-    --from-literal=ssh-privatekey="$ssh_privatekey"
-
-  oc label secret/${clustername}-ssh-private-key \
-    -n $clustername \
-    cluster.open-cluster-management.io/backup="cluster" \
-    cluster.open-cluster-management.io/copiedFromNamespace="open-cluster-management" \
-    cluster.open-cluster-management.io/copiedFromSecretName="$AWS_SECRET_NAME"
-}
-
-function create_pull_secret {
-  local clustername="$1"
-
-  if [ -z "$clustername" ]; then
-    echo "create_pull_secret called without clustername"
-    exit 1
-  fi
-
-  rm -rf $TMPDIR
-  mkdir -p $TMPDIR
-  oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.pullSecret}' | base64 -d > ${TMPDIR}/.dockerconfigjson
-
-  oc create secret docker-registry ${clustername}-pull-secret \
-    -n $clustername \
-    --from-file=.dockerconfigjson=${TMPDIR}/.dockerconfigjson
-
-  rm -rf $TMPDIR
-
-  oc label secret/${clustername}-pull-secret \
-    -n $clustername \
-    cluster.open-cluster-management.io/backup="cluster" \
-    cluster.open-cluster-management.io/copiedFromNamespace="open-cluster-management" \
-    cluster.open-cluster-management.io/copiedFromSecretName="$AWS_SECRET_NAME"
-}
-
 function create_install_config_secret {
   local clustername="$1"
   if [ -z "$clustername" ]; then
@@ -175,62 +127,6 @@ EOF
     --from-file=${TMPDIR}/install-config.yaml
 
   rm -rf $TMPDIR
-
-  oc label secret/${clustername}-ssh-private-key \
-    -n $clustername \
-    cluster.open-cluster-management.io/backup="cluster"
-}
-
-function create_cluster_deployment {
-  local clustername="$1"
-  if [ -z "$clustername" ]; then
-    echo "create_install_config_secret called without clustername"
-    exit 1
-  fi
-
-  local region="$2"
-  if [ -z "$region" ]; then
-    echo "create_install_config_secret called without region"
-    exit 1
-  fi
-
-  local base_domain="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.baseDomain}' | base64 -d)"
-  ensure_set base_domain
-
-  cat <<EOF | oc apply -f -
-apiVersion: hive.openshift.io/v1
-kind: ClusterDeployment
-metadata:
-  labels:
-    cloud: AWS
-    cluster.open-cluster-management.io/clusterset: $CLUSTERSET_NAME
-    hive.openshift.io/cluster-platform: aws
-    hive.openshift.io/cluster-region: $region
-    region: $region
-    vendor: OpenShift
-  name: $clustername
-  namespace: $clustername
-spec:
-  baseDomain: $base_domain
-  clusterName: $clustername
-  controlPlaneConfig:
-    servingCertificates: {}
-  installAttemptsLimit: 1
-  platform:
-    aws:
-      credentialsSecretRef:
-        name: ${clustername}-${AWS_SECRET_NAME}-creds
-      region: $region
-  provisioning:
-    imageSetRef:
-      name: $CLUSTERIMAGESET
-    installConfigSecretRef:
-      name: ${clustername}-install-config
-    sshPrivateKeySecretRef:
-      name: ${clustername}-ssh-private-key
-  pullSecretRef:
-    name: ${clustername}-pull-secret
-EOF
 }
 
 ensure_set AWS_SECRET_NAME
@@ -247,16 +143,190 @@ if [ $? -ne 0 ]; then
   exit 1
 fi
 
+base_domain="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.baseDomain}' | base64 -d)"
+ensure_set base_domain
+
+ssh_privatekey="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.ssh-privatekey}')"
+ensure_set ssh_privatekey
+
+pull_secret="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.pullSecret}')"
+ensure_set pull_secret
+
 for i in ${!CLUSTER_NAMES[@]}; do
-  echo "cluster name = ${CLUSTER_NAMES[$i]}"
-  echo "cluster region = ${CLUSTER_REGIONS[$i]}"
-  echo "cluster network = ${CLUSTER_NETWORKS[$i]}"
-  echo "service network = ${SERVICE_NETWORKS[$i]}"
+  clustername=${CLUSTER_NAMES[$i]}
+  region=${CLUSTER_REGIONS[$i]}
+  clusternetwork=${CLUSTER_NETWORKS[$i]}
+  servicenetwork=${SERVICE_NETWORKS[$i]}
+  echo "cluster name = $clustername"
+  echo "cluster region = $region"
+  echo "cluster network = $clusternetwork"
+  echo "service network = $servicenetwork"
 
   oc create ns ${CLUSTER_NAMES[$i]}
-  create_aws_creds_secret ${CLUSTER_NAMES[$i]}
-  create_ssh_private_key_secret ${CLUSTER_NAMES[$i]}
-  create_pull_secret ${CLUSTER_NAMES[$i]}
-  create_install_config_secret ${CLUSTER_NAMES[$i]} ${CLUSTER_REGIONS[$i]} ${CLUSTER_NETWORKS[$i]} ${SERVICE_NETWORKS[$i]}
-  create_cluster_deployment ${CLUSTER_NAMES[$i]} ${CLUSTER_REGIONS[$i]}
+
+  create_install_config_secret $clustername $region $clusternetwork $servicenetwork
+  create_aws_creds_secret $clustername
+
+  cat <<EOF | oc apply -f -
+apiVersion: hive.openshift.io/v1
+kind: ClusterDeployment
+metadata:
+  name: $clustername
+  namespace: $clustername
+  labels:
+    cloud: 'AWS'
+    region: $region
+    vendor: OpenShift
+    cluster.open-cluster-management.io/clusterset: $CLUSTERSET_NAME
+spec:
+  baseDomain: $base_domain
+  clusterName: $clustername
+  controlPlaneConfig:
+    servingCertificates: {}
+  installAttemptsLimit: 1
+  installed: false
+  platform:
+    aws:
+      credentialsSecretRef:
+        name: ${clustername}-${AWS_SECRET_NAME}-creds
+      region: $region
+  provisioning:
+    installConfigSecretRef:
+      name: ${clustername}-install-config
+    sshPrivateKeySecretRef:
+      name: ${clustername}-ssh-private-key
+    imageSetRef:
+      name: $CLUSTERIMAGESET
+  pullSecretRef:
+    name: ${clustername}-pull-secret
+---
+apiVersion: cluster.open-cluster-management.io/v1
+kind: ManagedCluster
+metadata:
+  labels:
+    cloud: Amazon
+    region: $region
+    name: $clustername
+    vendor: OpenShift
+    cluster.open-cluster-management.io/clusterset: $CLUSTERSET_NAME
+  name: $clustername
+spec:
+  hubAcceptsClient: true
+---
+apiVersion: hive.openshift.io/v1
+kind: MachinePool
+metadata:
+  name: ${clustername}-worker
+  namespace: $clustername
+spec:
+  clusterDeploymentRef:
+    name: $clustername
+  name: worker
+  platform:
+    aws:
+      rootVolume:
+        iops: 2000
+        size: 100
+        type: io1
+      type: m5.xlarge
+  replicas: 3
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${clustername}-pull-secret
+  namespace: $clustername
+data:
+  .dockerconfigjson: "$pull_secret"
+type: kubernetes.io/dockerconfigjson
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${clustername}-ssh-private-key
+  namespace: $clustername
+data:
+  ssh-privatekey: "$ssh_privatekey"
+type: Opaque
+---
+apiVersion: agent.open-cluster-management.io/v1
+kind: KlusterletAddonConfig
+metadata:
+  name: $clustername
+  namespace: $clustername
+spec:
+  clusterName: $clustername
+  clusterNamespace: $clustername
+  clusterLabels:
+    cloud: Amazon
+    vendor: OpenShift
+  applicationManager:
+    enabled: true
+  policyController:
+    enabled: true
+  searchCollector:
+    enabled: true
+  certPolicyController:
+    enabled: true
+  iamPolicyController:
+    enabled: true
+EOF
+done
+
+# wait for all clusters to be provisioned by ACM successfully
+
+total=${#CLUSTER_NAMES[@]}
+
+echo "we have to wait for $total clusters to be provisioned"
+
+last_count=-1
+
+while true; do
+  count=0
+  for clustername in ${CLUSTER_NAMES[@]}; do
+    installed="$(oc get -n $clustername clusterdeployment/$clustername -o jsonpath='{.spec.installed}' 2>/dev/null)"
+    if [ "$installed" = "true" ]; then
+      count=$(( count + 1 ))
+    fi
+  done
+  if [ $count -ne $last_count ]; then
+    last_count=$count
+    echo -n $last_count
+
+  else
+    echo -n "."
+  fi
+  if [ $last_count -ge $total ]; then
+    echo
+    break
+  fi
+  sleep 30
+done
+
+# wait for all clusters to be imported to ACM successfully
+
+echo "we have to wait for $total clusters to be imported"
+
+last_count=-1
+
+while true; do
+  count=0
+  for clustername in ${CLUSTER_NAMES[@]}; do
+    available="$(oc get managedcluster $clustername -o jsonpath='{.status.conditions[?(@.reason=="'"ManagedClusterAvailable"'")]}' 2>/dev/null)"
+    if [ -n "$available" ]; then
+      count=$(( count + 1 ))
+    fi
+  done
+  if [ $count -ne $last_count ]; then
+    last_count=$count
+    echo -n $last_count
+
+  else
+    echo -n "."
+  fi
+  if [ $last_count -ge $total ]; then
+    echo
+    break
+  fi
+  sleep 5
 done

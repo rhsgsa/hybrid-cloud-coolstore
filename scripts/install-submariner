@@ -1,0 +1,96 @@
+#!/bin/bash
+
+# installs Submariner on managed clusters
+# https://github.com/stolostron/submariner-addon
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+source ${BASE}/../config.sh
+
+function ensure_set {
+	local varName="$1"
+	if [ -z "${!varName}" ]; then
+		echo "$varName is not set"
+		exit 1
+	fi
+}
+
+ensure_set AWS_SECRET_NAME
+ensure_set CLUSTER_NAMES
+ensure_set CLUSTERSET_NAME
+
+echo "setting up Submariner broker..."
+cat <<EOF | oc apply -f -
+apiVersion: submariner.io/v1alpha1
+kind: Broker
+metadata:
+  name: submariner-broker
+  namespace: ${CLUSTERSET_NAME}-broker
+  labels:
+    cluster.open-cluster-management.io/backup: submariner
+spec:
+  globalnetEnabled: false
+EOF
+
+for clustername in ${CLUSTER_NAMES[@]}; do
+  echo "installing Submariner in ${clustername}..."
+  cat <<EOF | oc apply -f -
+apiVersion: addon.open-cluster-management.io/v1alpha1
+kind: ManagedClusterAddOn
+metadata:
+  name: submariner
+  namespace: $clustername
+spec:
+  installNamespace: submariner-operator
+---
+apiVersion: submarineraddon.open-cluster-management.io/v1alpha1
+kind: SubmarinerConfig
+metadata:
+  name: submariner
+  namespace: $clustername
+spec:
+  gatewayConfig:
+    gateways: 1
+    aws:
+      instanceType: c5d.large
+  IPSecNATTPort: 4500
+  airGappedDeployment: false
+  NATTEnable: true
+  cableDriver: libreswan
+  globalCIDR: ""
+  credentialsSecret:
+    name: ${clustername}-${AWS_SECRET_NAME}-creds
+EOF
+done
+
+# wait for all clusters to successfully connect
+
+total=${#CLUSTER_NAMES[@]}
+
+echo "we have to wait for $total clusters to report successful connections"
+
+last_count=-1
+
+while true; do
+  count=0
+  for clustername in ${CLUSTER_NAMES[@]}; do
+    available="$(oc get managedclusteraddon submariner -n $clustername -o jsonpath='{.status.conditions[?(@.reason=="'"ConnectionsEstablished"'")]}' 2>/dev/null)"
+    if [ -n "$available" ]; then
+      count=$(( count + 1 ))
+    fi
+  done
+  if [ $count -ne $last_count ]; then
+    last_count=$count
+    echo -n $last_count
+
+  else
+    echo -n "."
+  fi
+  if [ $last_count -ge $total ]; then
+    echo
+    break
+  fi
+  sleep 5
+done

@@ -22,6 +22,10 @@
 		*   Create a Cluster Set named `coolstore`
 		*   Create a binding from the `coolstore` Cluster Set to the `openshift-gitops` namespace
 		*   Provision 3 OpenShift clusters in different AWS regions
+		*   Install the Submariner add-on on the 3 managed clusters
+		*   Setup console banners on the OpenShift Console for the ACM Hub and the 3 managed clusters
+		*   Setup Let's Encrypt for the 3 managed clusters
+		*   Setup the ArgoCD `ApplicationSets`
 
 	*   The script will ask you to paste the contents of the email containing the ACM hub cluster details from RHDP; alternatively, you can retrieve the details by
 
@@ -30,12 +34,6 @@
 		*   Copy the contents of the `Provision Messages` row
 
 	*   After you paste the cluster details, enter Ctrl-D on a new line
-
-01. Login to the ACM Hub OpenShift Console in a web browser, select All Clusters / Infrastructure / Clusters, and monitor the provisioning of the 3 clusters
-
-01. After all 3 clusters have been provisioned, edit the `coolstore` clusterset and install Submariner add-ons in all clusters
-
-01. Wait for the submariner add-ons to complete installation on all nodes
 
 01. NOTE: If you have deployed the clusters in other AWS regions, or have deployed them on other public cloud providers such as Azure and GCP, then you will need to update the overlays folders in gitea
 
@@ -47,22 +45,6 @@
 			*   Note that the default login credentials for Gitea is `demo / password`
 			*   Commit and push all changes to Gitea
 	*   Ensure appropriate changes are made to the override YAML files for the other clusters, if need be
-
-01. Setup ArgoCD `ApplicationSet`s
-
-		oc apply -f yaml/argocd/coolstore.yaml
-
-01. Add banners to the OpenShift Consoles so you know which cluster you're on - do this for the hub cluster, `coolstore-a`, `coolstore-b`, `coolstore-c`
-
-		./scripts/setup-console-banners
-
-01. Configure Let's Encrypt for all the coolstore clusters
-
-		./scripts/setup-letsencrypt
-
-	The OpenShift ingress operator will notice the change in router CR and will re-deploy the router pods.
-
-		oc get po -n openshift-ingress
 
 01. Modify the `coolstore-a` alert manager settings so that alert emails are sent quicker
 
@@ -159,32 +141,11 @@ If you don't do the above, the clusters may be stuck in the detaching phase. If 
 
 01. Provision an OpenShift 4.12 workshop cluster on `demo.redhat.com`
 
-01. Login to the cluster as a `cluster-admin`
+01. Login to the cluster as a `cluster-admin` using `oc login`
 
-01. Install the OpenShift GitOps operator and `gitea`
+01. Install the OpenShift GitOps operator and `gitea`, setup the ArgoCD `ApplicationSets`
 
-		make install
-
-01. ArgoCD will be installing operators in the connected cluster, so we will need to assign it the proper privileges
-
-		cat <<EOF | oc apply -f -
-		apiVersion: rbac.authorization.k8s.io/v1
-		kind: ClusterRoleBinding
-		metadata:
-		  name: argocd-cluster-admin
-		roleRef:
-		  apiGroup: rbac.authorization.k8s.io
-		  kind: ClusterRole
-		  name: cluster-admin
-		subjects:
-		- kind: ServiceAccount
-		  name: openshift-gitops-argocd-application-controller
-		  namespace: openshift-gitops
-		EOF
-
-01. Add the `Application` resource
-
-		oc apply -f yaml/single-cluster/coolstore.yaml
+		make install-gitops deploy-gitea create-clusters
 
 The manifests in the `single-cluster` folder differ from the manifests in the `argocd` folder in the following ways:
 
