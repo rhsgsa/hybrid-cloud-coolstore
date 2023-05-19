@@ -90,13 +90,15 @@ do
 
 	echo $CONTEXT: Launching F5 Ingress ...
 
+	site_name=site-$site-$BASE_DOMAIN_READABLE
+	conffile=$OUT/$site_name.yaml
+
 	# Create the F5 Ingress (VES) in OpenShift
-	cat $HCD_CONF | yq ".sites.$site" | jinja2 yaml/f5/site.yaml -Dsite=$site -Dtoken=$TOKEN > $OUT/site-$site.yaml
-	oc --context=$CONTEXT create -f $OUT/site-$site.yaml -n ves-system
+	cat $HCD_CONF | yq ".sites.$site" | jinja2 yaml/f5/site.yaml -Dsite=$site -Dtoken=$TOKEN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
+	oc --context=$CONTEXT create -f $conffile -n ves-system
 
-	echo "oc --context=$CONTEXT delete -f $OUT/site-$site.yaml" >> $TMP/cleanup-sites.sh 
+	echo "oc --context=$CONTEXT delete -f $conffile" >> $TMP/cleanup-sites.sh 
 done
-
 
 # Wait for F5 Ingress to come up
 
@@ -142,11 +144,11 @@ sleep 5  # Seems this is needed!
 # Check the sites are available 
 for site in $SITE_LIST
 do
-	echo -n "Checking if site [$site] is available ... "
-	if ! vesctl configuration get site $site -n system >/dev/null
+	echo -n "Checking if site [$site-$BASE_DOMAIN_READABLE] is available ... "
+	if ! vesctl configuration get site $site-$BASE_DOMAIN_READABLE -n system >/dev/null
 	then
 		echo 
-		echo "Site [$site] not yet available.  Be sure all pods in the project 'ver-system' are running/ready and run this script again."
+		echo "Site [$site-$BASE_DOMAIN_READABLE] not yet available.  Be sure all pods in the project 'ver-system' are running/ready and run this script again."
 		exit 1
 	fi
 	echo done
@@ -176,11 +178,14 @@ do
 
 	cat $HCD_CONF | jinja2 yaml/f5/op.yaml -Dingress=$ingress -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile || exit 1
 
+	(
 	vesctl configuration create origin_pool -i $conffile >/dev/null 2>&1 || \
 		vesctl configuration replace origin_pool -i $conffile >/dev/null || exit 1
 
 	echo "vesctl configuration delete origin_pool $op_name -n multi-cloud-openshift" >> $TMP/cleanup-f5xc.sh
+	) & 
 done
+wait
 
 # Create the http load balancers, one for each ingress 
 for ingress in $INGRESS_LIST

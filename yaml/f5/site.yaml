@@ -148,7 +148,7 @@ data:
  config.yaml: | 
   Vpm:
     # CHANGE ME
-    ClusterName: {{ site }}
+    ClusterName: {{ site }}-{{ domain_readable }}
     ClusterType: ce
     Config: /etc/vpm/config.yaml
     DisableModules: ["recruiter"]
