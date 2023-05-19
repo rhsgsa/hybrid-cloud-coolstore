@@ -224,10 +224,6 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 		  dnsPolicy: ClusterFirst
 		  restartPolicy: Always
 
-*   Spin up a browser-based Kafka consumer on `coolstore-a` (if you want to deploy it on another cluster, edit `.spec.destination.name` in `yaml/kafka-consumer/application.yaml`
-
-		oc apply -f yaml/kafka-consumer/application.yaml
-
 
 ### Yugabyte
 
