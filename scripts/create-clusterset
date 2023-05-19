@@ -1,0 +1,32 @@
+#!/bin/bash
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+source ${BASE}/../config.sh
+
+if [ -z "$CLUSTERSET_NAME" ]; then
+  echo "CLUSTERSET_NAME is not defined in config.sh"
+  exit 1
+fi
+
+set -e
+
+cat <<EOF | oc apply -f -
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSet
+metadata:
+  name: $CLUSTERSET_NAME
+spec:
+  clusterSelector:
+    selectorType: ExclusiveClusterSetLabel
+---
+apiVersion: cluster.open-cluster-management.io/v1beta2
+kind: ManagedClusterSetBinding
+metadata:
+  name: $CLUSTERSET_NAME
+  namespace: openshift-gitops
+spec:
+  clusterSet: $CLUSTERSET_NAME
+EOF

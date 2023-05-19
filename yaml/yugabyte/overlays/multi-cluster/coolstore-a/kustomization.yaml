@@ -17,7 +17,7 @@ patches:
       value: "yb-master-0.coolstore-a.yb-masters.demo.svc.clusterset.local"
     - op: replace
       path: /spec/template/spec/containers/0/env/6/value
-      value: "ap-southeast-1a"
+      value: "ap-southeast-1"
     - op: replace
       path: /spec/template/spec/containers/0/env/9/value
       value: "ap-southeast-1"
@@ -30,7 +30,7 @@ patches:
       value: "yb-tserver-0.coolstore-a.yb-tservers.demo.svc.clusterset.local"
     - op: replace
       path: /spec/template/spec/containers/0/env/6/value
-      value: "ap-southeast-1a"
+      value: "ap-southeast-1"
     - op: replace
       path: /spec/template/spec/containers/0/env/7/value
       value: "ap-southeast-1"

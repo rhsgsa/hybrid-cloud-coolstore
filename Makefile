@@ -2,10 +2,13 @@ BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 include $(BASE)/config.sh
 
-.PHONY: install install-gitops deploy-gitea register-managed-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag login-a login-b login-c contexts hugepages f5 verify-f5 
+.PHONY: install create-aws-credentials install-gitops deploy-gitea create-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag login-a login-b login-c contexts hugepages f5 verify-f5 
 
-install: install-gitops deploy-gitea register-managed-clusters
+install: create-aws-credentials install-gitops deploy-gitea create-clusters
 	@echo "done"
+
+create-aws-credentials:
+	$(BASE)/scripts/create-aws-credentials
 
 install-gitops:
 	$(BASE)/scripts/install-gitops
@@ -15,12 +18,16 @@ deploy-gitea:
 	$(BASE)/scripts/deploy-gitea
 	$(BASE)/scripts/init-gitea $(GIT_PROJ) gitea $(GIT_ADMIN) $(GIT_PASSWORD) $(GIT_ADMIN)@example.com yaml coolstore 'Demo App'
 
-register-managed-clusters:
+create-clusters:
 	@if ! oc get project open-cluster-management 2>/dev/null >/dev/null; then \
 	  echo "this cluster does not have ACM installed"; \
 	else \
 	  echo "this cluster has ACM installed"; \
 	  oc apply -f $(BASE)/yaml/acm-gitops/acm-gitops.yaml; \
+	  $(BASE)/scripts/create-clusterset; \
+	  $(BASE)/scripts/create-clusters; \
+	  $(BASE)/scripts/wait-for-clusters; \
+	  $(BASE)/scripts/import-clusters; \
 	fi
 
 demo-manual-install:

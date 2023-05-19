@@ -1,0 +1,34 @@
+#!/bin/bash
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+source ${BASE}/../config.sh
+
+function ensure_set {
+	local varName="$1"
+	if [ -z "${!varName}" ]; then
+		echo "$varName is not set"
+		exit 1
+	fi
+}
+
+ensure_set CLUSTER_NAMES
+ensure_set CLUSTERSET_NAME
+
+for clustername in ${CLUSTER_NAMES[@]}; do
+  echo "importing ${clustername}..."
+  cat <<EOF | oc apply -f -
+apiVersion: cluster.open-cluster-management.io/v1
+kind: ManagedCluster
+metadata:
+  name: $clustername
+  labels:
+    cluster.open-cluster-management.io/clusterset: $CLUSTERSET_NAME
+    cloud: auto-detect
+    vendor: auto-detect
+spec:
+  hubAcceptsClient: true
+EOF
+done

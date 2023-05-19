@@ -1,0 +1,262 @@
+#!/bin/bash
+
+TMPDIR=/tmp/createclusters
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+source ${BASE}/../config.sh
+
+function ensure_set {
+	local varName="$1"
+	if [ -z "${!varName}" ]; then
+		echo "$varName is not set"
+		exit 1
+	fi
+}
+
+function create_aws_creds_secret {
+  local clustername="$1"
+
+  if [ -z "$clustername" ]; then
+    echo "create_aws_creds_secret called without clustername"
+    exit 1
+  fi
+
+  local aws_access_key_id="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.aws_access_key_id}' | base64 -d)"
+  local aws_secret_access_key="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.aws_secret_access_key}' | base64 -d)"
+
+  ensure_set aws_access_key_id
+  ensure_set aws_secret_access_key
+
+  oc create secret generic ${clustername}-${AWS_SECRET_NAME}-creds \
+    -n $clustername \
+    --from-literal=aws_access_key_id="$aws_access_key_id" \
+    --from-literal=aws_secret_access_key="$aws_secret_access_key"
+
+  oc label secret/${clustername}-${AWS_SECRET_NAME}-creds \
+    -n $clustername \
+    cluster.open-cluster-management.io/backup="cluster" \
+    cluster.open-cluster-management.io/copiedFromNamespace="open-cluster-management" \
+    cluster.open-cluster-management.io/copiedFromSecretName="$AWS_SECRET_NAME"
+}
+
+function create_ssh_private_key_secret {
+  local clustername="$1"
+
+  if [ -z "$clustername" ]; then
+    echo "create_ssh_private_key_secret called without clustername"
+    exit 1
+  fi
+
+  local ssh_privatekey="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.ssh-privatekey}' | base64 -d)"
+
+  ensure_set ssh_privatekey
+
+  oc create secret generic ${clustername}-ssh-private-key \
+    -n $clustername \
+    --from-literal=ssh-privatekey="$ssh_privatekey"
+
+  oc label secret/${clustername}-ssh-private-key \
+    -n $clustername \
+    cluster.open-cluster-management.io/backup="cluster" \
+    cluster.open-cluster-management.io/copiedFromNamespace="open-cluster-management" \
+    cluster.open-cluster-management.io/copiedFromSecretName="$AWS_SECRET_NAME"
+}
+
+function create_pull_secret {
+  local clustername="$1"
+
+  if [ -z "$clustername" ]; then
+    echo "create_pull_secret called without clustername"
+    exit 1
+  fi
+
+  rm -rf $TMPDIR
+  mkdir -p $TMPDIR
+  oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.pullSecret}' | base64 -d > ${TMPDIR}/.dockerconfigjson
+
+  oc create secret docker-registry ${clustername}-pull-secret \
+    -n $clustername \
+    --from-file=.dockerconfigjson=${TMPDIR}/.dockerconfigjson
+
+  rm -rf $TMPDIR
+
+  oc label secret/${clustername}-pull-secret \
+    -n $clustername \
+    cluster.open-cluster-management.io/backup="cluster" \
+    cluster.open-cluster-management.io/copiedFromNamespace="open-cluster-management" \
+    cluster.open-cluster-management.io/copiedFromSecretName="$AWS_SECRET_NAME"
+}
+
+function create_install_config_secret {
+  local clustername="$1"
+  if [ -z "$clustername" ]; then
+    echo "create_install_config_secret called without clustername"
+    exit 1
+  fi
+
+  local region="$2"
+  if [ -z "$region" ]; then
+    echo "create_install_config_secret called without region"
+    exit 1
+  fi
+
+  local clusternetwork="$3"
+  if [ -z "$clusternetwork" ]; then
+    echo "create_install_config_secret called without clusternetwork"
+    exit 1
+  fi
+
+  local servicenetwork="$4"
+  if [ -z "$servicenetwork" ]; then
+    echo "create_install_config_secret called without servicenetwork"
+    exit 1
+  fi
+
+  local base_domain="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.baseDomain}' | base64 -d)"
+  ensure_set base_domain
+
+  local ssh_publickey="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.ssh-publickey}' | base64 -d)"
+  ensure_set ssh_publickey
+
+  rm -rf $TMPDIR
+  mkdir -p $TMPDIR
+
+  cat <<EOF > ${TMPDIR}/install-config.yaml
+apiVersion: v1
+metadata:
+  name: "$clustername"
+baseDomain: $base_domain
+controlPlane:
+  architecture: amd64
+  hyperthreading: Enabled
+  name: master
+  replicas: 3
+  platform:
+    aws:
+      rootVolume:
+        iops: 4000
+        size: 100
+        type: io1
+      type: m5.xlarge
+compute:
+- hyperthreading: Enabled
+  architecture: amd64
+  name: 'worker'
+  replicas: 3
+  platform:
+    aws:
+      rootVolume:
+        iops: 2000
+        size: 100
+        type: io1
+      type: m5.xlarge
+networking:
+  networkType: OVNKubernetes
+  clusterNetwork:
+  - cidr: $clusternetwork
+    hostPrefix: 23
+  machineNetwork:
+  - cidr: 10.0.0.0/16
+  serviceNetwork:
+  - $servicenetwork
+platform:
+  aws:
+    region: $region
+pullSecret: "" # skip, hive will inject based on it's secrets
+sshKey: |-
+    $ssh_publickey
+EOF
+
+  oc create secret generic ${clustername}-install-config \
+    -n $clustername \
+    --from-file=${TMPDIR}/install-config.yaml
+
+  rm -rf $TMPDIR
+
+  oc label secret/${clustername}-ssh-private-key \
+    -n $clustername \
+    cluster.open-cluster-management.io/backup="cluster"
+}
+
+function create_cluster_deployment {
+  local clustername="$1"
+  if [ -z "$clustername" ]; then
+    echo "create_install_config_secret called without clustername"
+    exit 1
+  fi
+
+  local region="$2"
+  if [ -z "$region" ]; then
+    echo "create_install_config_secret called without region"
+    exit 1
+  fi
+
+  local base_domain="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.baseDomain}' | base64 -d)"
+  ensure_set base_domain
+
+  cat <<EOF | oc apply -f -
+apiVersion: hive.openshift.io/v1
+kind: ClusterDeployment
+metadata:
+  labels:
+    cloud: AWS
+    cluster.open-cluster-management.io/clusterset: $CLUSTERSET_NAME
+    hive.openshift.io/cluster-platform: aws
+    hive.openshift.io/cluster-region: $region
+    region: $region
+    vendor: OpenShift
+  name: $clustername
+  namespace: $clustername
+spec:
+  baseDomain: $base_domain
+  clusterName: $clustername
+  controlPlaneConfig:
+    servingCertificates: {}
+  installAttemptsLimit: 1
+  platform:
+    aws:
+      credentialsSecretRef:
+        name: ${clustername}-${AWS_SECRET_NAME}-creds
+      region: $region
+  provisioning:
+    imageSetRef:
+      name: $CLUSTERIMAGESET
+    installConfigSecretRef:
+      name: ${clustername}-install-config
+    sshPrivateKeySecretRef:
+      name: ${clustername}-ssh-private-key
+  pullSecretRef:
+    name: ${clustername}-pull-secret
+EOF
+}
+
+ensure_set AWS_SECRET_NAME
+ensure_set CLUSTERSET_NAME
+ensure_set CLUSTER_NAMES
+ensure_set CLUSTER_REGIONS
+ensure_set CLUSTER_NETWORKS
+ensure_set SERVICE_NETWORKS
+ensure_set CLUSTERIMAGESET
+
+oc get clusterimageset $CLUSTERIMAGESET 2>/dev/null >/dev/null
+if [ $? -ne 0 ]; then
+  echo "ClusterImageSet $CLUSTERIMAGESET does not exist"
+  exit 1
+fi
+
+for i in ${!CLUSTER_NAMES[@]}; do
+  echo "cluster name = ${CLUSTER_NAMES[$i]}"
+  echo "cluster region = ${CLUSTER_REGIONS[$i]}"
+  echo "cluster network = ${CLUSTER_NETWORKS[$i]}"
+  echo "service network = ${SERVICE_NETWORKS[$i]}"
+
+  oc create ns ${CLUSTER_NAMES[$i]}
+  create_aws_creds_secret ${CLUSTER_NAMES[$i]}
+  create_ssh_private_key_secret ${CLUSTER_NAMES[$i]}
+  create_pull_secret ${CLUSTER_NAMES[$i]}
+  create_install_config_secret ${CLUSTER_NAMES[$i]} ${CLUSTER_REGIONS[$i]} ${CLUSTER_NETWORKS[$i]} ${SERVICE_NETWORKS[$i]}
+  create_cluster_deployment ${CLUSTER_NAMES[$i]} ${CLUSTER_REGIONS[$i]}
+done

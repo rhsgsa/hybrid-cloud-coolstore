@@ -8,9 +8,20 @@
 
 01. Download the pull secret to the same directory as this README from the [Hybrid Cloud Console](https://console.redhat.com/openshift/install/pull-secret) - the pull secret should be named `pull-secret.txt`
 
-01. Execute the login script
+01. Install services to the ACM Hub Cluster
 
-		./scripts/create-aws-credentials
+		make install
+
+	*   This will:
+
+		*   Login to the ACM Hub cluster using `oc login`
+		*   Create the AWS credentials in the `open-cluster-management` namespace
+		*   Install the OpenShift GitOps operator
+		*   Install `gitea`
+		*   Upload manifests to `gitea`
+		*   Create a Cluster Set named `coolstore`
+		*   Create a binding from the `coolstore` Cluster Set to the `openshift-gitops` namespace
+		*   Provision 3 OpenShift clusters in different AWS regions
 
 	*   The script will ask you to paste the contents of the email containing the ACM hub cluster details from RHDP; alternatively, you can retrieve the details by
 
@@ -20,57 +31,7 @@
 
 	*   After you paste the cluster details, enter Ctrl-D on a new line
 
-	*   The script will login to the ACM Hub Cluster using `oc login` and create the AWS credentials in the `open-cluster-management` namespace
-
-01. Install services to the ACM Hub Cluster - this will: install the OpenShift GitOps operator, install `gitea`, upload manifests to `gitea`, setup a `coolstore` Application that points to the manifests in `gitea` (app-of-apps pattern)
-
-		make install
-
-01. Create a `clusterset` named `coolstore` - All Clusters / Infrastructure / Clusters / Cluster sets / Create cluster set
-
-	*   Create a namespace binding to `openshift-gitops`
-
-		*   All Clusters / Infrastructure / Clusters / Cluster sets / `coolstore` / Actions / Edit namespace bindings
-
-		*   or
-
-				cat <<EOF | oc apply -f -
-				apiVersion: cluster.open-cluster-management.io/v1beta2
-				kind: ManagedClusterSetBinding
-				metadata:
-				  name: coolstore
-				  namespace: openshift-gitops
-				spec:
-				  clusterSet: coolstore
-				EOF
-
-01. Create 3 AWS clusters in the `coolstore` clusterset
-
-	*   NOTE: Cluster creation documentation can be found at [here](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.7/html/clusters/cluster_mce_overview#creating-a-cluster)
-
-	*   Create an AWS cluster in the `coolstore` clusterset named `coolstore-a`
-
-		|Field|Value|
-		|---|---|
-		|AWS region|`ap-southeast-1`|
-		|Cluster network|`10.128.0.0/14`|
-		|Service network|`172.30.0.0/16`|
-
-	*   Create an AWS cluster in the `coolstore` clusterset named `coolstore-b`
-
-		|Field|Value|
-		|---|---|
-		|AWS region|`eu-central-1`|
-		|Cluster network|`10.132.0.0/14`|
-		|Service network|`172.31.0.0/16`|
-
-	*   Create an AWS cluster in the `coolstore` clusterset named `coolstore-c`
-
-		|Field|Value|
-		|---|---|
-		|AWS region|`us-east-1`|
-		|Cluster network|`10.136.0.0/14`|
-		|Service network|`172.32.0.0/16`|
+01. Login to the ACM Hub OpenShift Console in a web browser, select All Clusters / Infrastructure / Clusters, and monitor the provisioning of the 3 clusters
 
 01. After all 3 clusters have been provisioned, edit the `coolstore` clusterset and install Submariner add-ons in all clusters
 
@@ -236,6 +197,38 @@ The manifests in the `single-cluster` folder differ from the manifests in the `a
 * Cart's Infinispan is setup to deploy a single instance without cross-site replication
 
 
+## Manual Cluster Creation
+
+If you need to provision any of the clusters manually, go to All Clusters / Infrastructure / Clusters / Create cluster / Amazon Web Services / Standalone / Infrastructure provider credential - `aws` / Cluster set - `coolstore`
+
+*   `coolstore-a`
+
+	|Field|Value|
+	|---|---|
+	|Cluster name|`coolstore-a`|
+	|AWS region|`ap-southeast-1`|
+	|Cluster network|`10.128.0.0/14`|
+	|Service network|`172.30.0.0/16`|
+
+*   `coolstore-b`
+
+	|Field|Value|
+	|---|---|
+	|Cluster name|`coolstore-b`|
+	|AWS region|`ap-southeast-2`|
+	|Cluster network|`10.132.0.0/14`|
+	|Service network|`172.31.0.0/16`|
+
+*   `coolstore-c`
+
+	|Field|Value|
+	|---|---|
+	|Cluster name|`coolstore-c`|
+	|AWS region|`ap-northeast-1`|
+	|Cluster network|`10.136.0.0/14`|
+	|Service network|`172.32.0.0/16`|
+
+
 ## Troubleshooting
 
 ### `cart`
@@ -337,6 +330,12 @@ sequenceDiagram
 *   [Lab instructions](http://guides-m4-labs-infra.6923.rh-us-east-1.openshiftapps.com/workshop/cloudnative/lab/high-performing-cache-services)
 
 *   [Strimzi advertised addresses](https://strimzi.io/docs/operators/latest/configuring.html#property-listener-config-broker-reference)
+
+*   [Creating a cluster with ClusterDeployment](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.7/html/clusters/cluster_mce_overview#create-a-cluster-with-clusterdeployment)
+
+*   [Adding clusters to a ManagedClusterSet by using the CLI](https://access.redhat.com/documentation/en-us/red_hat_advanced_cluster_management_for_kubernetes/2.7/html/clusters/cluster_mce_overview#adding-clusters-managedclusterset-cli)
+
+*   [Setup Submariner on the Hub cluster](https://github.com/stolostron/submariner-addon#setup-submariner-on-the-hub-cluster)
 
 *   Force remove all Applications and ApplicationSets from ArgoCD
 
