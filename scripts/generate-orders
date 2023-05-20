@@ -9,7 +9,7 @@ cd - >> /dev/null
 source ${BASE}/../config.sh
 
 function get_kafka() {
-  oc get -n $PROJ sts/my-cluster-kafka -o name 2>/dev/null
+  oc get -n $PROJ deploy/kafka-0 -o name 2>/dev/null
 }
 
 # check if we have everything deployed on the connected cluster (single

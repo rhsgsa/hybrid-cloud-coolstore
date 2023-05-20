@@ -14,7 +14,7 @@ spec:
         - name: STOP
           value: "110"
         - name: BOOTSTRAP
-          value: my-cluster-kafka-bootstrap:9092
+          value: my-cluster-kafka-bootstrap.demo.svc.clusterset.local:9092
         - name: TOPIC
           value: orders
         command:
