@@ -51,6 +51,7 @@ create-clusters:
 	  $(BASE)/scripts/setup-console-banners; \
 	  $(BASE)/scripts/setup-letsencrypt; \
 	  $(BASE)/scripts/install-submariner; \
+	  #$(BASE)/scripts/configure-hugepages; \
 	  oc apply -f $(BASE)/yaml/argocd/coolstore.yaml; \
 	fi
 	@# Note we are performing some tasks between cluster provisioning and
