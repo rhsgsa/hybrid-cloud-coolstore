@@ -387,3 +387,20 @@ sequenceDiagram
 		    $r
 		  oc delete -n openshift-gitops $r --wait=false
 		done
+
+	To clean up datagrid operator fully
+
+  	```` 
+	for context in login-a login-b login-c
+	do
+		echo -n "$context: "
+
+		oc --context=$context get subscriptions.operators.coreos.com  -o name -n openshift-operators | \
+		grep datagrid | \
+		xargs -I {} oc --context=$context delete -n openshift-operators {}
+
+		oc --context=$context get csv -o name -n openshift-operators | \
+		grep datagrid | \
+		xargs -I {} oc --context=$context delete -n openshift-operators {}
+	done
+	````
