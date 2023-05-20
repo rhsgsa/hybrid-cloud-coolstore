@@ -208,6 +208,26 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 *   `wc`
 
 
+## Remote Install
+
+*   Runs most of the installation tasks in a Kubernetes job in the ACM hub cluster
+
+*   Start the installation by running
+
+		make remote-install
+
+*   When the job completes, remove the job and all dependent resources with
+
+		make clean-remote-install
+
+*   Since most of the work is done in the Kubernetes job, there are less requirements for the local machine; however, you will still need the following installed on your local machine
+
+	*   `make`
+	*   `bash`
+	*   `oc`
+	*   `ssh-keygen`
+
+
 ## Troubleshooting
 
 ### `cart`

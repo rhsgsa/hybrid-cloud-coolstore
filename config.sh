@@ -10,3 +10,6 @@ CLUSTER_REGIONS=(ap-southeast-1 ap-southeast-2 ap-northeast-1)
 CLUSTER_NETWORKS=(10.128.0.0/14 10.132.0.0/14 10.136.0.0/14)
 SERVICE_NETWORKS=(172.30.0.0/16 172.31.0.0/16 172.32.0.0/16)
 CLUSTERIMAGESET=img4.12.17-multi-appsub
+
+INSTALLER_IMAGE=ghcr.io/rhsgsa/hybrid-cloud-installer
+REMOTE_INSTALL_PROJ=infra

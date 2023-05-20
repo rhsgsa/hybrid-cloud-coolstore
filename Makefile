@@ -2,10 +2,29 @@ BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 include $(BASE)/config.sh
 
-.PHONY: install create-aws-credentials install-gitops deploy-gitea create-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag login-a login-b login-c contexts hugepages f5 verify-f5 
+.PHONY: install remote-install clean-remote-install create-aws-credentials install-gitops deploy-gitea create-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag login-a login-b login-c contexts hugepages f5 verify-f5 installer-image
 
 install: create-aws-credentials install-gitops deploy-gitea create-clusters
 	@echo "done"
+
+remote-install: create-aws-credentials
+	oc new-project $(REMOTE_INSTALL_PROJ) || oc project $(REMOTE_INSTALL_PROJ)
+	oc create sa -n $(REMOTE_INSTALL_PROJ) remote-installer
+	oc adm policy add-cluster-role-to-user -n $(REMOTE_INSTALL_PROJ) cluster-admin -z remote-installer
+	oc apply -f $(BASE)/yaml/remote-installer/remote-installer.yaml
+	@/bin/echo -n "waiting for job to appear..."
+	@until oc get -n $(REMOTE_INSTALL_PROJ) job/remote-installer 2>/dev/null >/dev/null; do \
+	  /bin/echo -n "."; \
+	  sleep 10; \
+	done
+	@echo "done"
+	oc wait -n $(REMOTE_INSTALL_PROJ) --for condition=ready po -l job-name=remote-installer
+	oc logs -n $(REMOTE_INSTALL_PROJ) -f job/remote-installer
+
+clean-remote-install:
+	oc delete -n $(REMOTE_INSTALL_PROJ) job/remote-installer
+	oc delete -n $(REMOTE_INSTALL_PROJ) sa/remote-installer
+	oc delete clusterrolebinding `oc get clusterrolebinding -o jsonpath='{.items[?(@.subjects[0].name == "remote-installer")].metadata.name}'`
 
 create-aws-credentials:
 	$(BASE)/scripts/create-aws-credentials
@@ -146,3 +165,7 @@ f5:
 
 verify-f5:
 	@scripts/verify-hugepages
+
+installer-image:
+	docker build -t $(INSTALLER_IMAGE) $(BASE)/installer-image
+	docker push $(INSTALLER_IMAGE)

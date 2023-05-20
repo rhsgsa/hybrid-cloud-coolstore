@@ -1,0 +1,46 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  labels:
+    app: remote-installer
+  name: remote-installer
+spec:
+  template:
+    spec:
+      serviceAccountName: remote-installer
+      containers:
+      - name: remote-installer
+        image: "ghcr.io/rhsgsa/hybrid-cloud-installer:latest"
+        command:
+        - /bin/bash
+        - "-c"
+        - |
+          export HOME=$(pwd)
+          git config --global user.email "installer@example.com"
+          git config --global user.name "Remote Installer"
+
+          git clone https://github.com/rhsgsa/hybrid-cloud-coolstore.git
+
+          cd hybrid-cloud-coolstore
+
+          make install-gitops deploy-gitea create-clusters
+
+          echo "installation completed"
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          runAsNonRoot: true
+          seccompProfile:
+            type: RuntimeDefault
+        resources:
+          limits:
+            cpu: "0.5"
+            memory: 1Gi
+          requests:
+            cpu: "0.5"
+            memory: 1Gi
+      restartPolicy: Never
+  backoffLimit: 2
