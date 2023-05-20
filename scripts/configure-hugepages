@@ -18,6 +18,8 @@ do
 	oc --context=$context create -f yaml/hugepages/ || true
 done
 
+echo
+
 for context in login-a login-b login-c
 do
 	echo "Waiting for worker-hp MCP on $context to be ready"

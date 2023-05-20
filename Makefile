@@ -158,9 +158,6 @@ login-c:
 contexts:
 	@scripts/set-contexts
 
-hugepages:
-	@scripts/configure-hugepages
-
 f5:
 	@scripts/configure-f5 f5/hcd-coolstore-multi-cluster.yaml
 

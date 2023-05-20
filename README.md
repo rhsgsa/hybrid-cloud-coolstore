@@ -75,10 +75,6 @@
 
 		make contexts 
 
-	Configure Huge Pages 
-
-		make hugepages
-
 	Configure F5 Global Loadbalancer
 	    * Note that you will need to install the following: yq, jinja2 and vesctl.
 
