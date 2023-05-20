@@ -230,6 +230,43 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 
 ## Troubleshooting
 
+### Cluster installation failure due to the quota limit
+
+* Determine whether it is AWS quota limit. The cluster provisoning logs will have a statement like `Error: creating EC2 EIP: AddressLimitExceeded`. The EC2 VPC Elastic IP default quota per region is:
+
+	````
+	{
+		"ServiceName": "Amazon Elastic Compute Cloud (Amazon EC2)",
+		"QuotaName": "EC2-VPC Elastic IPs",
+		"QuotaCode": "L-0263D0A3",
+		"Value": 5.0
+	}
+	````
+
+	You can check the the number of allocated Elastic IPs with `describe-addresses`.
+	
+	````
+	aws ec2 describe-addresses --query 'Addresses[*].PublicIp' --region ap-southeast-1
+	````
+
+* Raise the quota by following this [link](https://repost.aws/knowledge-center/request-service-quota-increase-cli)
+
+	````
+	aws service-quotas request-service-quota-increase \
+	--service-code ec2 \
+	--quota-code L-0263D0A3 \
+	--region ap-southeast-1 \
+	--desired-value 10
+	````
+
+* Check the status of the request with the `request-id`. The status will changed to `APPROVED`.
+
+	````
+	aws service-quotas get-requested-service-quota-change --request-id xxx --region ap-southeast-1
+	````
+
+* Destroy the cluster and run `make install` again. 
+
 ### `cart`
 
 *   Access cart swagger UI at `/q/swagger-ui`
