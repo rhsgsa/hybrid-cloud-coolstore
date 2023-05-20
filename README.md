@@ -249,7 +249,7 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 	aws ec2 describe-addresses --query 'Addresses[*].PublicIp' --region ap-southeast-1
 	````
 
-* Raise the quota by following this [link](https://repost.aws/knowledge-center/request-service-quota-increase-cli)
+* Raise the quota by following this [link](https://repost.aws/knowledge-center/request-service-quota-increase-cli) for the region.
 
 	````
 	aws service-quotas request-service-quota-increase \
@@ -259,13 +259,13 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 	--desired-value 10
 	````
 
-* Check the status of the request with the `request-id`. The status will changed to `APPROVED`.
+* Check the status of the request with the `request-id`. The status will change to `APPROVED`.
 
 	````
 	aws service-quotas get-requested-service-quota-change --request-id xxx --region ap-southeast-1
 	````
 
-* Destroy the cluster and run `make install` again. 
+* Destroy the failed cluster and run `make install` or `make remote-install` again. 
 
 ### `cart`
 
