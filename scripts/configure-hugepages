@@ -21,7 +21,7 @@ done
 for context in login-a login-b login-c
 do
 	echo "Waiting for worker-hp MCP on $context to be ready"
-	while ! oc --context=$context get mcp worker-hp -o jsonpath="{.status.conditions[?(@.type=='Updating')].status}" | grep False; do
+	while ! oc --context=$context get mcp worker-hp -o jsonpath="{.status.conditions[?(@.type=='Updating')].status}" | grep False > /dev/null; do
 		echo -n "."
 		sleep 5
 	done
