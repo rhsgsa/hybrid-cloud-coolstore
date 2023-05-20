@@ -4,7 +4,7 @@
 
 ### Multicluster Installation
 
-01. Provision an `OCP4 ACM Hub` cluster on `demo.redhat.com`
+01. Provision an `Red Hat OpenShift Container Platform 4 Red Hat Advanced Cluster Management Hub` cluster on `demo.redhat.com`
 
 01. Download the pull secret to the same directory as this README from the [Hybrid Cloud Console](https://console.redhat.com/openshift/install/pull-secret) - the pull secret should be named `pull-secret.txt`
 
@@ -188,6 +188,24 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 	|AWS region|`ap-northeast-1`|
 	|Cluster network|`10.136.0.0/14`|
 	|Service network|`172.32.0.0/16`|
+
+
+## Installation Requirements
+
+*   `oc`
+*   `kubectl`
+*   `git`
+*   `bash`
+*   `make`
+*   `ssh-keygen`
+*   `base64`
+*   `cat`
+*   `sed`
+*   `curl`
+*   `jq`
+*   `grep`
+*   `awk`
+*   `wc`
 
 
 ## Troubleshooting
