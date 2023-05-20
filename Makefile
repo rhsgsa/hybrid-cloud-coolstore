@@ -28,11 +28,14 @@ create-clusters:
 	  oc apply -f $(BASE)/yaml/acm-gitops/acm-gitops.yaml; \
 	  $(BASE)/scripts/create-clusterset; \
 	  $(BASE)/scripts/create-clusters; \
-	  $(BASE)/scripts/install-submariner; \
+	  $(BASE)/scripts/wait-for-secrets; \
 	  $(BASE)/scripts/setup-console-banners; \
 	  $(BASE)/scripts/setup-letsencrypt; \
+	  $(BASE)/scripts/install-submariner; \
 	  oc apply -f $(BASE)/yaml/argocd/coolstore.yaml; \
 	fi
+	@# Note we are performing some tasks between cluster provisioning and
+	@# installing Submariner in order to give the cluster some time to settle
 
 demo-manual-install:
 	# ensure we are logged into OpenShift
