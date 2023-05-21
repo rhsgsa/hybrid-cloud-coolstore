@@ -422,3 +422,9 @@ sequenceDiagram
 		  xargs -I {} oc --context=$context delete -n openshift-operators {}
 	done
 	````
+
+* Remove huge page configuration
+
+	````
+	scripts/delete-hugepages
+	````

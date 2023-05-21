@@ -1,0 +1,27 @@
+#!/bin/bash
+
+for context in login-a login-b login-c
+do
+    echo ================================
+    echo Configure for cluster context $context ...
+
+    for w in `oc --context=$context get node -oname -l node-role.kubernetes.io/worker=`
+    do
+        # Exclude any submariner gateway nodes
+        oc --context=$context get $w --show-labels | grep -q submariner.io/gateway=true && continue
+
+        oc --context=$context label $w node-role.kubernetes.io/worker-hp-
+    done    
+done
+
+for context in login-a login-b login-c
+do
+	echo "Waiting for worker MCP on $context to be ready"
+	while ! oc --context=$context get mcp worker -o jsonpath="{.status.conditions[?(@.type=='Updating')].status}" | grep False > /dev/null; do
+		echo -n "."
+		sleep 30
+	done
+
+    oc --context=$context delete mcp worker-hp
+    oc --context=$context delete tuned hugepages -n openshift-cluster-node-tuning-operator
+done
