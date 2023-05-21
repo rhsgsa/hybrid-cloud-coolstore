@@ -313,8 +313,6 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 * Restart all postgresql pods
 
 	````
-	make contexts
-
 	for context in login-a login-b login-c
 	do
 		echo -n "$context: "
