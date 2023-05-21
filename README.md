@@ -325,6 +325,8 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 		  grep yb- | \
 		  xargs -I {} oc --context=$context delete -n demo {}
 	done
+
+	oc --context=login-a delete job create-databases
 	````
 
 ### Infinispan

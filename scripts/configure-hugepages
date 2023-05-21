@@ -25,7 +25,7 @@ do
 	echo "Waiting for worker-hp MCP on $context to be ready"
 	while ! oc --context=$context get mcp worker-hp -o jsonpath="{.status.conditions[?(@.type=='Updating')].status}" | grep False > /dev/null; do
 		echo -n "."
-		sleep 5
+		sleep 30
 	done
 done
 
