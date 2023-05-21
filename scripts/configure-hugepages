@@ -8,7 +8,7 @@ AWS_CREDS_NS=open-cluster-management
 TMP_KUBECONFIG=/tmp/kubeconfig
 
 CLUSTERS="coolstore-a coolstore-b coolstore-c"
-NODE_CONFIG=""
+CONFIG=""
 
 cd `dirname $0`
 BASE=`pwd`
@@ -29,7 +29,7 @@ for cluster in $CLUSTERS; do
     exit 1
   fi
 
-  NODE_CONFIG="$NODE_CONFIG $cluster $token $apiserver"
+  CONFIG="$CONFIG $cluster $token $apiserver"
 done
 
 function login {
@@ -95,9 +95,8 @@ function login_and_wait_for_mcp {
   done
 }
 
-MCP_CONFIG="$NODE_CONFIG"
-login_and_label_nodes $NODE_CONFIG
-login_and_wait_for_mcp $MCP_CONFIG
+login_and_label_nodes $CONFIG
+login_and_wait_for_mcp $CONFIG
 
 #echo
 #echo -n Verifying huge pages [this can take some time] ...
