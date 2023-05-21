@@ -2,33 +2,102 @@
 # Set up huge pages
 # Be sure to run this BEFORE configuring Submariner.  Don't configure for Submainer gateways!
 
-for context in login-a login-b login-c
-do
-	echo ================================
-	echo Configure for cluster context $context ...
+AWS_CREDS_SECRET_NAME=aws
+AWS_CREDS_NS=open-cluster-management
 
-	for w in `oc --context=$context get node -oname -l node-role.kubernetes.io/worker=`
-	do
-		# Exclude any submariner gateway nodes
-		oc --context=$context get $w --show-labels | grep -q submariner.io/gateway=true && continue
+TMP_KUBECONFIG=/tmp/kubeconfig
 
-		oc --context=$context label $w node-role.kubernetes.io/worker-hp=
-	done
-	
-	oc --context=$context create -f yaml/hugepages/ || true
+CLUSTERS="coolstore-a coolstore-b coolstore-c"
+NODE_CONFIG=""
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+for cluster in $CLUSTERS; do
+  secret="$(oc get -n openshift-gitops secret/${cluster}-cluster-secret -o jsonpath='{.data}')"
+  token="$(echo -n $secret | jq -r '.config' | base64 -d | jq -r '.bearerToken')"
+  apiserver="$(echo -n $secret | jq -r '.server' | base64 -d)"
+
+  if [ -z "$token" ]; then
+    echo "could not extract token for $cluster"
+    exit 1
+  fi
+
+  if [ -z "$apiserver" ]; then
+    echo "could not extract API server for $cluster"
+    exit 1
+  fi
+
+  NODE_CONFIG="$NODE_CONFIG $cluster $token $apiserver"
 done
 
-echo
+function login {
+  local token="$1"
+  local api="$2"
 
-for context in login-a login-b login-c
-do
-	echo "Waiting for worker-hp MCP on $context to be ready"
-	while ! oc --context=$context get mcp worker-hp -o jsonpath="{.status.conditions[?(@.type=='Updating')].status}" | grep False > /dev/null; do
-		echo -n "."
-		sleep 30
+  export KUBECONFIG=$TMP_KUBECONFIG
+  rm -f $KUBECONFIG
+  touch $KUBECONFIG
+
+  echo "logging in to $api"
+  oc login $api --token=$token --insecure-skip-tls-verify
+}
+
+function login_and_label_nodes {
+  local clustername
+  local token
+  local apiserver
+
+  while [ $# -gt 0 ]; do
+    clustername="$1"
+    token="$2"
+    apiserver="$3"
+    shift
+    shift
+    shift
+    echo "$clustername $apiserver"
+    login $token $apiserver
+
+    for w in `oc get node -oname -l node-role.kubernetes.io/worker=`; do
+      # Exclude any submariner gateway nodes
+      oc get $w --show-labels | grep -q submariner.io/gateway=true && continue
+
+      oc label $w node-role.kubernetes.io/worker-hp=
+    done
+
+    oc create -f ${BASE}/../yaml/hugepages/ || true
+  done
+}
+
+function login_and_wait_for_mcp {
+  local clustername
+  local token
+  local apiserver
+
+  while [ $# -gt 0 ]; do
+    clustername="$1"
+    token="$2"
+    apiserver="$3"
+    shift
+    shift
+    shift
+    echo "$clustername $apiserver"
+    login $token $apiserver
+
+    echo -n "waiting for worker-hp MCP on $clustername to be ready..."
+	while ! oc get mcp worker-hp -o jsonpath="{.status.conditions[?(@.type=='Updating')].status}" | grep False > /dev/null; do
+	  echo -n "."
+	  sleep 30
 	done
-	echo
-done
+	echo "done"
+
+  done
+}
+
+MCP_CONFIG="$NODE_CONFIG"
+login_and_label_nodes $NODE_CONFIG
+login_and_wait_for_mcp $MCP_CONFIG
 
 #echo
 #echo -n Verifying huge pages [this can take some time] ...
@@ -37,5 +106,3 @@ done
 #	echo -n .
 #	sleep 5
 #done
-
-echo done
