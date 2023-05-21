@@ -327,6 +327,8 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 	oc --context=login-a delete job create-databases
 	````
 
+	Sync ArgoCD Application `coolstore-a-yugabyte-a` to recreate the databases. 
+
 ### Infinispan
 
 *   List keys in Infinispan
