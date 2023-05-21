@@ -39,7 +39,7 @@
 
 	*   The installation process should take about 65 minutes to complete
 
-	*   Note: `make install` will run the install script from your local machine - there is also a [remote install](#remote-install) option where a majority of the installation takes place in a Kubernetes Job on the ACM Hub cluster
+	*   Note: `make install` will run the install script from your local machine - there is also a [remote install](#remote-install) option where the majority of the installation takes place in a Kubernetes Job on the ACM Hub cluster
 
 01. Modify the `coolstore-a` alert manager settings so that alert emails are sent quicker
 
