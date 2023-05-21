@@ -71,12 +71,10 @@
 
 01. Set up F5 Distributed Cloud Global Loadbalancer
 
+	*   Note that you will need to install the following: `yq`, `jinja2` and `vesctl`.
 
-	* Note that you will need to install the following: yq, jinja2 and vesctl.
+			make f5
 
-		````
-		make f5
-		````
 
 ### Multicluster Demo
 
@@ -143,13 +141,13 @@ If you don't do the above, the clusters may be stuck in the detaching phase. If 
 
 The manifests in the `single-cluster` folder differ from the manifests in the `argocd` folder in the following ways:
 
-* The `Application` destination names (`.spec.destination.name`) have been set to `in-cluster` instead of `coolstore-a` and `coolstore-b`
+*   The `Application` destination names (`.spec.destination.name`) have been set to `in-cluster` instead of `coolstore-a` and `coolstore-b`
 
-* `kafka.yaml` has been modified - `.kafka.serviceexport` in `.spec.template.spec.source.helm` is set to `false`
+*   `kafka.yaml` has been modified - `.kafka.serviceexport` in `.spec.template.spec.source.helm` is set to `false`
 
-* `payment.yaml` has been modified - `.payment.kafka.bootstrapServers` in `.spec.template.spec.source.helm` is set to `my-cluster-kafka-bootstrap.demo.svc.cluster.local:9092`
+*   `payment.yaml` has been modified - `.payment.kafka.bootstrapServers` in `.spec.template.spec.source.helm` is set to `my-cluster-kafka-bootstrap.demo.svc.cluster.local:9092`
 
-* Cart's Infinispan is setup to deploy a single instance without cross-site replication
+*   Cart's Infinispan is setup to deploy a single instance without cross-site replication
 
 
 ## Manual Cluster Creation
@@ -226,40 +224,38 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 
 ### Cluster installation failure due to the quota limit
 
-* Determine whether it is AWS quota limit. The cluster provisoning logs will have a statement like `Error: creating EC2 EIP: AddressLimitExceeded`. The EC2 VPC Elastic IP default quota per region is:
+*   Determine whether it is AWS quota limit. The cluster provisoning logs will have a statement like `Error: creating EC2 EIP: AddressLimitExceeded`. The EC2 VPC Elastic IP default quota per region is:
 
-	````
-	{
-		"ServiceName": "Amazon Elastic Compute Cloud (Amazon EC2)",
-		"QuotaName": "EC2-VPC Elastic IPs",
-		"QuotaCode": "L-0263D0A3",
-		"Value": 5.0
-	}
-	````
+		{
+		  "ServiceName": "Amazon Elastic Compute Cloud (Amazon EC2)",
+		  "QuotaName": "EC2-VPC Elastic IPs",
+		  "QuotaCode": "L-0263D0A3",
+		  "Value": 5.0
+		}
 
-	You can check the the number of allocated Elastic IPs with `describe-addresses`.
-	
-	````
-	aws ec2 describe-addresses --query 'Addresses[*].PublicIp' --region ap-southeast-1
-	````
+	   You can check the the number of allocated Elastic IPs with `describe-addresses`.
 
-* Raise the quota by following this [link](https://repost.aws/knowledge-center/request-service-quota-increase-cli) for the region.
+		aws ec2 describe-addresses \
+		  --query 'Addresses[*].PublicIp' \
+		  --region ap-southeast-1
 
-	````
-	aws service-quotas request-service-quota-increase \
-	  --service-code ec2 \
-	  --quota-code L-0263D0A3 \
-	  --region ap-southeast-1 \
-	  --desired-value 10
-	````
+*   Raise the quota by following this [link](https://repost.aws/knowledge-center/request-service-quota-increase-cli) for the region.
 
-* Check the status of the request with the `request-id`. The status will change to `APPROVED`.
 
-	````
-	aws service-quotas get-requested-service-quota-change --request-id xxx --region ap-southeast-1
-	````
+		aws service-quotas request-service-quota-increase \
+		  --service-code ec2 \
+		  --quota-code L-0263D0A3 \
+		  --region ap-southeast-1 \
+		  --desired-value 10
 
-* Destroy the failed cluster and run `make install` or `make remote-install` again. 
+*   Check the status of the request with the `request-id`. The status will change to `APPROVED`.
+
+		aws service-quotas get-requested-service-quota-change \
+		  --request-id xxx \
+		  --region ap-southeast-1
+
+*   Destroy the failed cluster and run `make install` or `make remote-install` again. 
+
 
 ### `cart`
 
