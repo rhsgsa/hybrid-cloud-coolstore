@@ -2,9 +2,6 @@
 # Set up huge pages
 # Be sure to run this BEFORE configuring Submariner.  Don't configure for Submainer gateways!
 
-AWS_CREDS_SECRET_NAME=aws
-AWS_CREDS_NS=open-cluster-management
-
 TMP_KUBECONFIG=/tmp/kubeconfig
 
 CLUSTERS="coolstore-a coolstore-b coolstore-c"
@@ -105,3 +102,5 @@ login_and_wait_for_mcp $CONFIG
 #	echo -n .
 #	sleep 5
 #done
+
+rm -f $KUBECONFIG

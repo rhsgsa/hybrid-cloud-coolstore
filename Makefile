@@ -28,7 +28,9 @@ clean-remote-install:
 	-oc delete -n $(REMOTE_INSTALL_PROJ) job/remote-installer
 	-oc delete -n $(REMOTE_INSTALL_PROJ) sa/remote-installer
 	-oc delete -n $(REMOTE_INSTALL_PROJ) cm/remote-installer-config
-	-oc delete clusterrolebinding `oc get clusterrolebinding -o jsonpath='{.items[?(@.subjects[0].name == "remote-installer")].metadata.name}'`
+	-for s in `oc get clusterrolebinding -o jsonpath='{.items[?(@.subjects[0].name == "remote-installer")].metadata.name}'`; do \
+	  oc delete clusterrolebinding $$s; \
+	done
 
 create-aws-credentials:
 	$(BASE)/scripts/create-aws-credentials

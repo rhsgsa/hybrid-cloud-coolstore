@@ -214,6 +214,7 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 
 *   Since most of the work is done in the Kubernetes job, there are less requirements for the local machine; however, you will still need the following installed on your local machine
 
+	*   `git`
 	*   `make`
 	*   `bash`
 	*   `oc`

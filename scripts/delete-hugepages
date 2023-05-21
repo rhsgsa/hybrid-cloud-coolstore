@@ -1,8 +1,5 @@
 #!/bin/bash
 
-AWS_CREDS_SECRET_NAME=aws
-AWS_CREDS_NS=open-cluster-management
-
 TMP_KUBECONFIG=/tmp/kubeconfig
 
 CLUSTERS="coolstore-a coolstore-b coolstore-c"
@@ -93,3 +90,5 @@ function login_and_wait_for_mcp {
 
 login_and_unlabel_nodes $CONFIG
 login_and_wait_for_mcp $CONFIG
+
+rm -f $KUBECONFIG
