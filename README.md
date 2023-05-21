@@ -312,6 +312,20 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 		    -c 'select * from catalog' \
 		    catalog
 
+* Restart all postgresql pods
+
+	````
+	make contexts
+
+	for context in login-a login-b login-c
+	do
+		echo -n "$context: "
+
+		oc --context=$context get po  -o name -n demo| \
+		  grep yb- | \
+		  xargs -I {} oc --context=$context delete -n demo {}
+	done
+	````
 
 ### Infinispan
 
@@ -387,16 +401,22 @@ sequenceDiagram
 	To clean up datagrid operator fully
 
   	```` 
+	make contexts
+
 	for context in login-a login-b login-c
 	do
 		echo -n "$context: "
 
-		oc --context=$context get subscriptions.operators.coreos.com  -o name -n openshift-operators | \
-		grep datagrid | \
-		xargs -I {} oc --context=$context delete -n openshift-operators {}
+		oc --context=$context get subscriptions.operators.coreos.com \
+		  -o name \
+		  -n openshift-operators | \
+		  grep datagrid | \
+		  xargs -I {} oc --context=$context delete -n openshift-operators {}
 
-		oc --context=$context get csv -o name -n openshift-operators | \
-		grep datagrid | \
-		xargs -I {} oc --context=$context delete -n openshift-operators {}
+		oc --context=$context get csv \
+		  -o name \
+		  -n openshift-operators | \
+		  grep datagrid | \
+		  xargs -I {} oc --context=$context delete -n openshift-operators {}
 	done
 	````
