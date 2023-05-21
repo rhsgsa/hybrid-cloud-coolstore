@@ -35,6 +35,8 @@
 
 	*   After you paste the cluster details, enter Ctrl-D on a new line
 
+	* 	Once the ArgoCD `ApplicaitonSet` have been deployed, it can take about 5-10 minutes for the entire demo to be ready. 
+
 01. NOTE: If you have deployed the clusters in other AWS regions, or have deployed them on other public cloud providers such as Azure and GCP, then you will need to update the overlays folders in gitea
 
 	*   For instance, if `coolstore-a` is deployed in `ap-southeast-2` instead of `ap-southeast-1`, then you will need to
@@ -365,6 +367,10 @@ sequenceDiagram
 	PaymentsTopic ->> OrderService: payment successful status=COMPLETED
 	OrderService ->> OrderDatabase: order record status=COMPLETED
 ```
+
+## Huge Page Machine Config Pool
+
+* When the node gets stuck. It is simpler to remove the correseponding `machine` and let the `machienset` provision a new node. Run the `scripts/configure-hugepages` again when the node is `Ready`.
 
 
 ## Resources
