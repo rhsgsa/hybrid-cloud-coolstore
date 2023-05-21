@@ -27,6 +27,7 @@ do
 		echo -n "."
 		sleep 30
 	done
+	echo
 done
 
 #echo

@@ -34,3 +34,6 @@ patches:
     - op: replace
       path: /spec/template/spec/containers/0/env/4/value
       value: "yb-master-0.coolstore-a.yb-masters.demo.svc.clusterset.local:7100,yb-master-0.coolstore-b.yb-masters.demo.svc.clusterset.local:7100,yb-master-0.coolstore-c.yb-masters.demo.svc.clusterset.local:7100"
+    - op: add
+      path: /spec/template/spec/containers/0/resources/limits/hugepages-2Mi
+      value: 100Mi
