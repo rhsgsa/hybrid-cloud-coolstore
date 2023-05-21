@@ -247,10 +247,10 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 
 	````
 	aws service-quotas request-service-quota-increase \
-	--service-code ec2 \
-	--quota-code L-0263D0A3 \
-	--region ap-southeast-1 \
-	--desired-value 10
+	  --service-code ec2 \
+	  --quota-code L-0263D0A3 \
+	  --region ap-southeast-1 \
+	  --desired-value 10
 	````
 
 * Check the status of the request with the `request-id`. The status will change to `APPROVED`.
@@ -313,19 +313,19 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 * Restart all postgresql pods
 
 	````
-	make contexts
-
 	for context in login-a login-b login-c
 	do
-		echo -n "$context: "
+	  echo -n "$context: "
 
-		oc --context=$context get po  -o name -n demo| \
-		  grep yb- | \
-		  xargs -I {} oc --context=$context delete -n demo {}
+	  oc --context=$context get po  -o name -n demo| \
+	    grep yb- | \
+		xargs -I {} oc --context=$context delete -n demo {}
 	done
 
 	oc --context=login-a delete job create-databases
 	````
+
+	Sync ArgoCD Application `coolstore-a-yugabyte-a` to recreate the databases. 
 
 ### Infinispan
 
@@ -402,26 +402,27 @@ sequenceDiagram
 		  oc delete -n openshift-gitops $r --wait=false
 		done
 
-	To clean up datagrid operator fully
+	  To clean up datagrid operator fully
 
-  	```` 
-	for context in login-a login-b login-c
-	do
-		echo -n "$context: "
+    ````
+    for context in login-a login-b login-c
+    do
 
-		oc --context=$context get subscriptions.operators.coreos.com \
-		  -o name \
-		  -n openshift-operators | \
-		  grep datagrid | \
-		  xargs -I {} oc --context=$context delete -n openshift-operators {}
+      echo -n "$context: "
 
-		oc --context=$context get csv \
-		  -o name \
-		  -n openshift-operators | \
-		  grep datagrid | \
-		  xargs -I {} oc --context=$context delete -n openshift-operators {}
-	done
-	````
+      oc --context=$context get subscriptions.operators.coreos.com \
+        -o name \
+        -n openshift-operators | \
+        grep datagrid | \
+        xargs -I {} oc --context=$context delete -n openshift-operators {}
+
+      oc --context=$context get csv \
+        -o name \
+        -n openshift-operators | \
+        grep datagrid | \
+        xargs -I {} oc --context=$context delete -n openshift-operators {}
+    done
+    ````
 
 * Remove huge page configuration
 
