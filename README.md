@@ -52,6 +52,14 @@
 
 		./scripts/modify-alert-manager-settings
 
+01. Configure OpenShift contexts 
+	    
+	* Be sure to log into the hub cluster.
+
+		````	
+		make contexts 
+		````
+
 01. Open the following browser tabs
 
 	* ArgoCD
@@ -72,15 +80,12 @@
 
 01. Set up F5 Distributed Cloud Global Loadbalancer
 
-	Configure OpenShift contexts 
-	    * Be sure to log into the hub cluster.
 
-		make contexts 
+	* Note that you will need to install the following: yq, jinja2 and vesctl.
 
-	Configure F5 Global Loadbalancer
-	    * Note that you will need to install the following: yq, jinja2 and vesctl.
-
+		````
 		make f5
+		````
 
 ### Multicluster Demo
 
@@ -409,8 +414,6 @@ sequenceDiagram
 	To clean up datagrid operator fully
 
   	```` 
-	make contexts
-
 	for context in login-a login-b login-c
 	do
 		echo -n "$context: "
