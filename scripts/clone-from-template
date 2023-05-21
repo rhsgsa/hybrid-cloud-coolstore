@@ -18,7 +18,7 @@ dest_dir="$2"
 
 rm -rf $dest_dir
 mkdir -p $dest_dir
-cp -R ${src_dir}/ ${dest_dir}/
+tar -C $src_dir -cf - . | tar -C $dest_dir -xf -
 
 for dir in coolstore-a coolstore-b coolstore-c; do
   # https://stackoverflow.com/a/17030953
