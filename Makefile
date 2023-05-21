@@ -1,3 +1,5 @@
+TMP_REPO=/tmp/hybrid-coolstore
+
 BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 include $(BASE)/config.sh
@@ -7,10 +9,11 @@ include $(BASE)/config.sh
 install: create-aws-credentials install-gitops deploy-gitea create-clusters
 	@echo "done"
 
-remote-install: create-aws-credentials
+remote-install: create-aws-credentials clean-remote-install
 	oc new-project $(REMOTE_INSTALL_PROJ) || oc project $(REMOTE_INSTALL_PROJ)
-	oc create sa -n $(REMOTE_INSTALL_PROJ) remote-installer
+	oc create -n $(REMOTE_INSTALL_PROJ) sa remote-installer
 	oc adm policy add-cluster-role-to-user -n $(REMOTE_INSTALL_PROJ) cluster-admin -z remote-installer
+	oc create -n $(REMOTE_INSTALL_PROJ) cm remote-installer-config --from-file=$(BASE)/config.sh
 	oc apply -f $(BASE)/yaml/remote-installer/remote-installer.yaml
 	@/bin/echo -n "waiting for job to appear..."
 	@until oc get -n $(REMOTE_INSTALL_PROJ) job/remote-installer 2>/dev/null >/dev/null; do \
@@ -22,9 +25,10 @@ remote-install: create-aws-credentials
 	oc logs -n $(REMOTE_INSTALL_PROJ) -f job/remote-installer
 
 clean-remote-install:
-	oc delete -n $(REMOTE_INSTALL_PROJ) job/remote-installer
-	oc delete -n $(REMOTE_INSTALL_PROJ) sa/remote-installer
-	oc delete clusterrolebinding `oc get clusterrolebinding -o jsonpath='{.items[?(@.subjects[0].name == "remote-installer")].metadata.name}'`
+	-oc delete -n $(REMOTE_INSTALL_PROJ) job/remote-installer
+	-oc delete -n $(REMOTE_INSTALL_PROJ) sa/remote-installer
+	-oc delete -n $(REMOTE_INSTALL_PROJ) cm/remote-installer-config
+	-oc delete clusterrolebinding `oc get clusterrolebinding -o jsonpath='{.items[?(@.subjects[0].name == "remote-installer")].metadata.name}'`
 
 create-aws-credentials:
 	$(BASE)/scripts/create-aws-credentials
@@ -35,7 +39,9 @@ install-gitops:
 deploy-gitea:
 	$(BASE)/scripts/clean-gitea
 	$(BASE)/scripts/deploy-gitea
-	$(BASE)/scripts/init-gitea $(GIT_PROJ) gitea $(GIT_ADMIN) $(GIT_PASSWORD) $(GIT_ADMIN)@example.com yaml coolstore 'Demo App'
+	$(BASE)/scripts/clone-from-template $(BASE)/yaml $(TMP_REPO)
+	$(BASE)/scripts/init-gitea $(GIT_PROJ) gitea $(GIT_ADMIN) $(GIT_PASSWORD) $(GIT_ADMIN)@example.com $(TMP_REPO) coolstore 'Demo App'
+	rm -rf $(TMP_REPO)
 
 create-clusters:
 	@if ! oc get project open-cluster-management 2>/dev/null >/dev/null; then \

@@ -4,9 +4,11 @@
 
 ### Multicluster Installation
 
-01. Provision an `Red Hat OpenShift Container Platform 4 Red Hat Advanced Cluster Management Hub` cluster on `demo.redhat.com`
+01. Provision an `Red Hat OpenShift Container Platform 4 Red Hat Advanced Cluster Management Hub` cluster on `demo.redhat.com` - if you are planning on deploying clusters to the default regions (`ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1`), ensure that you deploy the ACM Hub cluster to a region other than those 3 to avoid problems with the AWS quotas
 
 01. Download the pull secret to the same directory as this README from the [Hybrid Cloud Console](https://console.redhat.com/openshift/install/pull-secret) - the pull secret should be named `pull-secret.txt`
+
+01. By default, the installer will deploy clusters to `ap-southeast-1`, `ap-southeast-2`, and `ap-northeast-1` - if you wish to deploy the clusters to different regions, edit `config.sh` and change the regions in the `CLUSTER_REGIONS` variable
 
 01. Install services to the ACM Hub Cluster
 
@@ -35,18 +37,9 @@
 
 	*   After you paste the cluster details, enter Ctrl-D on a new line
 
-	* 	Once the ArgoCD `ApplicaitonSet` have been deployed, it can take about 5-10 minutes for the entire demo to be ready. 
+	*   The installation process should take about 65 minutes to complete
 
-01. NOTE: If you have deployed the clusters in other AWS regions, or have deployed them on other public cloud providers such as Azure and GCP, then you will need to update the overlays folders in gitea
-
-	*   For instance, if `coolstore-a` is deployed in `ap-southeast-2` instead of `ap-southeast-1`, then you will need to
-		*   Update `coolstore/yugabyte/overlays/multi-cluster/coolstore-a/kustomization.yaml`
-			*   Perform search and replace of the value `ap-southeast-1` with `ap-southeast-2`
-			*   Make the required changes to the availability zone, if need be
-			*   Note that changes can either be done from the Gitea UI or via git commands
-			*   Note that the default login credentials for Gitea is `demo / password`
-			*   Commit and push all changes to Gitea
-	*   Ensure appropriate changes are made to the override YAML files for the other clusters, if need be
+	*   Note: `make install` will run the install script from your local machine - there is also a [remote install](#remote-install) option where a majority of the installation takes place in a Kubernetes Job on the ACM Hub cluster
 
 01. Modify the `coolstore-a` alert manager settings so that alert emails are sent quicker
 
@@ -54,11 +47,9 @@
 
 01. Configure OpenShift contexts 
 	    
-	* Be sure to log into the hub cluster.
+	*   Be sure to log into the hub cluster.
 
-		````	
-		make contexts 
-		````
+			make contexts 
 
 01. Open the following browser tabs
 

@@ -17,10 +17,10 @@ patches:
       value: "yb-master-0.coolstore-a.yb-masters.demo.svc.clusterset.local"
     - op: replace
       path: /spec/template/spec/containers/0/env/6/value
-      value: "ap-southeast-1"
+      value: "${CLUSTER_REGIONS[0]}"
     - op: replace
       path: /spec/template/spec/containers/0/env/9/value
-      value: "ap-southeast-1"
+      value: "${CLUSTER_REGIONS[0]}"
 - target:
     kind: StatefulSet
     name: yb-tserver
@@ -30,7 +30,7 @@ patches:
       value: "yb-tserver-0.coolstore-a.yb-tservers.demo.svc.clusterset.local"
     - op: replace
       path: /spec/template/spec/containers/0/env/6/value
-      value: "ap-southeast-1"
+      value: "${CLUSTER_REGIONS[0]}"
     - op: replace
       path: /spec/template/spec/containers/0/env/7/value
-      value: "ap-southeast-1"
+      value: "${CLUSTER_REGIONS[0]}"

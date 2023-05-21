@@ -23,10 +23,16 @@ spec:
 
           cd hybrid-cloud-coolstore
 
+          cp /home/install/custom-config/config.sh .
+
           make install-gitops deploy-gitea create-clusters
 
           echo "installation completed"
 
+        volumeMounts:
+        - name: config
+          mountPath: "/home/install/custom-config"
+          readOnly: true
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
@@ -42,5 +48,9 @@ spec:
           requests:
             cpu: "0.5"
             memory: 1Gi
+      volumes:
+      - name: config
+        configMap:
+          name: remote-installer-config
       restartPolicy: Never
   backoffLimit: 2

@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# substitutes variables in the yugabyte multi-cluster overlays
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+source ${BASE}/../config.sh
+
+if [ $# -lt 2 ]; then
+  echo "usage: $0 SRC_DIR DEST_DIR"
+  exit 1
+fi
+
+src_dir="$1"
+dest_dir="$2"
+
+rm -rf $dest_dir
+mkdir -p $dest_dir
+cp -R ${src_dir}/ ${dest_dir}/
+
+for dir in coolstore-a coolstore-b coolstore-c; do
+  # https://stackoverflow.com/a/17030953
+  eval "cat <<EOF
+$(<${src_dir}/yugabyte/overlays/multi-cluster/${dir}/kustomization.yaml)
+EOF
+" > ${dest_dir}/yugabyte/overlays/multi-cluster/${dir}/kustomization.yaml
+done

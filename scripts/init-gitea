@@ -71,7 +71,8 @@ function clone_repo {
     -d '{"auto_init":false, "default_branch":"'"$DEFAULT_BRANCH"'", "description":"'"$repoDescription"'", "gitignores":"", "issue_labels":"", "license":"", "name":"'"$repoName"'", "private":false, "readme":"", "template":false, "trust_model":"default"}' \
     https://${ROUTE_HOST}/api/v1/user/repos
 
-  cd ${BASE}/${repoDir}
+  cd ${BASE}
+  cd ${repoDir}
   rm -rf .git
   git init --initial-branch=$DEFAULT_BRANCH
   git add .
