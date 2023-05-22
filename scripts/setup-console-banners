@@ -7,7 +7,7 @@ BASE=`pwd`
 cd - >> /dev/null
 
 source ${BASE}/../config.sh
-source ${BASE}/generate_kubeconfigs
+source ${BASE}/generate-kubeconfigs
 
 generate_kubeconfigs $TMPDIR
 
