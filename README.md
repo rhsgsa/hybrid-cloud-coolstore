@@ -363,7 +363,7 @@ sequenceDiagram
 
 ## Huge Page Machine Config Pool
 
-* When the node gets stuck. It is simpler to remove the correseponding `machine` and let the `machienset` provision a new node. Run the `scripts/configure-hugepages` again when the node is `Ready`.
+* When the node gets stuck. It is simpler to remove the correseponding `machine` and let the `machineset` provision a new node. Run the `scripts/configure-hugepages` again when the node is `Ready`.
 
 
 ## Resources
@@ -401,28 +401,27 @@ sequenceDiagram
 
 	  To clean up datagrid operator fully
 
-    ````
-    for context in login-a login-b login-c
-    do
+		for context in login-a login-b login-c
+		do
+		  echo -n "$context: "
 
-      echo -n "$context: "
+		  oc --context=$context get subscriptions.operators.coreos.com \
+		    -o name \
+		    -n openshift-operators | \
+		    grep datagrid | \
+		    xargs -I {} oc --context=$context delete -n openshift-operators {}
 
-      oc --context=$context get subscriptions.operators.coreos.com \
-        -o name \
-        -n openshift-operators | \
-        grep datagrid | \
-        xargs -I {} oc --context=$context delete -n openshift-operators {}
+		  oc --context=$context get csv \
+		    -o name \
+		    -n openshift-operators | \
+		    grep datagrid | \
+		    xargs -I {} oc --context=$context delete -n openshift-operators {}
+		done
 
-      oc --context=$context get csv \
-        -o name \
-        -n openshift-operators | \
-        grep datagrid | \
-        xargs -I {} oc --context=$context delete -n openshift-operators {}
-    done
-    ````
+*   Remove huge page configuration
 
-* Remove huge page configuration
+		scripts/delete-hugepages
 
-	````
-	scripts/delete-hugepages
-	````
+*   To get a list of available OpenShift versions (for setting `CLUSTERIMAGESET` in `config.sh`), execute the following against the ACM Hub
+
+		oc get clusterimagesets
