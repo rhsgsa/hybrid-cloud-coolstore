@@ -307,22 +307,21 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 		    -c 'select * from catalog' \
 		    catalog
 
-* Restart all postgresql pods
+*   Restart all postgresql pods
 
-	````
-	for context in login-a login-b login-c
-	do
-	  echo -n "$context: "
+		for context in login-a login-b login-c
+		do
+		  echo -n "$context: "
 
-	  oc --context=$context get po  -o name -n demo| \
-	    grep yb- | \
-		xargs -I {} oc --context=$context delete -n demo {}
-	done
+		  oc --context=$context get po  -o name -n demo| \
+		  grep yb- | \
+		  xargs -I {} oc --context=$context delete -n demo {}
+		done
 
-	oc --context=login-a delete job create-databases
-	````
+		oc --context=login-a delete job create-databases
 
 	Sync ArgoCD Application `coolstore-a-yugabyte-a` to recreate the databases. 
+
 
 ### Infinispan
 
