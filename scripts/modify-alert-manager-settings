@@ -1,32 +1,30 @@
 #!/bin/bash
 
-TMP_KUBECONFIG=/tmp/kubeconfig
+TMPDIR=/tmp/alertmanagersettings
 
-TOKEN="$(oc get -n openshift-gitops secret coolstore-a-cluster-secret -o jsonpath='{.data.config}' | base64 -d | jq -r '.bearerToken')"
-API_SERVER="$(oc get -n openshift-gitops secret coolstore-a-cluster-secret -o jsonpath='{.data.server}' | base64 -d)"
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
 
-echo "token = $TOKEN"
-echo "api = $API_SERVER"
+source ${BASE}/../config.sh
 
-if [ -z "$TOKEN" ]; then
-  echo "could not get coolstore-a token"
-  exit 1
-fi
+# setup kubeconfig files for each cluster
+rm -rf $TMPDIR
+mkdir -p $TMPDIR
+for clustername in coolstore-a; do
+  config="$(oc get -n $clustername secrets -l hive.openshift.io/secret-type=kubeconfig -o jsonpath='{.items[0].data.kubeconfig}' 2>/dev/null)"
+  if [ -z "$config" ]; then
+    echo "could not retrieve kubeconfig for $clustername"
+    exit 1
+  fi
+  echo -n "$config" | base64 -d > ${TMPDIR}/${clustername}
+done
 
-if [ -z "$API_SERVER" ]; then
-  echo "could not get coolstore-a API server"
-  exit 1
-fi
-
-export KUBECONFIG=$TMP_KUBECONFIG
-rm -f $KUBECONFIG
-touch $KUBECONFIG
-
-oc login $API_SERVER --token=$TOKEN --insecure-skip-tls-verify
+cmd="oc --insecure-skip-tls-verify --kubeconfig=${TMPDIR}/coolstore-a"
 
 set -e
 
-oc get secret/alertmanager-main \
+$cmd get secret/alertmanager-main \
   -n openshift-monitoring \
   -o jsonpath='{.data.alertmanager\.yaml}' \
 | \
@@ -37,10 +35,10 @@ sed \
   -e 's/"group_wait".*/"group_wait": "15s"/' \
 > /tmp/alertmanager.yaml
 
-oc set data secret/alertmanager-main \
+$cmd set data secret/alertmanager-main \
   -n openshift-monitoring \
   --from-file=alertmanager.yaml=/tmp/alertmanager.yaml
 
 rm -f /tmp/alertmanager.yaml
 
-rm -f $KUBECONFIG
+rm -rf $TMPDIR

@@ -55,7 +55,6 @@ create-clusters:
 	  oc apply -f $(BASE)/yaml/acm-gitops/acm-gitops.yaml; \
 	  $(BASE)/scripts/create-clusterset; \
 	  $(BASE)/scripts/create-clusters; \
-	  $(BASE)/scripts/wait-for-secrets; \
 	  $(BASE)/scripts/setup-console-banners; \
 	  $(BASE)/scripts/setup-letsencrypt; \
 	  $(BASE)/scripts/install-submariner; \

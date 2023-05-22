@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TMP_KUBECONFIG=/tmp/kubeconfig
+TMPDIR=/tmp/generateorders
 
 cd $(dirname $0)
 BASE=$(pwd)
@@ -8,56 +8,45 @@ cd - >> /dev/null
 
 source ${BASE}/../config.sh
 
+cmd="oc"
+
 function get_kafka() {
-  oc get -n $PROJ deploy/kafka-0 -o name 2>/dev/null
+  $cmd get -n $PROJ deploy/kafka-0 -o name 2>/dev/null
 }
 
 # check if we have everything deployed on the connected cluster (single
 # cluster install)
 KAFKA="$(get_kafka)"
+
 if [ -z "$KAFKA" ]; then
   echo "kafka is not on the connected cluster - trying to see if we can connect to coolstore-a"
 
-  CLUSTER_SECRET="$(oc get -n openshift-gitops secret/coolstore-a-cluster-secret -o jsonpath='{.data}' 2>/dev/null)"
-  if [ -z "$CLUSTER_SECRET" ]; then
-    echo "could not get coolstore-a cluster secret"
-    exit 1
-  fi
-  API="$(echo $CLUSTER_SECRET | jq -r .server | base64 -d)"
-  if [ -z "$API" ]; then
-    echo "could not get coolstore-a API server"
-    exit 1
-  fi
-  CONFIG="$(echo $CLUSTER_SECRET | jq -r .config | base64 -d)"
-  if [ -z "$CONFIG" ]; then
-    echo "could not get coolstore-a config"
-    exit 1
-  fi
-  TOKEN="$(echo $CONFIG | jq -r .bearerToken)"
-  if [ -z "$TOKEN" ]; then
-    echo "could not get coolstore-a bearer token"
-    exit 1
-  fi
-  rm -f $TMP_KUBECONFIG
-  touch $TMP_KUBECONFIG
-  export KUBECONFIG=$TMP_KUBECONFIG
-  set -e
-  echo "logging into coolstore-a..."
-  oc login --insecure-skip-tls-verify=true --token="$TOKEN" "$API"
-  set +e
+  # setup kubeconfig for coolstore-a
+  rm -rf $TMPDIR
+  mkdir -p $TMPDIR
+  for clustername in coolstore-a; do
+    config="$(oc get -n $clustername secrets -l hive.openshift.io/secret-type=kubeconfig -o jsonpath='{.items[0].data.kubeconfig}' 2>/dev/null)"
+    if [ -z "$config" ]; then
+      echo "could not retrieve kubeconfig for $clustername"
+      exit 1
+    fi
+    echo -n "$config" | base64 -d > ${TMPDIR}/${clustername}
+  done
+  cmd="$cmd --insecure-skip-tls-verify --kubeconfig=${TMPDIR}/${clustername}"
+
   KAFKA="$(get_kafka)"
   if [ -z "$KAFKA" ]; then
     echo "kafka is not installed on coolstore-a"
-    rm -f $TMP_KUBECONFIG
+    rm -f $TMPDIR
     exit 1
   fi
 fi
 
 echo "creating order generator job"
-oc apply -n $PROJ -f ${BASE}/../yaml/order-generator/order-generator-job.yaml
+$cmd apply -n $PROJ -f ${BASE}/../yaml/order-generator/order-generator-job.yaml
 echo "sleeping"
 sleep 30
 echo "deleting order generator job"
-oc delete -n $PROJ -f ${BASE}/../yaml/order-generator/order-generator-job.yaml
+$cmd delete -n $PROJ -f ${BASE}/../yaml/order-generator/order-generator-job.yaml
 
-rm -f $TMP_KUBECONFIG
+rm -f $TMPDIR
