@@ -425,3 +425,17 @@ sequenceDiagram
 *   To get a list of available OpenShift versions (for setting `CLUSTERIMAGESET` in `config.sh`), execute the following against the ACM Hub
 
 		oc get clusterimagesets
+
+*   If one of the clusters fail to provision, destroy the cluster using the ACM Hub console, and reprovision the cluster using the `create-single-cluster` script
+
+	*   To reprovision `coolstore-a`,
+
+			./scripts/create-single-cluster 0
+
+	*   To reprovision `coolstore-b`,
+
+			./scripts/create-single-cluster 1
+
+	*   To reprovision `coolstore-c`,
+
+			./scripts/create-single-cluster 2

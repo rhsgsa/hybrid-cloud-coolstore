@@ -1,12 +1,19 @@
 #!/bin/bash
 
-TMPDIR=/tmp/createclusters
+TMPDIR=/tmp/createsinglecluster
 
 cd `dirname $0`
 BASE=`pwd`
 cd - >> /dev/null
 
 source ${BASE}/../config.sh
+
+if [ $# -lt 1 ]; then
+  echo "usage: $0 CLUSTER_INDEX"
+  exit 1
+fi
+
+cluster_index=$1
 
 function ensure_set {
 	local varName="$1"
@@ -152,7 +159,7 @@ ensure_set ssh_privatekey
 pull_secret="$(oc get -n open-cluster-management secret/${AWS_SECRET_NAME} -o jsonpath='{.data.pullSecret}')"
 ensure_set pull_secret
 
-for i in ${!CLUSTER_NAMES[@]}; do
+for i in $cluster_index; do
   clustername=${CLUSTER_NAMES[$i]}
   region=${CLUSTER_REGIONS[$i]}
   clusternetwork=${CLUSTER_NETWORKS[$i]}
@@ -271,62 +278,4 @@ spec:
   iamPolicyController:
     enabled: true
 EOF
-done
-
-# wait for all clusters to be provisioned by ACM successfully
-
-total=${#CLUSTER_NAMES[@]}
-
-echo "we have to wait for $total clusters to be provisioned"
-
-last_count=-1
-
-while true; do
-  count=0
-  for clustername in ${CLUSTER_NAMES[@]}; do
-    installed="$(oc get -n $clustername clusterdeployment/$clustername -o jsonpath='{.spec.installed}' 2>/dev/null)"
-    if [ "$installed" = "true" ]; then
-      count=$(( count + 1 ))
-    fi
-  done
-  if [ $count -ne $last_count ]; then
-    last_count=$count
-    echo -n $last_count
-
-  else
-    echo -n "."
-  fi
-  if [ $last_count -ge $total ]; then
-    echo
-    break
-  fi
-  sleep 30
-done
-
-# wait for all clusters to be imported to ACM successfully
-
-echo "we have to wait for $total clusters to be imported"
-
-last_count=-1
-
-while true; do
-  count=0
-  for clustername in ${CLUSTER_NAMES[@]}; do
-    available="$(oc get managedcluster $clustername -o jsonpath='{.status.conditions[?(@.reason=="'"ManagedClusterAvailable"'")]}' 2>/dev/null)"
-    if [ -n "$available" ]; then
-      count=$(( count + 1 ))
-    fi
-  done
-  if [ $count -ne $last_count ]; then
-    last_count=$count
-    echo -n $last_count
-
-  else
-    echo -n "."
-  fi
-  if [ $last_count -ge $total ]; then
-    echo
-    break
-  fi
-  sleep 5
 done
