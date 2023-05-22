@@ -1,25 +1,32 @@
 #!/bin/bash -e
 # Check huge pages
 
-for context in login-a login-b login-c
-do
-	echo ================================
+TMPDIR=/tmp/verifyhugepages
 
-	workers=`oc --context=$context get node --show-labels --no-headers | grep node-role.kubernetes.io/worker= \
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+source ${BASE}/../config.sh
+source ${BASE}/generate_kubeconfigs
+
+generate_kubeconfigs $TMPDIR
+
+for clustername in ${CLUSTER_NAMES[@]}; do
+  echo "verifying hugepages for ${clustername}..."
+  cmd="oc --insecure-skip-tls-verify --kubeconfig=${TMPDIR}/${clustername}"
+  workers=`$cmd get node --show-labels --no-headers | grep node-role.kubernetes.io/worker= \
 		| grep -v -e submariner.io/gateway=true -e node-role.kubernetes.io/master= | awk '{print $1}'`
 
+  for w in $workers; do
+    # Run in background
+    (
+      line="$line$w: `$cmd get node/$w -o jsonpath='{.status.allocatable.hugepages-2Mi}'`"
 
-	echo -e "Verifying for cluster context $context:"
-
-	for w in $workers
-	do
-
-		# Run in background
-		(
-			line="$line$w: `oc --context=$context get node/$w -o jsonpath='{.status.allocatable.hugepages-2Mi}'`"
-
-			echo -e "$context: $line"
-		) &
-	done
-	wait 
+      echo -e "$clustername: $line"
+    ) &
+  done
+  wait
 done
+
+rm -rf $TMPDIR
