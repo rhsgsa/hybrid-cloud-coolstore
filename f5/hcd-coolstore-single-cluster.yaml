@@ -1,6 +1,6 @@
 hcd:
   name: "Hybrid Cloud Demo 1"
-  token: 78c1d1ad-2ef1-4d57-8fa2-4bc784bd4b8d  # Use this token or create a new one
+  token: e459c511-ced7-423a-91c6-5c4dd4c711c0  # Use this token or create a new one
   domain: hcd3.ltsai.com                       # Use either hcd1.ltsai.com, hcd2.ltsai.com or hcd3.ltsai.com
   namespace: multi-cloud-openshift             # This is the namespace to use in F5 XC
 sites: 
