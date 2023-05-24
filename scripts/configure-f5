@@ -2,6 +2,7 @@
 
 [ $# -eq 0 ] && echo "Usage: `basename $0` <hcd config yaml file>" && exit 1
 
+[ "$1" = "--clean" ] && CLEAN_FIRST=1 && shift
 HCD_CONF=$1
 
 # Check yq, jinja2 and vesctl are installed 
@@ -26,18 +27,18 @@ if ! which vesctl > /dev/null; then
 	exit 1
 fi
 
-
-TMP=/tmp/.tmp.$$
+BG_CNT=0                     # Used for running api requests concurrently 
+BG_MAX=3
+TMP=/tmp/.f5.tmp
 rm -rf $TMP && mkdir $TMP
 OUT=/tmp/out
 rm -rf $OUT && mkdir $OUT
-
-[ -f f5/cleanup-sites.sh ] && mv -f f5/cleanup-sites.sh f5/cleanup-sites.sh.prev
-[ -f f5/cleanup-f5xc.sh ]  && mv -f f5/cleanup-f5xc.sh  f5/cleanup-f5xc.sh.prev
+LOG=/tmp/.f5.log
+rm -f $LOG
 
 wait_pod_exists()
 {
-	while ! oc --context=$CONTEXT get po $* --no-headers 2>/dev/null >&2
+	while ! oc --context=$CONTEXT get pod $* --no-headers 2>/dev/null >&2
 	do
 		sleep 1
 	done
@@ -45,7 +46,7 @@ wait_pod_exists()
 
 wait_all_pods_ready()
 {
-	while ! oc --context=$CONTEXT get po $* --no-headers 2>/dev/null  | awk '{print $2}' | awk -F/ '{if ($1 != $2) exit 1}'
+	while ! oc --context=$CONTEXT get pod $* --no-headers 2>/dev/null  | awk '{print $2}' | awk -F/ '{if ($1 != $2) exit 1}'
 	do
 		sleep 1
 	done
@@ -63,8 +64,16 @@ F5_NAMESPACE=$(cat $HCD_CONF | yq .hcd.namespace)
 CLUSTER_CONTEXTS=`cat $HCD_CONF | yq .sites.*.context`
 > $TMP/.contexts
 
+CLEANUP_SITES=f5/cleanup/cleanup-sites-$BASE_DOMAIN_READABLE.sh
+CLEANUP_F5XC=f5/cleanup/cleanup-f5xc-$BASE_DOMAIN_READABLE.sh
+[ -f $CLEANUP_SITES ] && mv $CLEANUP_SITES $CLEANUP_SITES.prev
+[ -f $CLEANUP_F5XC ]  && mv $CLEANUP_F5XC  $CLEANUP_F5XC.prev
+echo 'wait' >> $CLEANUP_F5XC
+echo 'wait' >> $CLEANUP_SITES
 
+###############################################################
 echo Checking OCP contexts are configured and unique ...
+
 for context in $CLUSTER_CONTEXTS
 do
 	echo -n "$context: "
@@ -81,77 +90,205 @@ getContext()
 	echo $(cat $HCD_CONF | yq .sites.$1.context) 
 }
 
+# Fetch list of site names from config file
 SITE_LIST=$(cat $HCD_CONF | yq '.sites[] | key')
 
+if [ "$CLEAN_FIRST" ]; then
+	for site in $SITE_LIST
+	do
+		CONTEXT=$(getContext $site) || exit 1
+
+		site_name=site-$site-$BASE_DOMAIN_READABLE
+		conffile=$OUT/$site_name.yaml
+
+		echo $CONTEXT: Cleaning F5 Ingress on context $CONTEXT ...
+		# Create the F5 Ingress (VES) in OpenShift
+		cat $HCD_CONF | yq ".sites.$site" | jinja2 yaml/f5/site.yaml -Dsite=$site -Dtoken=$TOKEN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
+
+		[ "$CLEAN_FIRST" ] && oc --context=$CONTEXT delete -f $conffile -n ves-system >>$LOG 2>&1 &
+	done
+	wait
+fi
+	
+
+###############################################################
 # Set up the F5 Ingress (VER) on each site/cluster. 
+
 for site in $SITE_LIST
 do
 	CONTEXT=$(getContext $site) || exit 1
 
-	echo $CONTEXT: Launching F5 Ingress ...
+	echo $CONTEXT: Launching F5 Ingress for site [$site-$BASE_DOMAIN_READABLE] ...
 
 	site_name=site-$site-$BASE_DOMAIN_READABLE
 	conffile=$OUT/$site_name.yaml
 
 	# Create the F5 Ingress (VES) in OpenShift
 	cat $HCD_CONF | yq ".sites.$site" | jinja2 yaml/f5/site.yaml -Dsite=$site -Dtoken=$TOKEN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
-	oc --context=$CONTEXT create -f $conffile -n ves-system
 
-	echo "oc --context=$CONTEXT delete -f $conffile" >> $TMP/cleanup-sites.sh 
+	##[ "$CLEAN_FIRST" ] && oc --context=$CONTEXT delete -f $conffile -n ves-system >>$LOG 2>&1
+	oc --context=$CONTEXT create -f $conffile -n ves-system >>$LOG 2>&1
+
+	echo "oc --context=$CONTEXT delete -f $conffile &" >> $CLEANUP_SITES 
 done
 
-# Wait for F5 Ingress to come up
+###############################################################
+# Remove any existing, non-pending site registrations
+
+echo "{}" > $TMP/.empty.request.yaml  
+
+vcmd="vesctl --timeout 10"
+
+for site in $SITE_LIST
+do
+	site_name=$site-$BASE_DOMAIN_READABLE
+
+	r=
+	$vcmd request rpc registration.CustomAPI.ListRegistrationsBySite -i $TMP/.empty.request.yaml \
+		--uri /public/namespaces/system/registrations_by_site/$site_name --http-method GET > $TMP/.reg-$site_name.yaml 
+
+	r=`cat $TMP/.reg-$site_name.yaml | yq .items[0].name`
+	[ "$r" = "null" ] && r=
+
+	if [ "$r" ] 
+	then
+		[ "$CLEAN_FIRST" ] && $vcmd configuration delete registration $r -n system
+
+		s=`cat $TMP/.reg-$site_name.yaml | yq .items[0].object.status.currentState`
+
+		echo -n $site_name: found existing registration [$r] for site [$site_name] with status [$s] ...
+
+		if [ "$s" != "PENDING" -a "$s" != "ONLINE" ]; then
+			echo -n ... removing ...
+	
+			$vcmd configuration delete registration $r -n system
+
+		fi
+		echo ok
+	fi
+done
+
+###############################################################
+# Wait for F5 Ingress to come up on all sites 
 
 for site in $SITE_LIST
 do
 	export CONTEXT=$(getContext $site) || exit 1
 
-	echo ==========================================================================
-	echo -n "$CONTEXT: Waiting for all initial pods to be ready in namespace ves-system ... "
+	echo -n "$CONTEXT: Waiting for vp-manager-0 pod to be ready in namespace ves-system ... "
 	#wait_all_pods_ready -n ves-system 
 	#CONTEXT=$(getContext $site) wait_all_pods_ready -n ves-system 
-	wait_all_pods_ready -n ves-system 
-	echo done
+	wait_all_pods_ready vp-manager-0 -n ves-system 
+	echo ok
 done
 
-echo 
-echo  =====================================================================================
-echo "Please confirm pending site registrations by clicking on the blue tick in the F5 UI under:"
-echo "  Home -> Multi-Cloud Network Connect -> Manage -> Site Management -> Registrations"
-echo "  https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-network-connect/manage/site_management/registrations;tab=pending"
-echo -n "  About 2 to 3 mins after confirmation, the ver-0 pod will start ... "
-wait_pod_exists ver-0 -n ves-system
-echo done
-
-# Wait for F5 Ingress to come up ...
+###############################################################
+# Approve the pending site registrations
 
 for site in $SITE_LIST
 do
-	export CONTEXT=$(getContext $site) || exit 1
+	site_name=$site-$BASE_DOMAIN_READABLE
 
-	## echo -n "$CONTEXT: Waiting for the ver-0 pod to start in ves-system namespace on context $CONTEXT ... "
-	wait_pod_exists ver-0 -n ves-system
-	#echo done
+	echo -n $site_name: Waiting for pending registration for site [$site_name] ...
+	r=
+	s=
+	#while [ ! "$r" -a ! "$s" ]
+	while [ ! "$r" -o "$s" != "PENDING" ]
+	do
+		$vcmd request rpc registration.CustomAPI.ListRegistrationsBySite -i $TMP/.empty.request.yaml \
+			--uri /public/namespaces/system/registrations_by_site/$site_name --http-method GET > $TMP/.site-$site_name.yaml
+		r=`cat $TMP/.site-$site_name.yaml | yq .items[0].name`
+		s=`cat $TMP/.site-$site_name.yaml | yq .items[0].object.status.currentState` 
+		[ "$r" = "null" ] && r=
+		[ "$s" = "null" ] && s=
 
-	echo -n "$CONTEXT: Waiting for all pods to be ready in ves-system namespace on context $CONTEXT ... "
-	#CONTEXT=$(getContext $site) wait_all_pods_ready -n ves-system 
-	wait_all_pods_ready -n ves-system 
-	echo done
+		[ "$s" = "ONLINE" ] && break 
+
+		echo -n .
+
+		sleep 3
+	done
+
+	echo "$vcmd configuration delete registration $r -n system &" >> $CLEANUP_SITES
+
+	if [ "$s" = "PENDING" ]; then
+		echo ok, pending registration found [$r] 
+
+		conffile=$OUT/request-template-$site_name.yaml
+
+		cat $TMP/.site-$site_name.yaml | jinja2 yaml/f5/approve-registration.yaml > $conffile
+
+		echo -n "Approving registration [$r] for site [$site_name] ... "
+
+		$vcmd request rpc registration.CustomAPI.RegistrationApprove -i $conffile \
+			--uri /public/namespaces/system/registration/$r/approve --http-method POST >>$LOG  || exit 1
+		echo "approved"
+	else
+		echo "none pending, status is [$s]"
+	fi
 done
 
-sleep 5  # Seems this is needed!
+#####
+# Wait for registration to be "ONLINE" 
+
+for site in $SITE_LIST
+do
+	site_name=$site-$BASE_DOMAIN_READABLE
+
+	echo -n $site_name: Waiting for online registration for site [$site_name] ...
+	r=
+	s=
+	until [ "$r" -a "$s" = "ONLINE" ]
+	do
+		$vcmd request rpc registration.CustomAPI.ListRegistrationsBySite -i $TMP/.empty.request.yaml \
+			--uri /public/namespaces/system/registrations_by_site/$site_name --http-method GET > $TMP/.site-$site_name.yaml
+		r=`cat $TMP/.site-$site_name.yaml | yq .items[0].name`
+		s=`cat $TMP/.site-$site_name.yaml | yq .items[0].object.status.currentState` 
+		[ "$r" = "null" ] && r=
+		[ "$s" = "null" ] && s=
+
+		echo -n .
+
+		sleep 3
+	done
+	echo ok
+done
+#####
+
+# Wait for F5 Ingress to come up fully ...
+
+# FIXME for site in $SITE_LIST
+# FIXME do
+# FIXME 	export CONTEXT=$(getContext $site) || exit 1
+# FIXME 
+# FIXME 	echo -n "$CONTEXT: Waiting for the ver-0 pod to start in ves-system namespace on context $CONTEXT ... "
+# FIXME 	wait_pod_exists ver-0 -n ves-system
+# FIXME 	echo ok
+# FIXME 
+# FIXME done
+
+# FIXME for site in $SITE_LIST
+# FIXME do
+# FIXME 	export CONTEXT=$(getContext $site) || exit 1
+# FIXME 
+# FIXME 	echo -n "$CONTEXT: Waiting for all pods to be ready in ves-system namespace on context $CONTEXT ... "
+# FIXME 	wait_all_pods_ready -n ves-system 
+# FIXME 	echo ok
+# FIXME done
+
+sleep 1
 
 # Check the sites are available 
 for site in $SITE_LIST
 do
 	echo -n "Checking if site [$site-$BASE_DOMAIN_READABLE] is available ... "
-	if ! vesctl configuration get site $site-$BASE_DOMAIN_READABLE -n system >/dev/null
+	if ! $vcmd configuration get site $site-$BASE_DOMAIN_READABLE -n system >/dev/null
 	then
 		echo 
 		echo "Site [$site-$BASE_DOMAIN_READABLE] not yet available.  Be sure all pods in the project 'ver-system' are running/ready and run this script again."
 		exit 1
 	fi
-	echo done
+	echo ok
 done
 
 
@@ -161,9 +298,12 @@ done
 
 echo Creating basic health check config [healthcheck] ...
 cp yaml/f5/health.yaml $OUT
-vesctl configuration create healthcheck -i $OUT/health.yaml >/dev/null 2>&1|| \
-	vesctl configuration replace healthcheck -i $OUT/health.yaml >/dev/null || exit 1
-echo "vesctl configuration delete healthcheck basic-healthcheck -n multi-cloud-openshift" >> $TMP/cleanup-f5xc.sh
+
+##[ "$CLEAN_FIRST" ] && $vcmd configuration delete healthcheck basic-healthcheck -n multi-cloud-openshift
+
+$vcmd configuration create healthcheck -i $OUT/health.yaml >>$LOG 2>&1|| \
+	$vcmd configuration replace healthcheck -i $OUT/health.yaml >>$LOG || exit 1
+echo "$vcmd configuration delete healthcheck basic-healthcheck -n multi-cloud-openshift &" >> $CLEANUP_F5XC
 
 
 INGRESS_LIST=$(cat $HCD_CONF  | yq '.ingresses[] | key')
@@ -179,13 +319,19 @@ do
 	cat $HCD_CONF | jinja2 yaml/f5/op.yaml -Dingress=$ingress -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile || exit 1
 
 	(
-	vesctl configuration create origin_pool -i $conffile >/dev/null 2>&1 || \
-		vesctl configuration replace origin_pool -i $conffile >/dev/null || exit 1
 
-	echo "vesctl configuration delete origin_pool $op_name -n multi-cloud-openshift" >> $TMP/cleanup-f5xc.sh
+	##[ "$CLEAN_FIRST" ] && $vcmd configuration delete origin_pool $op_name -n multi-cloud-openshift 
+
+	$vcmd configuration create origin_pool -i $conffile >>$LOG 2>&1 || \
+		$vcmd configuration replace origin_pool -i $conffile >>$LOG || exit 1
+
+	echo "$vcmd configuration delete origin_pool $op_name -n multi-cloud-openshift &" >> $CLEANUP_F5XC
 	) & 
+
+	let BG_CNT=$BG_CNT+1
+	if [ $BG_CNT -ge $BG_MAX ]; then wait; BG_CNT=0; fi
 done
-wait
+
 
 # Create the http load balancers, one for each ingress 
 for ingress in $INGRESS_LIST
@@ -197,25 +343,39 @@ do
 
 	cat $HCD_CONF | yq ".ingresses.$ingress" | jinja2 yaml/f5/lb.yaml -Dingress=$ingress -Ddomain=$BASE_DOMAIN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
 
-	vesctl configuration create http_loadbalancer -i $conffile >/dev/null 2>&1 || \
-		vesctl configuration replace http_loadbalancer -i $conffile >/dev/null || exit 1
-	echo "vesctl configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift" >> $TMP/cleanup-f5xc.sh
+	(
+
+	##[ "$CLEAN_FIRST" ] && $vcmd configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift
+
+	$vcmd configuration create http_loadbalancer -i $conffile >>$LOG 2>&1 || \
+		$vcmd configuration replace http_loadbalancer -i $conffile >>$LOG || exit 1
+	echo "$vcmd configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift &" >> $CLEANUP_F5XC
+	) &
+
+	let BG_CNT=$BG_CNT+1
+	if [ $BG_CNT -ge $BG_MAX ]; then wait; BG_CNT=0; fi
 done
+
+wait
 
 echo
 echo All done
 
 echo All applied F5 configurations can be found in the $OUT directory for reference. 
 
-echo 'set -x' >> $TMP/cleanup-f5xc.sh
-echo 'set -x' >> $TMP/cleanup-sites.sh
+echo 'set -x' >> $CLEANUP_F5XC
+echo 'set -x' >> $CLEANUP_SITES
 
-tac $TMP/cleanup-f5xc.sh  > f5/cleanup-f5xc.sh;   chmod 700 f5/cleanup-f5xc.sh
-tac $TMP/cleanup-sites.sh > f5/cleanup-sites.sh;  chmod 700 f5/cleanup-sites.sh
+tac $CLEANUP_F5XC  > /tmp/tt && mv /tmp/tt $CLEANUP_F5XC;   chmod 700 $CLEANUP_F5XC
+tac $CLEANUP_SITES > /tmp/tt && mv /tmp/tt $CLEANUP_SITES;  chmod 700 $CLEANUP_SITES
 
 echo 
 echo "To clean up configurations, run one of the following commands:"
 echo 
-echo "f5/cleanup-sites.sh    # Clean up all F5 Ingress pods in ves-system"
-echo "f5/cleanup-f5xc.sh     # Clean up only the loadbalacners and pools"
+echo "Clean up all F5 Ingress pods in ves-system: "
+echo " $CLEANUP_F5XC"
+echo 
+echo "Clean up only the load balancers and pools:"
+echo " $CLEANUP_SITES "
+echo 
 
