@@ -2,10 +2,10 @@
 
 Reference documentation:
 
-- Main OCP instructons: https://docs.cloud.f5.com/docs/integrations/integrating-cloud-mesh-with-ocp
-- Aditional help: https://f5cloud.zendesk.com/hc/en-us/articles/4410470282263-How-to-create-Customer-Edge-CE-site-on-OpenShift-cluster 
+- Main OCP instructions: https://docs.cloud.f5.com/docs/integrations/integrating-cloud-mesh-with-ocp
+- Additional help: https://f5cloud.zendesk.com/hc/en-us/articles/4410470282263-How-to-create-Customer-Edge-CE-site-on-OpenShift-cluster 
 - Get the CLI: https://gitlab.com/volterra.io/vesctl/blob/main/README.md
-- The orignal site template: https://gitlab.com/volterra.io/volterra-ce/-/raw/master/k8s/ce_k8s.yml
+- The original site template: https://gitlab.com/volterra.io/volterra-ce/-/raw/master/k8s/ce_k8s.yml
 - Generic Kubernetes site creation: https://docs.cloud.f5.com/docs/how-to/site-management/create-k8s-site
 
 Note: The above instructions mention configuring "Huge Pages" support.  In testing it was found that Huge Pages are needed!
@@ -17,7 +17,7 @@ If interested, see this article about the Volterra architecture:
 
 One time tasks to set up the domains for each demo and the F5 UID
 
-1. Install vecclt CLI.  See: https://gitlab.com/volterra.io/vesctl/blob/main/README.md
+1. Install vesctl CLI.  See: https://gitlab.com/volterra.io/vesctl/blob/main/README.md
 1. Set up "$HOME/.vesconfig" by "Obtaining API Credentials from Volterra Console" using "API Certificate". Note, the cert has expiry date of 3 months! 
 1. Set up domain delegation e.g. for hcd1.example.com, hcd2.example.com, hcd3.example.com 
 1. Create the F5 UID
@@ -31,10 +31,10 @@ Once all clusters are up and their context (make contexts) properly set:
 1. For all 3 clusters, bring up the initial sites (all pods in ves-system namespace) 
 1. Wait for the site to register 
 1. Confirm the pending registration in the F5 UI
-1. Configure http load ballancers for all 3 sites 
+1. Configure http load balancers for all 3 sites 
 
 
-# Miscellanious Notes
+# Miscellaneous Notes
 
 Fetch the CLI:
 
@@ -44,7 +44,7 @@ curl -LO "https://vesio.azureedge.net/releases/vesctl/$(curl -s https://download
 
 # Troubleshooting
 
-Once the new sites (clusters) have been regsistered and confirmed you should see the following:
+Once the new sites (clusters) have been registered and confirmed you should see the following:
 
 ```
 $ oc get po -n ves-system
@@ -79,7 +79,7 @@ Label one or more workers for Huge Page support
 
 ```
 for w in `oc get node -oname -l node-role.kubernetes.io/worker=`; do oc label $w node-role.kubernetes.io/worker-hp=; done
-# Note, DO NOT set HP for the Submainer gateway nodes, as they will fail to boot
+# Note, DO NOT set HP for the Submariner gateway nodes, as they will fail to boot
 ```
 
 ```
