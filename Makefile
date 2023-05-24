@@ -157,7 +157,7 @@ contexts:
 	@scripts/set-contexts
 
 f5:
-	@scripts/configure-f5 f5/hcd-coolstore-multi-cluster.yaml
+	@scripts/configure-f5 --clean f5/hcd-coolstore-multi-cluster.yaml
 
 verify-f5:
 	@scripts/verify-hugepages
