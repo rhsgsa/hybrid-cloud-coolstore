@@ -64,6 +64,7 @@ F5_NAMESPACE=$(cat $HCD_CONF | yq .hcd.namespace)
 CLUSTER_CONTEXTS=`cat $HCD_CONF | yq .sites.*.context`
 > $TMP/.contexts
 
+mkdir -p f5/cleanup
 CLEANUP_SITES=f5/cleanup/cleanup-sites-$BASE_DOMAIN_READABLE.sh
 CLEANUP_F5XC=f5/cleanup/cleanup-f5xc-$BASE_DOMAIN_READABLE.sh
 [ -f $CLEANUP_SITES ] && mv $CLEANUP_SITES $CLEANUP_SITES.prev
