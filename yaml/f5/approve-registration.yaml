@@ -1,0 +1,13 @@
+{
+  "namespace": "system",
+  "state": "APPROVED",
+  "name": "{{ items[0].name }}",
+  "passport": {
+    "cluster_name": "{{ items[0].getSpec.passport.clusterName }}", 
+    "cluster_size": {{ items[0].getSpec.passport.clusterSize }}, 
+    "cluster_type": "{{ items[0].getSpec.passport.clusterType }}",
+    "latitude": {{ items[0].getSpec.passport.latitude }}, 
+    "longitude": {{ items[0].getSpec.passport.longitude }}
+  },
+  "tunnel_type": "SITE_TO_SITE_TUNNEL_IPSEC_OR_SSL"
+}
