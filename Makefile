@@ -80,6 +80,7 @@ demo-manual-install:
 	$(BASE)/scripts/oc-apply $(BASE)/yaml/services/inventory/base/ demo
 	$(BASE)/scripts/oc-apply $(BASE)/yaml/services/order/app/base/ demo
 	$(BASE)/scripts/oc-apply $(BASE)/yaml/services/payment/base/ demo
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/kafka-consumer/ demo
 
 argocd:
 	@open "https://`oc get -n openshift-gitops route/openshift-gitops-server -o jsonpath='{.spec.host}'`"
