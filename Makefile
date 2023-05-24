@@ -64,32 +64,22 @@ create-clusters:
 	@# Note we are performing some tasks between cluster provisioning and
 	@# installing Submariner in order to give the cluster some time to settle
 
+# installs on a single cluster without ArgoCD
 demo-manual-install:
 	# ensure we are logged into OpenShift
 	oc whoami
-	oc new-project $(PROJ) || oc project $(PROJ)
-	cd $(BASE)/yaml/helm && helm template -n $(PROJ) amq-streams amq-streams-0.1.0.tgz | oc apply -f -
-	oc apply -f $(BASE)/yaml/knative/serverless/serverless-operator.yaml
-	$(BASE)/scripts/install-nexus
-	$(BASE)/scripts/wait-for-api knativeservings
-	oc apply -f $(BASE)/yaml/knative/knative/knative-serving.yaml
-	$(BASE)/scripts/wait-for-api knativeeventings
-	oc apply -f $(BASE)/yaml/knative/knative/knative-eventing.yaml
-	$(BASE)/scripts/wait-for-api knativekafkas
-	oc apply -f $(BASE)/yaml/knative/knative/knative-kafka.yaml
-	$(BASE)/scripts/wait-for-api kafkas
-	$(BASE)/scripts/wait-for-api kafkatopics
-	oc apply -n $(PROJ) -f $(BASE)/yaml/kafka/kafka.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/kafka/orders-topic.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/kafka/payments-topic.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/services/cart/cart.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/services/catalog/catalog.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/services/coolstore-ui/coolstore-ui.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/services/inventory/inventory.yaml
-	oc apply -n $(PROJ) -f $(BASE)/yaml/services/order/order.yaml
-	$(BASE)/scripts/wait-for-api kafkasources
-	$(BASE)/scripts/wait-for-crd services.serving.knative.dev
-	cd $(BASE)/yaml/helm && helm template -n $(PROJ) payment payment-0.1.0.tgz | oc apply -f -
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/data-grid-operator/ openshift-gitops
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/knative/serverless/
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/knative/knative/
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/kafka/overlays/single-cluster/ demo
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/yugabyte/overlays/single-instance/ demo
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/services/order/database/overlays/single-cluster/ demo
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/services/cart/base/ demo
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/services/catalog/base/ demo
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/services/coolstore-ui/ demo
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/services/inventory/base/ demo
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/services/order/app/base/ demo
+	$(BASE)/scripts/oc-apply $(BASE)/yaml/services/payment/base/ demo
 
 argocd:
 	@open "https://`oc get -n openshift-gitops route/openshift-gitops-server -o jsonpath='{.spec.host}'`"

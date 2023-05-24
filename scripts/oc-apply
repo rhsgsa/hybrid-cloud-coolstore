@@ -1,0 +1,33 @@
+#!/bin/bash
+
+# this script will figure out if a given directory uses kustomize and will
+# run "oc apply -k" if kustomization.yaml exists and "oc apply -f" in all
+# other cases
+#
+# it will keep running "oc apply" until it succeeds
+
+if [ $# -lt 1 ]; then
+  echo "usage: $0 DIRECTORY"
+  exit 1
+fi
+
+dir="$1"
+ns="$2"
+
+cmd="oc apply -f $dir"
+if [ -f "${dir}/kustomization.yaml" ]; then
+  cmd="oc apply -k $dir"
+  echo "$dir contains kustomization.yaml"
+fi
+
+if [ -n "$ns" ]; then
+  echo "creating $ns namespace..."
+  oc create ns $ns
+  cmd="$cmd -n $ns"
+fi
+
+echo "installing artifacts in ${dir}..."
+until ${cmd}; do
+  sleep 10
+done
+echo "done"
