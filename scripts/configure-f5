@@ -27,6 +27,8 @@ if ! which vesctl > /dev/null; then
 	exit 1
 fi
 
+##################################
+
 BG_CNT=0                     # Used for running api requests concurrently 
 BG_MAX=3
 TMP=/tmp/.f5.tmp
@@ -185,6 +187,9 @@ done
 
 ###############################################################
 # Approve the pending site registrations
+# Docs on the below API call:
+# https://f5-asean.console.ves.volterra.io/web/devportal/apidocs/registration 
+# https://docs.cloud.f5.com/docs/reference/api-ref/ves-io-schema-registration-customapi-registrationapprove 
 
 for site in $SITE_LIST
 do
