@@ -18,13 +18,13 @@ One time tasks to set up the domains for each demo and the F5 UID
 
 1. Install vesctl CLI.  See: https://gitlab.com/volterra.io/vesctl/blob/main/README.md
 1. Set up [domain delegation in F5 XC](https://docs.cloud.f5.com/docs/how-to/app-networking/domain-delegation) for the domains you want to use.
-  1.  Note that some donains have already been set up for use, e.g.:
-    1.  hcd1.ltsai.com
-    1.  hcd2.ltsai.com
-    1.  hcd3.ltsai.com
-    1.  hcd1.bylo.de
-    1.  hcd2.bylo.de
-    1.  hcd3.bylo.de
+    1.  Note that some donains have already been set up for use, e.g.:
+        1.  hcd1.ltsai.com
+        1.  hcd2.ltsai.com
+        1.  hcd3.ltsai.com
+        1.  hcd1.bylo.de
+        1.  hcd2.bylo.de
+        1.  hcd3.bylo.de
 1. Create an F5 UID and add it to the config file you intend to use (e.g. f5/hcd-coolstore-multi-cluster.yaml), which is used in the F5 configuration 
 
 ## Create all F5 XC sites (ingress points) 
