@@ -228,6 +228,10 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 		  -it \
 		  ghcr.io/rhsgsa/hybrid-cloud-installer
 
+*   If your connection gets interrupted and you wish to resume monitoring the installation process, execute the following
+
+		oc logs -n infra -f job/remote-installer
+
 
 ## Troubleshooting
 
