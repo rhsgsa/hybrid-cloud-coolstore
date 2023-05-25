@@ -220,6 +220,14 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 	*   `oc`
 	*   `ssh-keygen`
 
+*   If you do not have the tools listed above, an alternative is to run the installation from a container
+
+		docker run \
+		  --name installer \
+		  --rm \
+		  -it \
+		  ghcr.io/rhsgsa/hybrid-cloud-installer
+
 
 ## Troubleshooting
 
