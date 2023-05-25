@@ -12,11 +12,13 @@ Reference documentation:
 Note: The above instructions mention configuring "Huge Pages" support.  In testing it was found that Huge Pages are needed, otherwise the 'ver-0' pod stay 'Pending'!
 
 
-# Overall Process to set up F5 XC 
+## Overall Process to set up F5 XC 
 
-One time tasks to set up the domains for each demo and the F5 UID
+### One time tasks to set up the domains for each demo and the F5 UID
 
-1. Install vesctl CLI.  See: https://gitlab.com/volterra.io/vesctl/blob/main/README.md
+1. Install vesctl CLI.  See: https://gitlab.com/volterra.io/vesctl/blob/main/README.md.
+    1. To run on RHEL, be sure to turn off SELinux, otherwise vesctl will crash/core dump on startup.  Use 'sudo setenforce 0'. 
+    1. Go to this [F5 XC page](https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials) to create an API Certificate. 
 1. Set up [domain delegation in F5 XC](https://docs.cloud.f5.com/docs/how-to/app-networking/domain-delegation) for the domains you want to use.
     1.  Note that some domains have already been set up for use, e.g.:
         1.  hcd1.ltsai.com
@@ -25,19 +27,19 @@ One time tasks to set up the domains for each demo and the F5 UID
         1.  hcd1.bylo.de
         1.  hcd2.bylo.de
         1.  hcd3.bylo.de
-1. Create an F5 UID and add it to the config file you intend to use (e.g. f5/hcd-coolstore-multi-cluster.yaml), which is used in the F5 configuration 
+1. Create an F5 UID and add it to the config file you intend to use (e.g. f5/hcd-coolstore-multi-cluster.yaml), which is used in the F5 configuration.
 
-## Create all F5 XC sites (ingress points) 
+## Create all F5 XC sites (ingress points)
 
 Once all clusters are up.  The high-level process to set up F5 XC is as follows: 
 
 1. Log into the Hub cluster and run 'make contexts'. 
 1. Copy one of the config files f5/hcd*yaml, e.g. cp f5/hcd-coolstore-multi-cloud.yaml f5/hcd-my-config-file.yaml' and edit the file.  Make changes to the configuration to match your application's ingress needs.  There are comments in the config file to help you. 
 1. For all clusters, bring up the initial F5 'sites' (all pods in ves-system namespace) 
-  1. Run the command 'scripts/configure-f5 f5/hcd-my-config-file.yaml'
+  1. Run the command 'scripts/configure-f5 f5/hcd-my-config-file.yaml'.
 1. Wait for the site to register with F5 XC.
-1. The generated pending registration is approved automatically 
-1. Configure health checks, origin pools and http load balancers for all sites 
+1. The generated pending 'site registration' is approved automatically.
+1. Configure health checks, origin pools and http load balancers for all sites.
 
 
 # Miscellaneous Notes
