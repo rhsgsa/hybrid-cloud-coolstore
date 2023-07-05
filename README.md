@@ -4,7 +4,7 @@
 
 ### Multicluster Installation
 
-01. Provision an `Red Hat OpenShift Container Platform 4 Red Hat Advanced Cluster Management Hub` cluster on `demo.redhat.com` - if you are planning on deploying clusters to the default regions (`ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1`), ensure that you deploy the ACM Hub cluster to a region other than those 3 to avoid problems with the AWS quotas
+01. Provision an `Red Hat OpenShift Container Platform 4 Red Hat Advanced Cluster Management Hub` [link](https://demo.redhat.com/catalog?search=Advanced+Cluster+Management&item=babylon-catalog-prod%2Fsandboxes-gpte.ocp4-acm-hub-rhpds.prod) cluster on `demo.redhat.com` - if you are planning on deploying clusters to the default regions (`ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1`), ensure that you deploy the ACM Hub cluster to a region other than those 3 to avoid problems with the AWS quotas
 
 01. Download the pull secret to the same directory as this README from the [Hybrid Cloud Console](https://console.redhat.com/openshift/install/pull-secret) - the pull secret should be named `pull-secret.txt`
 
