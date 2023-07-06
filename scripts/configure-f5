@@ -373,7 +373,7 @@ done
 wait
 
 echo
-echo All done
+echo All done.  Please wait 2-3 mins for all sites to become available!
 
 echo All applied F5 configurations can be found in the $OUT directory for reference. 
 
