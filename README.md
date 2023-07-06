@@ -72,6 +72,8 @@
 01. Set up F5 Distributed Cloud Global Loadbalancer
 
 	*   Note that you will need to install the following: `yq`, `jinja2` and `vesctl`.
+        *   Be sure a valid 'Site Token' is set in the file: f5/hcd-coolstore-multi-cluster.yaml
+        *   Read more about F5 XC in: f5/README.md
 
 			make f5
 
