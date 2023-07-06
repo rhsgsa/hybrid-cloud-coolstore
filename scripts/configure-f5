@@ -146,6 +146,7 @@ for site in $SITE_LIST
 do
 	site_name=$site-$BASE_DOMAIN_READABLE
 
+	# Fetch any existing site registration request with the same name
 	r=
 	$vcmd request rpc registration.CustomAPI.ListRegistrationsBySite -i $TMP/.empty.request.yaml \
 		--uri /public/namespaces/system/registrations_by_site/$site_name --http-method GET > $TMP/.reg-$site_name.yaml 
@@ -157,6 +158,7 @@ do
 	then
 		[ "$CLEAN_FIRST" ] && $vcmd configuration delete registration $r -n system
 
+		# Fetch status of site registration request 
 		s=`cat $TMP/.reg-$site_name.yaml | yq .items[0].object.status.currentState`
 
 		echo -n $site_name: found existing registration [$r] for site [$site_name] with status [$s] ...
@@ -198,11 +200,14 @@ do
 	echo -n $site_name: Waiting for pending registration for site [$site_name] ...
 	r=
 	s=
+	cnt=0
 	#while [ ! "$r" -a ! "$s" ]
 	while [ ! "$r" -o "$s" != "PENDING" ]
 	do
 		$vcmd request rpc registration.CustomAPI.ListRegistrationsBySite -i $TMP/.empty.request.yaml \
 			--uri /public/namespaces/system/registrations_by_site/$site_name --http-method GET > $TMP/.site-$site_name.yaml
+
+		# Fetch request name and status
 		r=`cat $TMP/.site-$site_name.yaml | yq .items[0].name`
 		s=`cat $TMP/.site-$site_name.yaml | yq .items[0].object.status.currentState` 
 		[ "$r" = "null" ] && r=
@@ -211,6 +216,9 @@ do
 		[ "$s" = "ONLINE" ] && break 
 
 		echo -n .
+
+		let cnt=$cnt+1
+		[ $cnt -gt 20 ] && echo "Site registration not found on F5 side.  Are all pods running & 'ready' in all 'ves-system' namespaces on all clusters?  Is the your API token valid?" && exit 1
 
 		sleep 3
 	done
