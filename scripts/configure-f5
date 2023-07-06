@@ -218,7 +218,7 @@ do
 		echo -n .
 
 		let cnt=$cnt+1
-		[ $cnt -gt 20 ] && echo "Site registration not found on F5 side.  Are all pods running & 'ready' in all 'ves-system' namespaces on all clusters?  Is the your API token valid?" && exit 1
+		[ $cnt -gt 20 ] && echo -e "\nSite registration not found on F5 side.\nAre all pods running & 'ready' in all 'ves-system' namespaces on all clusters?\nIs your F5 XC API token valid?\nCheck the vp-manager-0 pod logs\nDo you see error 'Registration failed'?\nAlso see the f5/README.md" && exit 1
 
 		sleep 3
 	done
