@@ -16,6 +16,8 @@ Note: The above instructions mention configuring "Huge Pages" support.  In testi
 
 ### One time tasks to set up the domains for each demo and the F5 UID
 
+1. Log into the F5 XC Console
+    1. https://f5-asean.console.ves.volterra.io/ - log in or reset your password. Use your Red Hat email as login. 
 1. Install vesctl CLI.  See: https://gitlab.com/volterra.io/vesctl/blob/main/README.md.
     1. To run on RHEL, be sure to turn off SELinux, otherwise vesctl will crash/core dump on startup.  Use 'sudo setenforce 0'. 
     1. Go to this [F5 XC page](https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials) to create an API Certificate. 
@@ -69,6 +71,27 @@ curl -LO "https://vesio.azureedge.net/releases/vesctl/$(curl -s https://download
 ```
 
 # Troubleshooting
+
+If you see this error, then more worker nodes need to be added, add one more node to each cluster where F5 is running:
+
+```
+ver-0   0/17   Pending
+```
+
+To add a node to all clusters, run the following:
+```
+for site in a b c 
+do
+   MS=`oc --context=login-$site get machineset -n openshift-machine-api --no-headers -l hive.openshift.io/machine-pool=worker | head -1 | awk '{print $1}'` 
+   oc --context=login-$site -n openshift-machine-api scale machineset $MS --replicas=2
+done
+```
+
+If you see this error it means you need to authenticate 'vesctl' to F5 XC.  To do this fetch an API token from the F5 XC Console and configure 'vesctl', as described above. 
+
+```
+Error: Error constructing configapi.APIClient: Neither hw-key nor cert/key nor non-empty p12 bundle/password provided
+```
 
 Once the new sites (clusters) have been registered and confirmed you should see the following:
 
