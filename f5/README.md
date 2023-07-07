@@ -72,6 +72,12 @@ curl -LO "https://vesio.azureedge.net/releases/vesctl/$(curl -s https://download
 
 # Troubleshooting
 
+URL for the site list.  Note the namepsaceis 'multi-cloud-openshift' and not 'default'!
+
+```
+https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-app-connect/namespaces/multi-cloud-openshift/sites/site_list
+```
+
 If you see this error, then more worker nodes need to be added, add one more node to each cluster where F5 is running:
 
 ```
