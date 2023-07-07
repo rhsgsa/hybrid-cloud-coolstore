@@ -16,7 +16,7 @@ fi
 
 if ! which jinja2 > /dev/null; then
 	echo "Please install 'jinja2'!"
-	echo "sudo pip install jinja2-cli"
+	echo "sudo pip3 install jinja2-cli"
 	exit 1
 fi
 
