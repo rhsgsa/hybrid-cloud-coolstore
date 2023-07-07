@@ -18,6 +18,13 @@ spec:
         argocd.argoproj.io/sync-wave: "30"
       name: "{{cluster}}-order-database-primary"
     spec:
+      ignoreDifferences:
+      - group: apps
+        kind: Deployment
+        name: order-database-primary
+        namespace: demo 
+        jsonPointers:
+          - /spec/replicas
       destination:
         namespace: "{{values.namespace}}"
         name: "{{cluster}}"
