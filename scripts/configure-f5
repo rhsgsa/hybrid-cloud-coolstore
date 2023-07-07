@@ -96,6 +96,9 @@ getContext()
 # Fetch list of site names from config file
 SITE_LIST=$(cat $HCD_CONF | yq '.sites[] | key')
 
+[ ! "$SITE_LIST" ] && echo "Cannot parse the site names from $HCD_CONF file using your yq CLI" && exit 1
+
+
 if [ "$CLEAN_FIRST" ]; then
 	for site in $SITE_LIST
 	do
