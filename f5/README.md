@@ -54,7 +54,11 @@ After completion of 'make f5', wait 1-2 mins and you should now have F5 configur
 How to fetch the CLI:
 
 ```
+# For MacOS
 curl -LO "https://vesio.azureedge.net/releases/vesctl/$(curl -s https://downloads.volterra.io/releases/vesctl/latest.txt)/vesctl.darwin-amd64.gz"
+
+# For Linux
+curl -LO "https://vesio.azureedge.net/releases/vesctl/$(curl -s https://downloads.volterra.io/releases/vesctl/latest.txt)/vesctl.linux-amd64.gz"
 ```
 
 # Reference documentation
