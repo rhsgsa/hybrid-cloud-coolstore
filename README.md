@@ -14,7 +14,7 @@
 
 	*   Create and download your F5 XC API Certificate file and store it to the same directory as this README.  Fetch the cert from https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials - the file must be named `f5xc.p12`.  Remember the password you chose to create the cert file. 
 	*   Add your chosen password for the API Certificate and store it to a file in the same directory - the file must be named `f5xc.password` 
-        *   Execute the following command: 
+	*   Execute the following command: 
 
 		make install-with-f5
   
