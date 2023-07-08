@@ -45,12 +45,6 @@
 
 		./scripts/modify-alert-manager-settings
 
-01. Configure OpenShift contexts 
-	    
-	*   Be sure to log into the hub cluster.
-
-			make contexts 
-
 01. Open the following browser tabs
 
 	* ArgoCD
@@ -68,6 +62,12 @@
 	* `maildev` - `make email`
 		* Turn on notifications so you see the alert email coming in
 		* If you are using Google Chrome, you may need to view site information and explicitly allow notifications - don't forget to reload the page after enabling notifications
+
+01. Configure OpenShift contexts 
+	    
+	*   Be sure to log into the hub cluster.
+
+			make contexts 
 
 01. Set up F5 Distributed Cloud Global Loadbalancer
 
