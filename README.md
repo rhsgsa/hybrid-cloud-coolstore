@@ -10,6 +10,10 @@
 
 01. By default, the installer will deploy clusters to `ap-southeast-1`, `ap-southeast-2`, and `ap-northeast-1` - if you wish to deploy the clusters to different regions, edit `config.sh` and change the regions in the `CLUSTER_REGIONS` variable
 
+01. *If you want to install with F5*, follow these steps and skip the 'make install' step below.
+
+		make install-with-f5
+  
 01. Install services to the ACM Hub Cluster
 
 		make install
@@ -63,20 +67,17 @@
 		* Turn on notifications so you see the alert email coming in
 		* If you are using Google Chrome, you may need to view site information and explicitly allow notifications - don't forget to reload the page after enabling notifications
 
-01. Configure OpenShift contexts 
+01. Set up F5 Distributed Cloud (F5 XC) Load Balancer
+
+        * If you executed 'make install-with-f5' above, then follow these steps
+
+			make f5-bastion
+
+01. (Optional) If needed, configure OpenShift contexts 
 	    
 	*   Be sure to log into the hub cluster.
 
 			make contexts 
-
-01. Set up F5 Distributed Cloud Global Loadbalancer
-
-	*   Note that you will need to install the following: `yq`, `jinja2` and `vesctl`.
-        *   Be sure a valid 'Site Token' is set in the file: f5/hcd-coolstore-multi-cluster.yaml
-        *   Set your chosen 'domain' to use in the file: f5/hcd-coolstore-multi-cluster.yaml
-        *   Read more about F5 XC in: f5/README.md
-
-			make f5
 
 
 ### Multicluster Demo
