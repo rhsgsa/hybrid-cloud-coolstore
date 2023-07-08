@@ -1,6 +1,63 @@
 # Configure F5 Distributed Cloud (F5 XC) Global Load Balancer 
 
-Reference documentation:
+## Steps to set up F5 XC for the coolstore hybrid cloud demo
+
+### One time setup 
+
+If this is your first time, follow these steps:
+
+1. Log into the F5 XC Console with your pre-registered Red Hat email address. If needed, ask the f5-asean team for access.
+    1. https://f5-asean.console.ves.volterra.io/ - log in or reset your password. Use your Red Hat email as login. 
+1. Install vesctl CLI. 
+    1. To run on RHEL, be sure to turn off SELinux, otherwise vesctl will crash/core dump on startup.  Use 'sudo setenforce 0'. 
+    1. Go to this [F5 XC page](https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials) to create an API Certificate. 
+    1. See below example on how to configure the '$HOME/.vesconfig' file. 
+    1. See https://gitlab.com/volterra.io/vesctl/blob/main/README.md for all the details on installing vesctl. 
+1. The existing F5 UID in the file f5/hcd-coolstore-multi-cluster.yaml should still be valid.  If it is not valid (e.g. the F5 XC pods cannot register with F5), create a new F5 UID and replace it in the config file.  See below docs on how to do this.
+
+Example Configration for vesctl
+
+1. Log into the F5 XC UI, create & download an API Certificate (p12) file and configure the $HOME/.vesconfig file like this:
+1. Go to this [F5 XC page](https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials) to create an 'API Certificate'. Download the (p12) file and configure the $HOME/.vesconfig file like this:
+
+Example config:
+```
+server-urls: https://f5-asean.console.ves.volterra.io/api
+p12-bundle: /home/user/path-to/f5-asean.console.ves.volterra.io.api-creds.p12
+```
+
+Set the VES_P12_PASSWORD env variable with the password you set when creating your ' API Certificate', e.g.:
+```
+export VES_P12_PASSWORD=password
+```
+
+---
+Once all clusters are up.  The steps to set up F5 XC are as follows: 
+
+1. Run 'make f5' from this repo's top level directory. 
+
+After completion of 'make f5', wait 1-2 mins and you should now have F5 configured and working with the Coolstore app. 
+
+
+# Miscellaneous Notes
+
+## Create all F5 XC sites (ingress points)
+
+1. Log into the Hub cluster and run 'make contexts'. 
+1. Copy one of the config files f5/hcd*yaml, e.g. cp f5/hcd-coolstore-multi-cloud.yaml f5/hcd-my-config-file.yaml' and edit the file.  Make changes to the configuration to match your application's ingress needs.  There are comments in the config file to help you. 
+1. For all clusters, bring up the initial F5 'sites' (all pods in ves-system namespace) 
+  1. Run the command 'scripts/configure-f5 f5/hcd-my-config-file.yaml'.
+1. Wait for the site to register with F5 XC.
+1. The generated pending 'site registration' is approved automatically.
+1. Configure health checks, origin pools and http load balancers for all sites.
+
+How to fetch the CLI:
+
+```
+curl -LO "https://vesio.azureedge.net/releases/vesctl/$(curl -s https://downloads.volterra.io/releases/vesctl/latest.txt)/vesctl.darwin-amd64.gz"
+```
+
+# Reference documentation
 
 - Main OCP instructions: https://docs.cloud.f5.com/docs/integrations/integrating-cloud-mesh-with-ocp
 - Additional help: https://f5cloud.zendesk.com/hc/en-us/articles/4410470282263-How-to-create-Customer-Edge-CE-site-on-OpenShift-cluster 
@@ -11,17 +68,10 @@ Reference documentation:
 
 Note: The above instructions mention configuring "Huge Pages" support.  In testing it was found that Huge Pages are needed, otherwise the 'ver-0' pod stay 'Pending'!
 
+# Domain delegation
 
-## Overall Process to set up F5 XC 
+## One time tasks to set up the domains for each demo and the F5 UID
 
-### One time tasks to set up the domains for each demo and the F5 UID
-
-1. Log into the F5 XC Console
-    1. https://f5-asean.console.ves.volterra.io/ - log in or reset your password. Use your Red Hat email as login. 
-1. Install vesctl CLI.  See: https://gitlab.com/volterra.io/vesctl/blob/main/README.md.
-    1. To run on RHEL, be sure to turn off SELinux, otherwise vesctl will crash/core dump on startup.  Use 'sudo setenforce 0'. 
-    1. Go to this [F5 XC page](https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials) to create an API Certificate. 
-    1. See below example on how to configure the '$HOME/.vesconfig' file. 
 1. Set up [domain delegation in F5 XC](https://docs.cloud.f5.com/docs/how-to/app-networking/domain-delegation) for the domains you want to use.
     1.  Note that some domains have already been set up for use, e.g.:
         1.  hcd1.ltsai.com
@@ -30,45 +80,6 @@ Note: The above instructions mention configuring "Huge Pages" support.  In testi
         1.  hcd1.bylo.de
         1.  hcd2.bylo.de
         1.  hcd3.bylo.de
-1. Create an F5 UID and add it to the config file you intend to use (e.g. f5/hcd-coolstore-multi-cluster.yaml), which is used in the F5 configuration.
-
-## Create all F5 XC sites (ingress points)
-
-Once all clusters are up.  The high-level process to set up F5 XC is as follows: 
-
-1. Log into the Hub cluster and run 'make contexts'. 
-1. Copy one of the config files f5/hcd*yaml, e.g. cp f5/hcd-coolstore-multi-cloud.yaml f5/hcd-my-config-file.yaml' and edit the file.  Make changes to the configuration to match your application's ingress needs.  There are comments in the config file to help you. 
-1. For all clusters, bring up the initial F5 'sites' (all pods in ves-system namespace) 
-  1. Run the command 'scripts/configure-f5 f5/hcd-my-config-file.yaml'.
-1. Wait for the site to register with F5 XC.
-1. The generated pending 'site registration' is approved automatically.
-1. Configure health checks, origin pools and http load balancers for all sites.
-
-Example Configration for vesctl
-
-Follow these instructions: https://gitlab.com/volterra.io/vesctl/blob/main/README.md 
-
-You will need to log into the F5 XC UI, create & download an API Certificate (p12) file and configure the $HOME/.vesconfig file like this:
-
-```
-server-urls: https://f5-asean.console.ves.volterra.io/api
-p12-bundle: /home/user/path-to/f5-asean.console.ves.volterra.io.api-creds.p12
-```
-
-Set the VES_P12_PASSWORD env variable with the password you set to encrypt your API Certificate, e.g.
-
-```
-export VES_P12_PASSWORD=password
-```
-
-
-# Miscellaneous Notes
-
-Fetch the CLI:
-
-```
-curl -LO "https://vesio.azureedge.net/releases/vesctl/$(curl -s https://downloads.volterra.io/releases/vesctl/latest.txt)/vesctl.darwin-amd64.gz"
-```
 
 # Troubleshooting
 
