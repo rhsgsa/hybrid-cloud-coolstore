@@ -15,7 +15,7 @@ If this is your first time, follow these steps:
     1. See https://gitlab.com/volterra.io/vesctl/blob/main/README.md for all the details on installing vesctl. 
 1. The existing F5 UID in the file f5/hcd-coolstore-multi-cluster.yaml should still be valid.  If it is not valid (e.g. the F5 XC pods cannot register with F5), create a new F5 UID and replace it in the config file.  See below docs on how to do this.
 
-Example Configration for vesctl
+Example configuration for vesctl
 
 1. Log into the F5 XC UI, create & download an API Certificate (p12) file and configure the $HOME/.vesconfig file like this:
 1. Go to this [F5 XC page](https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials) to create an 'API Certificate'. Download the (p12) file and configure the $HOME/.vesconfig file like this:
@@ -87,13 +87,13 @@ Note: The above instructions mention configuring "Huge Pages" support.  In testi
 
 # Troubleshooting
 
-URL for the site list.  Note the namepsaceis 'multi-cloud-openshift' and not 'default'!
+URL for the site list.  Note the namespace to use in the F5 XC UI is 'multi-cloud-openshift' and not 'default'.
 
 ```
 https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-app-connect/namespaces/multi-cloud-openshift/sites/site_list
 ```
 
-If you see this error, then more worker nodes need to be added, add one more node to each cluster where F5 is running:
+If you see the following error in the ves-system, namespace, then more worker nodes need to be added, add one more node to each cluster where F5 is running:
 
 ```
 ver-0   0/17   Pending
@@ -108,7 +108,7 @@ do
 done
 ```
 
-If you see this error it means you need to authenticate 'vesctl' to F5 XC.  To do this fetch an API token from the F5 XC Console and configure 'vesctl', as described above. 
+If you see the following error it means you need to authenticate 'vesctl' to F5 XC.  To do this fetch an API token from the F5 XC Console and configure 'vesctl', as described above. 
 
 ```
 Error: Error constructing configapi.APIClient: Neither hw-key nor cert/key nor non-empty p12 bundle/password provided
