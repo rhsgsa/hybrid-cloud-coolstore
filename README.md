@@ -10,10 +10,11 @@
 
 01. By default, the installer will deploy clusters to `ap-southeast-1`, `ap-southeast-2`, and `ap-northeast-1` - if you wish to deploy the clusters to different regions, edit `config.sh` and change the regions in the `CLUSTER_REGIONS` variable
 
-01. **If you want to install the demo with the F5 global load balancer**, skip the 'make install' step below and follow this step instead 
+01. **If you want to install the demo with the F5 global load balancer**, skip the 'make install' step below and follow this step instead:
 
-	*   Create and download your F5 XC API Certificate file and store it to the same directory as this README.  Fetch the cert from https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials - the file must be named `f5xc.p12`.  Remember the password you chose to create the cert file.   For more information, see f5/README.md 
-	*   Add your chosen password for the API Certificate and store it to a file in the same directory - the file must be named `f5xc.password`.  For more information, see f5/README.md 
+	*   If not already, create and download your F5 XC API Certificate file and store it to the same directory as this README.  Fetch the cert from https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials - the file must be named `f5xc.p12`.  Remember the password for the next step.  
+   		*   Store your chosen password, for the API Certificate, to a file in the same directory - the file must be named `f5xc.password`.  
+		*   For more information, see f5/README.md 
 	*   Execute the following command: 
 
 		make install-with-f5
