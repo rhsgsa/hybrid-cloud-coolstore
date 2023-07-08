@@ -10,10 +10,11 @@
 
 01. By default, the installer will deploy clusters to `ap-southeast-1`, `ap-southeast-2`, and `ap-northeast-1` - if you wish to deploy the clusters to different regions, edit `config.sh` and change the regions in the `CLUSTER_REGIONS` variable
 
-01. *If you want to install with F5*, follow these steps and skip the 'make install' step below.
+01. **If you want to install with F5**, follow these steps and skip the 'make install' step below.
 
-	*   Create and download the F5 XC API Ceetificate file and store it to the same directory as this README from https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials - the file must be named `f5xc.p12`.  Remember the password you chose to create the cert file. 
-	*   Add your chosen password for the API Ceetificate file and store it to the same directory as this README - the file must be named `f5xc.password` 
+	*   Create and download your F5 XC API Certificate file and store it to the same directory as this README.  Fetch the ceert from https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials - the file must be named `f5xc.p12`.  Remember the password you chose to create the cert file. 
+	*   Add your chosen password for the API Ceetificate and store it to a file in the same directory - the file must be named `f5xc.password` 
+        *   Execute the following command: 
 
 		make install-with-f5
   
