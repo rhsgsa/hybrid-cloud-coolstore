@@ -12,6 +12,9 @@
 
 01. *If you want to install with F5*, follow these steps and skip the 'make install' step below.
 
+	*   Create and download the F5 XC API Ceetificate file and store it to the same directory as this README from https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials - the file must be named `f5xc.p12`.  Remember the password you chose to create the cert file. 
+	*   Add your chosen password for the API Ceetificate file and store it to the same directory as this README - the file must be named `f5xc.password` 
+
 		make install-with-f5
   
 01. Install services to the ACM Hub Cluster
