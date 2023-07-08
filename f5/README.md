@@ -87,11 +87,35 @@ Note: The above instructions mention configuring "Huge Pages" support.  In testi
 
 # Troubleshooting
 
-URL for the site list.  Note the namespace to use in the F5 XC UI is 'multi-cloud-openshift' and not 'default'.
+URL for the site list:
+- Note the namespace to use in the F5 XC UI is 'multi-cloud-openshift' and not 'default'.
 
-```
 https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-app-connect/namespaces/multi-cloud-openshift/sites/site_list
-```
+
+URL for the site map:
+
+https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-app-connect/namespaces/multi-cloud-openshift/sites/site_map
+
+URL for pending site registrations:
+
+https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-network-connect/manage/site_management/registrations;tab=pending
+
+and existing site registrations:
+
+https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-network-connect/manage/site_management/registrations;tab=other
+
+URL for viewing and creating site tokens:
+
+https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-network-connect/manage/site_management/site_tokens
+
+URL for managing API credentials:
+
+https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials
+
+URL for domain name management:
+
+https://f5-asean.console.ves.volterra.io/web/workspaces/dns-management/manage/dns_domain
+
 
 If you see the following error in the ves-system, namespace, then more worker nodes need to be added, add one more node to each cluster where F5 is running:
 
