@@ -1,0 +1,19 @@
+#!/bin/bash -e
+# This will execute the actualt F5 configuration from the bastion 
+
+echo Re-use the env vars captured from scripts/create-bastion-credentials 
+. bastion-env.sh
+
+echo Prep the bastion with needed CLIs
+ssh -F $SSH_DIR/config -i ${SSH_DIR}/${SSH_KEYFILE} $ssh_user@$ssh_bastion scripts/prep-f5-bastion
+
+echo Refresh the F5 config file
+scp -F $SSH_DIR/config -i ${SSH_DIR}/${SSH_KEYFILE} f5/hcd-coolstore-multi-cluster.yaml $ssh_user@$ssh_bastion:f5
+
+echo 
+echo "Executing 'make f5' on the bastion host: $ssh_bastion ..."
+echo
+
+echo Execute the config...
+ssh -F $SSH_DIR/config -i ${SSH_DIR}/${SSH_KEYFILE} $ssh_user@$ssh_bastion make f5 
+
