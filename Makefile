@@ -4,7 +4,7 @@ BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 include $(BASE)/config.sh
 
-.PHONY: install remote-install clean-remote-install create-aws-credentials install-gitops deploy-gitea create-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag login-a login-b login-c contexts hugepages f5 verify-f5 installer-image create-bastion-credentials
+.PHONY: install remote-install clean-remote-install create-aws-credentials install-gitops deploy-gitea create-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag login-a login-b login-c contexts hugepages f5 verify-f5 installer-image create-bastion-credentials install-with-f5
 
 install: create-aws-credentials install-gitops deploy-gitea create-clusters
 	@echo "done"
@@ -38,6 +38,9 @@ clean-remote-install:
 
 create-aws-credentials:
 	$(BASE)/scripts/create-aws-credentials
+
+create-bastion-credentials:
+	$(BASE)/scripts/create-bastion-credentials
 
 install-gitops:
 	$(BASE)/scripts/install-gitops
