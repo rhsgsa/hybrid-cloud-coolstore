@@ -1,2 +1,7 @@
 pull-secret.txt
 f5/cleanup
+bastion-env.sh
+f5xc.p12
+f5xc.password
+*.bak
+

@@ -1,0 +1,19 @@
+#!/bin/bash -e
+# This will execute the actualt F5 configuration from the bastion 
+
+echo Re-use the env vars captured from scripts/create-bastion-credentials 
+. bastion-env.sh
+
+# Best way to copy all files to bastion ...
+( tar czf - * | ssh -F $SSH_DIR/config -i ${SSH_DIR}/${SSH_KEYFILE} $ssh_user@$ssh_bastion tar xzf - )
+
+echo Prep the bastion with needed CLIs
+ssh -F $SSH_DIR/config -i ${SSH_DIR}/${SSH_KEYFILE} $ssh_user@$ssh_bastion scripts/prep-f5-bastion
+
+echo 
+echo "Executing 'make f5' on the bastion host: $ssh_bastion ..."
+echo
+
+echo Execute the F5 config from the bastion ...
+ssh -F $SSH_DIR/config -i ${SSH_DIR}/${SSH_KEYFILE} $ssh_user@$ssh_bastion make f5 
+

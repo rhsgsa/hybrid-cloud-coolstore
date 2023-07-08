@@ -1,0 +1,47 @@
+#!/bin/bash -e
+
+# Install needed commands
+
+if ! which make; then
+	echo "Installing make"
+	sudo yum install make -y
+fi
+
+if ! which yq; then
+	echo "Insalling yq CLI"
+	sudo curl --location --silent --show-error https://github.com/mikefarah/yq/releases/download/v4.33.3/yq_linux_amd64 -o /usr/local/bin/yq && sudo chmod +x /usr/local/bin/yq
+fi
+yq --version
+
+if ! which jinja2; then
+	echo "Installing jinja2 CLI"
+	sudo pip3 install jinja2-cli
+fi
+jinja2 --version
+
+echo "Installing F5 XC vesctl CLI"
+[ ! -f vesctl.linux-amd64 ] && curl -L -O https://vesio.azureedge.net/releases/vesctl/$(curl -s https://downloads.volterra.io/releases/vesctl/latest.txt)/vesctl.linux-amd64.gz 
+[ -f vesctl.linux-amd64.gz ] && gunzip vesctl.linux-amd64.gz
+sudo cp vesctl.linux-amd64 /usr/local/bin/vesctl
+sudo chmod +x /usr/local/bin/vesctl
+
+ls -l /usr/local/bin/vesctl
+sudo setenforce 0
+echo "Checking vesctl installation"
+vesctl version
+
+echo "Configure vesctl auth"
+cat > $HOME/.vesconfig <<END
+server-urls: https://f5-asean.console.ves.volterra.io/api
+p12-bundle: $HOME/f5xc.p12
+END
+
+echo "export VES_P12_PASSWORD=`cat $HOME/f5xc.password`" >> $HOME/.bashrc 
+export VES_P12_PASSWORD=`cat $HOME/f5xc.password`
+
+echo "Testing vesctl auth"
+vesctl configuration list namespace
+
+[ $? -ne 0 ] && echo "Warning: There were errors!  Please check that the following c ommands are installed and working on the bastion: yq, jinja2, vesctl & make" && exit 1
+
+exit 0

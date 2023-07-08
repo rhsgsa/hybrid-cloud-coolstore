@@ -16,7 +16,7 @@ fi
 
 if ! which jinja2 > /dev/null; then
 	echo "Please install 'jinja2'!"
-	echo "sudo pip install jinja2-cli"
+	echo "sudo pip3 install jinja2-cli"
 	exit 1
 fi
 
@@ -30,7 +30,7 @@ fi
 ##################################
 
 BG_CNT=0                     # Used for running api requests concurrently 
-BG_MAX=3
+BG_MAX=4
 TMP=/tmp/.f5.tmp
 rm -rf $TMP && mkdir $TMP
 OUT=/tmp/out
@@ -96,6 +96,9 @@ getContext()
 # Fetch list of site names from config file
 SITE_LIST=$(cat $HCD_CONF | yq '.sites[] | key')
 
+[ ! "$SITE_LIST" ] && echo "Cannot parse the site names from $HCD_CONF file using your yq CLI" && exit 1
+
+
 if [ "$CLEAN_FIRST" ]; then
 	for site in $SITE_LIST
 	do
@@ -104,7 +107,7 @@ if [ "$CLEAN_FIRST" ]; then
 		site_name=site-$site-$BASE_DOMAIN_READABLE
 		conffile=$OUT/$site_name.yaml
 
-		echo $CONTEXT: Cleaning F5 Ingress on context $CONTEXT ...
+		echo "$CONTEXT: Cleaning F5 Ingress (all resources from ves-system namespace) on context $CONTEXT ..."
 		# Create the F5 Ingress (VES) in OpenShift
 		cat $HCD_CONF | yq ".sites.$site" | jinja2 yaml/f5/site.yaml -Dsite=$site -Dtoken=$TOKEN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
 
@@ -346,6 +349,7 @@ do
 	if [ $BG_CNT -ge $BG_MAX ]; then wait; BG_CNT=0; fi
 done
 
+wait  #  Cannot create http LBs until the dependent pools are created 
 
 # Create the http load balancers, one for each ingress 
 for ingress in $INGRESS_LIST

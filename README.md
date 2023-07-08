@@ -10,6 +10,15 @@
 
 01. By default, the installer will deploy clusters to `ap-southeast-1`, `ap-southeast-2`, and `ap-northeast-1` - if you wish to deploy the clusters to different regions, edit `config.sh` and change the regions in the `CLUSTER_REGIONS` variable
 
+01. **If you want to install the demo with the F5 global load balancer, follow this step (and skip the next step - 'make install' - below.**  This step will also complete everything that 'make install' does): 
+
+	*   If not already, create and download your own F5 XC API Certificate file and store it to the same directory as this README.  Fetch the cert from https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials (reset your password if it's your first time) - the file must be named `f5xc.p12`.  Remember the password for the next step.
+		*   Store your chosen password, for the API Certificate, to a file in the same directory - the file must be named `f5xc.password`.
+		*   For more information, see [f5/README.md](f5/README.md)
+	*   Execute the following command:
+
+		make install-with-f5
+
 01. Install services to the ACM Hub Cluster
 
 		make install
@@ -45,12 +54,6 @@
 
 		./scripts/modify-alert-manager-settings
 
-01. Configure OpenShift contexts 
-	    
-	*   Be sure to log into the hub cluster.
-
-			make contexts 
-
 01. Open the following browser tabs
 
 	* ArgoCD
@@ -69,14 +72,17 @@
 		* Turn on notifications so you see the alert email coming in
 		* If you are using Google Chrome, you may need to view site information and explicitly allow notifications - don't forget to reload the page after enabling notifications
 
-01. Set up F5 Distributed Cloud Global Loadbalancer
+01. Set up F5 Distributed Cloud (F5 XC) Load Balancer
 
-	*   Note that you will need to install the following: `yq`, `jinja2` and `vesctl`.
-        *   Be sure a valid 'Site Token' is set in the file: f5/hcd-coolstore-multi-cluster.yaml
-        *   Set your chosen 'domain' to use in the file: f5/hcd-coolstore-multi-cluster.yaml
-        *   Read more about F5 XC in: f5/README.md
+        * If you executed 'make install-with-f5' above, then follow these steps
 
-			make f5
+			make f5-bastion
+
+01. (Optional) If needed, configure OpenShift contexts 
+	    
+	*   Be sure to log into the hub cluster.
+
+			make contexts 
 
 
 ### Multicluster Demo
@@ -240,7 +246,7 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 
 ### Cluster installation failure due to the quota limit
 
-*   Determine whether it is AWS quota limit. The cluster provisoning logs will have a statement like `Error: creating EC2 EIP: AddressLimitExceeded`. The EC2 VPC Elastic IP default quota per region is:
+*   Determine whether it is AWS quota limit. The cluster provisioning logs will have a statement like `Error: creating EC2 EIP: AddressLimitExceeded`. The EC2 VPC Elastic IP default quota per region is:
 
 		{
 		  "ServiceName": "Amazon Elastic Compute Cloud (Amazon EC2)",
@@ -377,7 +383,7 @@ sequenceDiagram
 
 ## Huge Page Machine Config Pool
 
-* When the node gets stuck. It is simpler to remove the correseponding `machine` and let the `machineset` provision a new node. Run the `scripts/configure-hugepages` again when the node is `Ready`.
+* When the node gets stuck. It is simpler to remove the corresponding `machine` and let the `machineset` provision a new node. Run the `scripts/configure-hugepages` again when the node is `Ready`.
 
 
 ## Resources
@@ -440,16 +446,16 @@ sequenceDiagram
 
 		oc get clusterimagesets
 
-*   If one of the clusters fail to provision, destroy the cluster using the ACM Hub console, and reprovision the cluster using the `create-single-cluster` script
+*   If one of the clusters fail to provision, destroy the cluster using the ACM Hub console, and re-provision the cluster using the `create-single-cluster` script
 
-	*   To reprovision `coolstore-a`,
+	*   To re-provision `coolstore-a`,
 
 			./scripts/create-single-cluster 0
 
-	*   To reprovision `coolstore-b`,
+	*   To re-provision `coolstore-b`,
 
 			./scripts/create-single-cluster 1
 
-	*   To reprovision `coolstore-c`,
+	*   To re-provision `coolstore-c`,
 
 			./scripts/create-single-cluster 2

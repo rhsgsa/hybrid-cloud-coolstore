@@ -1,6 +1,6 @@
 hcd:
   name: "Hybrid Cloud Demo 1"
-  token: e459c511-ced7-423a-91c6-5c4dd4c711c0  # Use this token or create a new one
+  token: 946752f6-0539-4f26-9720-932373e97b77  # Create a new F5 XC API token and add it here.
   domain: hcd1.ltsai.com                       # Use either hcd1.ltsai.com, hcd2.ltsai.com or hcd3.ltsai.com
   namespace: multi-cloud-openshift             # This is the namespace to use in F5 XC
 sites: 
@@ -9,12 +9,12 @@ sites:
     lat: 1.314
     context: login-a                           # Cluster context 
   coolstore-b:
-    long: 0.1278
-    lat: 51.5074
+    long: 151.2093
+    lat: 33.8688
     context: login-b
   coolstore-c:
-    long: 139.6917
-    lat: 35.689
+    long: 139.6503
+    lat: 35.6762
     context: login-c
 ingresses:                  # List of kube ingresses
   coolstore-ui-demo:        # Ingress name, e.g.  coolstore-ui-demo.example.com 

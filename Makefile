@@ -4,9 +4,13 @@ BASE:=$(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
 
 include $(BASE)/config.sh
 
-.PHONY: install remote-install clean-remote-install create-aws-credentials install-gitops deploy-gitea create-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag login-a login-b login-c contexts hugepages f5 verify-f5 installer-image
+.PHONY: install remote-install clean-remote-install create-aws-credentials install-gitops deploy-gitea create-clusters demo-manual-install argocd argocd-password gitea coolstore-ui topology-view coolstore-a-password metrics alerts generate-orders email remove-lag login-a login-b login-c contexts hugepages f5 verify-f5 installer-image create-bastion-credentials install-with-f5
 
 install: create-aws-credentials install-gitops deploy-gitea create-clusters
+	@echo "done"
+
+# Do the install but also include pre-config steps for later 'make f5'. The script 'create-bastion-credentials' is a drop-in replacement for 'create-aws-credentials''.
+install-with-f5: create-bastion-credentials install-gitops deploy-gitea create-clusters
 	@echo "done"
 
 remote-install: create-aws-credentials clean-remote-install
@@ -34,6 +38,9 @@ clean-remote-install:
 
 create-aws-credentials:
 	$(BASE)/scripts/create-aws-credentials
+
+create-bastion-credentials:
+	$(BASE)/scripts/create-bastion-credentials
 
 install-gitops:
 	$(BASE)/scripts/install-gitops
@@ -156,8 +163,11 @@ login-c:
 contexts:
 	@scripts/set-contexts
 
-f5:
+f5: contexts
 	@scripts/configure-f5 --clean f5/hcd-coolstore-multi-cluster.yaml
+
+f5-bastion: 
+	@scripts/configure-f5-bastion
 
 verify-f5:
 	@scripts/verify-hugepages
