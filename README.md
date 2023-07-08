@@ -12,8 +12,8 @@
 
 01. **If you want to install with F5**, follow these steps and skip the 'make install' step below.
 
-	*   Create and download your F5 XC API Certificate file and store it to the same directory as this README.  Fetch the ceert from https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials - the file must be named `f5xc.p12`.  Remember the password you chose to create the cert file. 
-	*   Add your chosen password for the API Ceetificate and store it to a file in the same directory - the file must be named `f5xc.password` 
+	*   Create and download your F5 XC API Certificate file and store it to the same directory as this README.  Fetch the cert from https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials - the file must be named `f5xc.p12`.  Remember the password you chose to create the cert file. 
+	*   Add your chosen password for the API Certificate and store it to a file in the same directory - the file must be named `f5xc.password` 
         *   Execute the following command: 
 
 		make install-with-f5
@@ -245,7 +245,7 @@ If you need to provision any of the clusters manually, go to All Clusters / Infr
 
 ### Cluster installation failure due to the quota limit
 
-*   Determine whether it is AWS quota limit. The cluster provisoning logs will have a statement like `Error: creating EC2 EIP: AddressLimitExceeded`. The EC2 VPC Elastic IP default quota per region is:
+*   Determine whether it is AWS quota limit. The cluster provisioning logs will have a statement like `Error: creating EC2 EIP: AddressLimitExceeded`. The EC2 VPC Elastic IP default quota per region is:
 
 		{
 		  "ServiceName": "Amazon Elastic Compute Cloud (Amazon EC2)",
@@ -382,7 +382,7 @@ sequenceDiagram
 
 ## Huge Page Machine Config Pool
 
-* When the node gets stuck. It is simpler to remove the correseponding `machine` and let the `machineset` provision a new node. Run the `scripts/configure-hugepages` again when the node is `Ready`.
+* When the node gets stuck. It is simpler to remove the corresponding `machine` and let the `machineset` provision a new node. Run the `scripts/configure-hugepages` again when the node is `Ready`.
 
 
 ## Resources
@@ -445,16 +445,16 @@ sequenceDiagram
 
 		oc get clusterimagesets
 
-*   If one of the clusters fail to provision, destroy the cluster using the ACM Hub console, and reprovision the cluster using the `create-single-cluster` script
+*   If one of the clusters fail to provision, destroy the cluster using the ACM Hub console, and re-provision the cluster using the `create-single-cluster` script
 
-	*   To reprovision `coolstore-a`,
+	*   To re-provision `coolstore-a`,
 
 			./scripts/create-single-cluster 0
 
-	*   To reprovision `coolstore-b`,
+	*   To re-provision `coolstore-b`,
 
 			./scripts/create-single-cluster 1
 
-	*   To reprovision `coolstore-c`,
+	*   To re-provision `coolstore-c`,
 
 			./scripts/create-single-cluster 2
