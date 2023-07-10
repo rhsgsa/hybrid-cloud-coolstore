@@ -59,8 +59,8 @@ create-clusters:
 	  oc apply -f $(BASE)/yaml/single-cluster/coolstore.yaml; \
 	else \
 	  echo "this cluster has ACM installed"; \
-      oc label managedcluster local-cluster cloud-
-      oc label managedcluster local-cluster cloud=vmware #Mock the hub to be on VMware
+	  oc label managedcluster local-cluster cloud-
+	  oc label managedcluster local-cluster cloud=vmware #Mock the hub to be on VMware
 	  oc apply -f $(BASE)/yaml/acm-gitops/acm-gitops.yaml; \
 	  $(BASE)/scripts/create-clusterset; \
 	  $(BASE)/scripts/create-clusters; \
