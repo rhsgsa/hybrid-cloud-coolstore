@@ -159,20 +159,22 @@ do
 
 	if [ "$r" ] 
 	then
-		[ "$CLEAN_FIRST" ] && $vcmd configuration delete registration $r -n system
-
-		# Fetch status of site registration request 
-		s=`cat $TMP/.reg-$site_name.yaml | yq .items[0].object.status.currentState`
-
-		echo -n $site_name: found existing registration [$r] for site [$site_name] with status [$s] ...
-
-		if [ "$s" != "PENDING" -a "$s" != "ONLINE" ]; then
-			echo -n ... removing ...
-	
+		if [ "$CLEAN_FIRST" ]; then
 			$vcmd configuration delete registration $r -n system
-
+		else
+			# Fetch status of site registration request 
+			s=`cat $TMP/.reg-$site_name.yaml | yq .items[0].object.status.currentState`
+	
+			echo -n $site_name: found existing registration [$r] for site [$site_name] with status [$s] ...
+	
+			if [ "$s" != "PENDING" -a "$s" != "ONLINE" ]; then
+				echo -n ... removing ...
+		
+				$vcmd configuration delete registration $r -n system
+	
+			fi
+			echo ok
 		fi
-		echo ok
 	fi
 done
 

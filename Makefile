@@ -10,7 +10,7 @@ install: create-aws-credentials install-gitops deploy-gitea create-clusters
 	@echo "done"
 
 # Do the install but also include pre-config steps for later 'make f5'. The script 'create-bastion-credentials' is a drop-in replacement for 'create-aws-credentials''.
-install-with-f5: create-bastion-credentials install-gitops deploy-gitea create-clusters
+install-with-f5: create-bastion-credentials install-gitops deploy-gitea create-clusters f5-bastion
 	@echo "done"
 
 remote-install: create-aws-credentials clean-remote-install
