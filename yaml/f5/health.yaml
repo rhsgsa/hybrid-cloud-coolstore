@@ -13,8 +13,8 @@ spec:
     request_headers_to_remove: []
     use_http2: false
     use_origin_server_name: {}
-  interval: 5
+  interval: 2
   jitter: 0
   jitter_percent: 30
-  timeout: 3
-  unhealthy_threshold: 1
+  timeout: 8
+  unhealthy_threshold: 2
