@@ -12,7 +12,7 @@ sites:
     long: -33.865143
     lat: 151.209
     context: login-b
-  coolstore-c:       # Tokio
+  coolstore-c:       # Tokyo
     long: 139.6503
     lat: 35.6762
     context: login-c
