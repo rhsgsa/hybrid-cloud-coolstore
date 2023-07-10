@@ -17,6 +17,7 @@
 		*   For more information, see [f5/README.md](f5/README.md)
 	*   Execute the following command:
 
+		make clean                  # Run this once for every new "OCP4 ACM Hub" environment you order via RHDP 
 		make install-with-f5
 
 01. Install services to the ACM Hub Cluster

@@ -179,4 +179,5 @@ installer-image:
 	docker push $(INSTALLER_IMAGE)
 
 clean:
-	rm -f /tmp/.hub-cluster-details
+	rm -f /tmp/.hub-cluster-details bastion-env.sh
+
