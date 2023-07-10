@@ -5,14 +5,14 @@ hcd:
   namespace: multi-cloud-openshift             # This is the namespace to use in F5 XC
 sites: 
   coolstore-a:                                 # name of cluster 
-    long: 103.845                              # Ex. SIN: 103.845 1.314  LON: 0.1278 51.5074  TOK: 139.6917 35.689  DAL: 96.7970 32.7767
+    long: 103.845    # Singapore               # Ex. SIN: 103.845 1.314  LON: 0.1278 51.5074  TOK: 139.6917 35.689  DAL: 96.7970 32.7767  SYD: -33.865, 151.209
     lat: 1.314
     context: login-a                           # Cluster context 
-  coolstore-b:
-    long: 151.2093
-    lat: 33.8688
+  coolstore-b:       # Sydney 
+    long: -33.865143
+    lat: 151.209
     context: login-b
-  coolstore-c:
+  coolstore-c:       # Tokio
     long: 139.6503
     lat: 35.6762
     context: login-c
