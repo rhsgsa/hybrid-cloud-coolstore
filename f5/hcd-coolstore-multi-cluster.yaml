@@ -10,7 +10,8 @@ sites:
     context: login-a                           # Cluster context 
   coolstore-b:       # Sydney 
     long: -33.865143
-    lat: 151.209
+#    lat: 151.209
+    lat: 51.209
     context: login-b
   coolstore-c:       # Tokyo
     long: 139.6503
