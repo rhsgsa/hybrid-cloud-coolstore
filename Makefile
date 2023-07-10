@@ -177,3 +177,6 @@ verify-f5:
 installer-image:
 	docker build -t $(INSTALLER_IMAGE) $(BASE)/installer-image
 	docker push $(INSTALLER_IMAGE)
+
+clean:
+	rm -f /tmp/.hub-cluster-details
