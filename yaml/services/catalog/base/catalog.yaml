@@ -25,7 +25,7 @@ spec:
         app: catalog
     spec:
       containers:
-      - image: ghcr.io/rhsgsa/catalog:1.0-SNAPSHOT
+      - image: quay.io/rhsgsa/catalog:1.0-SNAPSHOT
         name: catalog
         env:
         - name: JAVA_OPTS_APPEND
@@ -60,6 +60,24 @@ spec:
           requests:
             cpu: 100m
             memory: 512Mi
+        livenessProbe:
+            httpGet:
+              path: /actuator/health/liveness
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+        readinessProbe:
+            httpGet:
+              path: /actuator/health/readiness
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
 status: {}
 ---
 apiVersion: v1

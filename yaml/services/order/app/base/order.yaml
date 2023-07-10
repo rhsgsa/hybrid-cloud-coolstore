@@ -44,7 +44,7 @@ spec:
         app.openshift.io/runtime: quarkus
     spec:
       containers:
-      - image: ghcr.io/rhsgsa/order:1.0-SNAPSHOT
+      - image: quay.io/rhsgsa/order:1.0-SNAPSHOT
         name: order
         env:
         - name: QUARKUS_MONGODB_CONNECTION_STRING
@@ -79,6 +79,33 @@ spec:
           requests:
             cpu: 100m
             memory: 512Mi
+        startupProbe:
+            httpGet:
+              path: /q/health/started
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+        readinessProbe:
+            httpGet:
+              path: /q/health/ready
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
+        livenessProbe:
+            httpGet:
+              path: /q/health/live
+              port: 8080
+              scheme: HTTP
+            timeoutSeconds: 1
+            periodSeconds: 10
+            successThreshold: 1
+            failureThreshold: 3
 status: {}
 ---
 apiVersion: route.openshift.io/v1
