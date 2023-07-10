@@ -96,6 +96,10 @@ URL for the site map:
 
 https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-app-connect/namespaces/multi-cloud-openshift/sites/site_map
 
+URL for the HTTP Load Balancers
+
+https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-app-connect/namespaces/multi-cloud-openshift/manage/load_balancers/http_loadbalancers
+
 URL for pending site registrations:
 
 https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-network-connect/manage/site_management/registrations;tab=pending

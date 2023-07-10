@@ -1,17 +1,22 @@
 hcd:
   name: "Hybrid Cloud Demo 1"
   token: 946752f6-0539-4f26-9720-932373e97b77  # Create a new F5 XC API token and add it here.
-  domain: hcd1.ltsai.com                       # Use either hcd1.ltsai.com, hcd2.ltsai.com or hcd3.ltsai.com
+  domain: hcd2.bylo.de                       # Use either hcd1.ltsai.com, hcd2.ltsai.com or hcd3.ltsai.com
+                                               # Domain allocation: 
+					       # Li Ming - hcd1.ltsai.com
+					       # Anthony - hcd2.ltsai.com
+					       # KH -      hcd3.ltsai.com
+					       # Steve -   hcd1.bylo.de
+					       # Kin Wai - hcd2.bylo.de
   namespace: multi-cloud-openshift             # This is the namespace to use in F5 XC
 sites: 
   coolstore-a:                                 # name of cluster 
-    long: 103.845    # Singapore               # Ex. SIN: 103.845 1.314  LON: 0.1278 51.5074  TOK: 139.6917 35.689  DAL: 96.7970 32.7767  SYD: -33.865, 151.209
+    long: 103.845    # Singapore               # Ex. SIN: 103.845 1.314  LON: 0.1278 51.5074  TOK: 139.6917 35.689  DAL: 96.7970 32.7767  SYD: -33.865, 151.209  MUM: 18.940 72.834
     lat: 1.314
     context: login-a                           # Cluster context 
   coolstore-b:       # Sydney 
-    long: -33.865143
-#    lat: 151.209
-    lat: 51.209
+    long: 151.209     
+    lat: '-33.865' 
     context: login-b
   coolstore-c:       # Tokyo
     long: 139.6503
@@ -38,7 +43,3 @@ ingresses:                  # List of kube ingresses
     service: inventory
     port: 80
     namespace: demo
-#  payment:
-#    service: payment
-#    port: 80
-#    namespace: demo
