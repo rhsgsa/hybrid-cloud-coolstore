@@ -362,9 +362,12 @@ do
 	lb_name=lb-$ingress-$BASE_DOMAIN_READABLE
 	conffile=$OUT/$lb_name.yaml
 
-	echo Creating HTTP Loadbalancer [$lb_name] ...
-
 	cat $HCD_CONF | yq ".ingresses.$ingress" | jinja2 yaml/f5/lb.yaml -Dingress=$ingress -Ddomain=$BASE_DOMAIN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
+
+
+	fqdn=`cat $HCD_CONF | yq ".ingresses.$ingress" | jinja2 yaml/f5/fqdn -Dingress=$ingress -Ddomain=$BASE_DOMAIN`
+
+	echo Creating HTTP Loadbalancer [$lb_name] fqdn [$fqdn] ...
 
 	(
 
@@ -384,7 +387,7 @@ wait
 echo
 echo All done.  Please wait 2-3 mins for all sites to become available!
 
-echo All applied F5 configurations can be found in the $OUT directory for reference. 
+echo All applied F5 configurations can be found in the $OUT directory on host `hostname` for reference. 
 
 echo 'set -x' >> $CLEANUP_F5XC
 echo 'set -x' >> $CLEANUP_SITES
