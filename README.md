@@ -79,7 +79,7 @@
 
 01. Set up F5 Distributed Cloud (F5 XC) Load Balancer
 
-        * If you executed 'make install-with-f5' above, then follow these steps
+        * If you executed 'make install-with-f5' above and you want to repeat the f5 configuration, then follow these steps
 
 			make f5-bastion
 
