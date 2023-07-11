@@ -12,7 +12,7 @@ spec:
   advanced_options: null
   endpoint_selection: LOCAL_PREFERRED
   healthcheck:
-  - name: basic-healthcheck
+  - name: {{ health_check }}
     namespace: multi-cloud-openshift
   loadbalancer_algorithm: ROUND_ROBIN
   no_tls: {}

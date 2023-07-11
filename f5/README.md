@@ -87,6 +87,25 @@ Note: The above instructions mention configuring "Huge Pages" support.  In testi
 
 # Troubleshooting
 
+If a site does not register, then check out the logs from the vp-manager-0, e.g.:
+
+```
+oc --context login-a -n ves-system logs vp-manager-0
+```
+
+If you see this error in the output of e.g. `oc --context login-a -n ves-system logs vp-manager-0`, contact F5 XC supprot!: 
+
+```
+client.go:181: Sending registration request to https://register.ves.volterra.io/registerBootstrap
+client.go:188: Unable to parse registration error: unexpected end of JSON input
+register.go:701: Registration failed: Registration request: Request Register failed: Response with non-OK status code: 503, content: , retry in 1m4.037955274s
+checker.go:184: Starting check for new workload version, with timeout 40m0s
+checker.go:109: Workload check has finished without error, sleeping for 5m18.801242383s, until 2023-07-11 07:58:48.595412013 +0000 UTC m=+644.686690212
+ipchange.go:35: Unable to read fabric IP from registration: Error reading registration object file: open /etc/vpm/registration-obj.yml: no such file or directory
+
+```
+- For "503" there is no resolution
+
 URL for the site list:
 - Note the namespace to use in the F5 XC UI is 'multi-cloud-openshift' and not 'default'.
 

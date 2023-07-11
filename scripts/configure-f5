@@ -29,8 +29,8 @@ fi
 
 ##################################
 
-BG_CNT=0                     # Used for running api requests concurrently 
-BG_MAX=4
+#BG_CNT=0                     # Used for running api requests concurrently 
+#BG_MAX=4
 TMP=/tmp/.f5.tmp
 rm -rf $TMP && mkdir $TMP
 OUT=/tmp/out
@@ -98,7 +98,6 @@ SITE_LIST=$(cat $HCD_CONF | yq '.sites[] | key')
 
 [ ! "$SITE_LIST" ] && echo "Cannot parse the site names from $HCD_CONF file using your yq CLI" && exit 1
 
-
 if [ "$CLEAN_FIRST" ]; then
 	for site in $SITE_LIST
 	do
@@ -116,27 +115,6 @@ if [ "$CLEAN_FIRST" ]; then
 	wait
 fi
 	
-
-###############################################################
-# Set up the F5 Ingress (VER) on each site/cluster. 
-
-for site in $SITE_LIST
-do
-	CONTEXT=$(getContext $site) || exit 1
-
-	echo $CONTEXT: Launching F5 Ingress for site [$site-$BASE_DOMAIN_READABLE] ...
-
-	site_name=site-$site-$BASE_DOMAIN_READABLE
-	conffile=$OUT/$site_name.yaml
-
-	# Create the F5 Ingress (VES) in OpenShift
-	cat $HCD_CONF | yq ".sites.$site" | jinja2 yaml/f5/site.yaml -Dsite=$site -Dtoken=$TOKEN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
-
-	##[ "$CLEAN_FIRST" ] && oc --context=$CONTEXT delete -f $conffile -n ves-system >>$LOG 2>&1
-	oc --context=$CONTEXT create -f $conffile -n ves-system >>$LOG 2>&1
-
-	echo "oc --context=$CONTEXT delete -f $conffile &" >> $CLEANUP_SITES 
-done
 
 ###############################################################
 # Remove any existing, non-pending site registrations
@@ -182,6 +160,27 @@ do
 done
 
 ###############################################################
+# Set up the F5 Ingress (VER) on each site/cluster. 
+
+for site in $SITE_LIST
+do
+	CONTEXT=$(getContext $site) || exit 1
+
+	echo $CONTEXT: Launching F5 Ingress for site [$site-$BASE_DOMAIN_READABLE] ...
+
+	site_name=site-$site-$BASE_DOMAIN_READABLE
+	conffile=$OUT/$site_name.yaml
+
+	# Create the F5 Ingress (VES) in OpenShift
+	cat $HCD_CONF | yq ".sites.$site" | jinja2 yaml/f5/site.yaml -Dsite=$site -Dtoken=$TOKEN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
+
+	##[ "$CLEAN_FIRST" ] && oc --context=$CONTEXT delete -f $conffile -n ves-system >>$LOG 2>&1
+	oc --context=$CONTEXT create -f $conffile -n ves-system >>$LOG 2>&1
+
+	echo "oc --context=$CONTEXT delete -f $conffile &" >> $CLEANUP_SITES 
+done
+
+###############################################################
 # Wait for F5 Ingress to come up on all sites 
 
 for site in $SITE_LIST
@@ -205,6 +204,8 @@ for site in $SITE_LIST
 do
 	site_name=$site-$BASE_DOMAIN_READABLE
 
+	echo "If registrations fail in any way, check out the logs of the manager pod, e.g.: 'oc --context login-a -n ves-system logs vp-manager-0'"
+
 	echo -n Waiting for pending registration for site [$site_name] ...
 	r=
 	s=
@@ -222,11 +223,13 @@ do
 		[ "$s" = "null" ] && s=
 
 		[ "$s" = "ONLINE" ] && break 
+		#[ "$s" = "PENDING" ] && break 
+		#[ "$s" = "NEW" ] && break 
 
 		echo -n .
 
 		let cnt=$cnt+1
-		[ $cnt -gt 20 ] && echo -e "\nSite registration not found on F5 side.\nAre all pods running & 'ready' in all 'ves-system' namespaces on all clusters?\nIs your F5 XC API token valid?\nCheck the vp-manager-0 pod logs\nDo you see error 'Registration failed'?\nAlso see the f5/README.md" && exit 1
+		#[ $cnt -gt 30 ] && echo -e "\nSite registration not found on F5 side.\nAre all pods running & 'ready' in all 'ves-system' namespaces on all clusters?\nIs your F5 XC API token valid?\nCheck the vp-manager-0 pod logs\nDo you see error 'Registration failed'?\nAlso see the f5/README.md" && exit 1
 
 		sleep 3
 	done
@@ -329,32 +332,70 @@ echo "$vcmd configuration delete healthcheck basic-healthcheck -n multi-cloud-op
 
 
 INGRESS_LIST=$(cat $HCD_CONF  | yq '.ingresses[] | key')
+echo wait >> $CLEANUP_F5XC
 
-# Create the Origin Pools, one for each ingress
+# Create the Health Checks, if needed
 for ingress in $INGRESS_LIST
 do
+	path=`cat $HCD_CONF | yq ".ingresses.$ingress.health_path"`
+
+	if [ "$path" -a "$path" != "null" ]; then
+		hc_name=hc-$ingress-$BASE_DOMAIN_READABLE
+		conffile=$OUT/$hc_name.yaml
+
+		cat $HCD_CONF | jinja2 yaml/f5/health-check.yaml -Dpath=$path -Dingress=$ingress -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile || exit 1
+
+		(
+			echo Creating Health Check [$hc_name] ...
+			$vcmd configuration create healthcheck -i $conffile >>$LOG 2>&1 || \
+				$vcmd configuration replace healthcheck -i $conffile >>$LOG || exit 1
+
+			echo "$vcmd configuration delete healthcheck $hc_name -n multi-cloud-openshift &" >> $CLEANUP_F5XC
+		) &
+	fi
+done
+
+wait
+
+
+# Create the Origin Pools, one for each ingress
+echo wait >> $CLEANUP_F5XC
+
+for ingress in $INGRESS_LIST
+do
+	# Custom health check needed?
+	path=`cat $HCD_CONF | yq ".ingresses.$ingress.health_path"`
+	if [ "$path" -a "$path" != "null" ]; then
+		hc_name=hc-$ingress-$BASE_DOMAIN_READABLE
+	else
+		hc_name=basic-healthcheck
+	fi
+
+	# Now create the pool
 	op_name=op-$ingress-$BASE_DOMAIN_READABLE
 	conffile=$OUT/$op_name.yaml
 
 	echo Creating Origin Pool [$op_name] ...
 
-	cat $HCD_CONF | jinja2 yaml/f5/op.yaml -Dingress=$ingress -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile || exit 1
+	cat $HCD_CONF | jinja2 yaml/f5/op.yaml -Dhealth_check=$hc_name -Dingress=$ingress -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile || exit 1
 
 	(
+		$vcmd configuration create origin_pool -i $conffile >>$LOG 2>&1 || \
+			$vcmd configuration replace origin_pool -i $conffile >>$LOG || exit 1
 
-	$vcmd configuration create origin_pool -i $conffile >>$LOG 2>&1 || \
-		$vcmd configuration replace origin_pool -i $conffile >>$LOG || exit 1
-
-	echo "$vcmd configuration delete origin_pool $op_name -n multi-cloud-openshift &" >> $CLEANUP_F5XC
+		echo "$vcmd configuration delete origin_pool $op_name -n multi-cloud-openshift &" >> $CLEANUP_F5XC
 	) & 
 
-	let BG_CNT=$BG_CNT+1
+	#let BG_CNT=$BG_CNT+1
 	#if [ $BG_CNT -ge $BG_MAX ]; then wait; BG_CNT=0; fi
 done
 
 wait  #  Cannot create http LBs until the dependent pools are created 
 
+
 # Create the http load balancers, one for each ingress 
+echo wait >> $CLEANUP_F5XC
+
 for ingress in $INGRESS_LIST
 do
 	lb_name=lb-$ingress-$BASE_DOMAIN_READABLE
@@ -362,21 +403,17 @@ do
 
 	cat $HCD_CONF | yq ".ingresses.$ingress" | jinja2 yaml/f5/lb.yaml -Dingress=$ingress -Ddomain=$BASE_DOMAIN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
 
-
-	#fqdn=`cat $HCD_CONF | yq ".ingresses.$ingress" | jinja2 yaml/f5/fqdn -Dingress=$ingress -Ddomain=$BASE_DOMAIN`
 	fqdn=$ingress.$BASE_DOMAIN
-	#echo "fqd2=[$fqd2]"
 
-	echo Creating HTTP Loadbalancer [$lb_name] fqdn [$fqdn] ...
+	echo Creating HTTP Loadbalancer [$lb_name] with fqdn [$fqdn] ...
 
 	(
-
-	$vcmd configuration create http_loadbalancer -i $conffile >>$LOG 2>&1 || \
-		$vcmd configuration replace http_loadbalancer -i $conffile >>$LOG || exit 1
-	echo "$vcmd configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift &" >> $CLEANUP_F5XC
+		$vcmd configuration create http_loadbalancer -i $conffile >>$LOG 2>&1 || \
+			$vcmd configuration replace http_loadbalancer -i $conffile >>$LOG || exit 1
+		echo "$vcmd configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift &" >> $CLEANUP_F5XC
 	) &
 
-	let BG_CNT=$BG_CNT+1
+	#let BG_CNT=$BG_CNT+1
 #	if [ $BG_CNT -ge $BG_MAX ]; then wait; BG_CNT=0; fi
 done
 

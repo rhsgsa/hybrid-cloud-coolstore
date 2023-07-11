@@ -1,0 +1,20 @@
+metadata:
+  description: Custom Healthcheck
+  disable: false
+  name: hc-{{ ingress }}-{{ domain_readable }}
+  namespace: multi-cloud-openshift
+spec:
+  healthy_threshold: 2
+  http_health_check:
+    expected_status_codes:
+    - "200"
+    headers: {}
+    path: {{ path }} 
+    request_headers_to_remove: []
+    use_http2: false
+    use_origin_server_name: {}
+  interval: 2
+  jitter: 0
+  jitter_percent: 30
+  timeout: 8
+  unhealthy_threshold: 2
