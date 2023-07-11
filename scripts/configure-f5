@@ -200,11 +200,12 @@ done
 # https://f5-asean.console.ves.volterra.io/web/devportal/apidocs/registration 
 # https://docs.cloud.f5.com/docs/reference/api-ref/ves-io-schema-registration-customapi-registrationapprove 
 
+echo
+echo "If registrations fail in any way, check out the logs of the vp-manager pod, e.g.: 'oc --context login-a -n ves-system logs vp-manager-0'"
+
 for site in $SITE_LIST
 do
 	site_name=$site-$BASE_DOMAIN_READABLE
-
-	echo "If registrations fail in any way, check out the logs of the manager pod, e.g.: 'oc --context login-a -n ves-system logs vp-manager-0'"
 
 	echo -n Waiting for pending registration for site [$site_name] ...
 	r=
