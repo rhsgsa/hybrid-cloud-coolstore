@@ -9,7 +9,8 @@ include $(BASE)/config.sh
 install: create-aws-credentials install-gitops deploy-gitea create-clusters
 	@echo "done"
 
-# Do the install but also include pre-config steps for later 'make f5'. The script 'create-bastion-credentials' is a drop-in replacement for 'create-aws-credentials''.
+# This is the same as the above 'install:' rule except the 'create-bastion-credentials' script is a wrapper for 'create-aws-credentials' script. 
+# The 'f5-bastion:' rule copies the repo to the bastion and then executes the 'f5:' rule on the bastion.
 install-with-f5: create-bastion-credentials install-gitops deploy-gitea create-clusters f5-bastion
 	@echo "done"
 
