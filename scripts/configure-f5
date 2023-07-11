@@ -363,7 +363,9 @@ do
 	cat $HCD_CONF | yq ".ingresses.$ingress" | jinja2 yaml/f5/lb.yaml -Dingress=$ingress -Ddomain=$BASE_DOMAIN -Ddomain_readable=$BASE_DOMAIN_READABLE > $conffile
 
 
-	fqdn=`cat $HCD_CONF | yq ".ingresses.$ingress" | jinja2 yaml/f5/fqdn -Dingress=$ingress -Ddomain=$BASE_DOMAIN`
+	#fqdn=`cat $HCD_CONF | yq ".ingresses.$ingress" | jinja2 yaml/f5/fqdn -Dingress=$ingress -Ddomain=$BASE_DOMAIN`
+	fqdn=$ingress.$BASE_DOMAIN
+	#echo "fqd2=[$fqd2]"
 
 	echo Creating HTTP Loadbalancer [$lb_name] fqdn [$fqdn] ...
 
