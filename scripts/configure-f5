@@ -162,13 +162,13 @@ do
 		s=`cat $TMP/.reg-$site_name.yaml | yq .items[0].object.status.currentState`
 
 		if [ "$CLEAN_FIRST" ]; then
-			echo "$site_name: Cleaning up existing registration [$r] for site [$site_name] with status [$s]" 
+			echo "Cleaning up existing registration [$r] for site [$site_name] with status [$s]" 
 			$vcmd configuration delete registration $r -n system
 		else
 			# Fetch status of site registration request 
 			#s=`cat $TMP/.reg-$site_name.yaml | yq .items[0].object.status.currentState`
 	
-			echo -n $site_name: found existing registration [$r] for site [$site_name] with status [$s] ...
+			echo -n found existing registration [$r] for site [$site_name] with status [$s] ...
 	
 			if [ "$s" != "PENDING" -a "$s" != "ONLINE" ]; then
 				echo -n ... removing ...
@@ -205,7 +205,7 @@ for site in $SITE_LIST
 do
 	site_name=$site-$BASE_DOMAIN_READABLE
 
-	echo -n $site_name: Waiting for pending registration for site [$site_name] ...
+	echo -n Waiting for pending registration for site [$site_name] ...
 	r=
 	s=
 	cnt=0
@@ -257,7 +257,7 @@ for site in $SITE_LIST
 do
 	site_name=$site-$BASE_DOMAIN_READABLE
 
-	echo -n $site_name: Waiting for online registration for site [$site_name] ...
+	echo -n Waiting for online registration for site [$site_name] ...
 	r=
 	s=
 	until [ "$r" -a "$s" = "ONLINE" ]
