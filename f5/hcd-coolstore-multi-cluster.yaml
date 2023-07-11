@@ -6,8 +6,8 @@ hcd:
                                                # Li Ming - hcd1.ltsai.com
                                                # Anthony - hcd2.ltsai.com
                                                # KH -      hcd3.ltsai.com
-                                               # Steve -   hcd1.bylo.de
-                                               # Kin Wai - hcd2.bylo.de
+                                               # Steve -   hcd2.bylo.de
+                                               # Kin Wai - hcd3.bylo.de
   namespace: multi-cloud-openshift             # This is the namespace to use in F5 XC
 sites: 
   coolstore-a:                                 # name of cluster 
@@ -15,8 +15,8 @@ sites:
     lat: 1.314
     context: login-a                           # Cluster context 
   coolstore-b:       # Sydney 
-    long: 151.209     
-    lat: '-33.865' 
+    long: 151.209
+    lat: -33.865
     context: login-b
   coolstore-c:       # Tokyo
     long: 139.6503
