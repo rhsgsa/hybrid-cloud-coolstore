@@ -342,8 +342,6 @@ do
 
 	(
 
-	##[ "$CLEAN_FIRST" ] && $vcmd configuration delete origin_pool $op_name -n multi-cloud-openshift 
-
 	$vcmd configuration create origin_pool -i $conffile >>$LOG 2>&1 || \
 		$vcmd configuration replace origin_pool -i $conffile >>$LOG || exit 1
 
@@ -351,7 +349,7 @@ do
 	) & 
 
 	let BG_CNT=$BG_CNT+1
-	if [ $BG_CNT -ge $BG_MAX ]; then wait; BG_CNT=0; fi
+	#if [ $BG_CNT -ge $BG_MAX ]; then wait; BG_CNT=0; fi
 done
 
 wait  #  Cannot create http LBs until the dependent pools are created 
@@ -371,15 +369,13 @@ do
 
 	(
 
-	##[ "$CLEAN_FIRST" ] && $vcmd configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift
-
 	$vcmd configuration create http_loadbalancer -i $conffile >>$LOG 2>&1 || \
 		$vcmd configuration replace http_loadbalancer -i $conffile >>$LOG || exit 1
 	echo "$vcmd configuration delete http_loadbalancer $lb_name -n multi-cloud-openshift &" >> $CLEANUP_F5XC
 	) &
 
 	let BG_CNT=$BG_CNT+1
-	if [ $BG_CNT -ge $BG_MAX ]; then wait; BG_CNT=0; fi
+#	if [ $BG_CNT -ge $BG_MAX ]; then wait; BG_CNT=0; fi
 done
 
 wait
