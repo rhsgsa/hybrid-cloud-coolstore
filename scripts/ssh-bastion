@@ -1,0 +1,1 @@
+. bastion-env.sh && ssh -F $SSH_DIR/config -i $SSH_DIR/$SSH_KEYFILE $ssh_user@$ssh_bastion
