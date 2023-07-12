@@ -182,3 +182,6 @@ installer-image:
 clean:
 	rm -f /tmp/.hub-cluster-details bastion-env.sh
 
+ssh:
+	scripts/ssh-bastion
+

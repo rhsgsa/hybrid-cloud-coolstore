@@ -26,12 +26,10 @@ done
 oc config use-context login-hub
 
 echo "Contexts created:"
-oc config get-contexts -oname| grep ^login
+oc config get-contexts -oname| grep ^login-
 
-echo
-echo Example usage:
-echo oc config use-context login-hub
-echo oc config use-context login-a
-echo or
+echo Useful commands:
 echo oc --context=login-a -n demo get pod 
+echo oc --context=login-a -n ves-system get pod 
+echo oc --context=login-a -n ves-system logs vp-manager-0
 	
