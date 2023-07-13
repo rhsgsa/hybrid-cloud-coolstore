@@ -14,7 +14,8 @@
 
 01. **If you want to install the demo with the F5 global load balancer, follow this step (and skip the next step - 'make install' - below.**  This step will also complete everything that 'make install' does): 
 
-	*   If not already, create and download your own F5 XC API Certificate file and store it to the same directory as this README.  Fetch the cert from the [F5 XC UI](https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials) (reset your password if it's your first time) - the file must be named `f5xc.p12`.  Remember the password for the next step.
+	*  Configure access to the F5 XC API:
+		*   If not already, create and download your own F5 XC API Certificate file and store it to the same directory as this README.  Fetch the cert from the [F5 XC UI](https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials) (reset your password if it's your first time) - the file must be named `f5xc.p12`.  Remember the password for the next step.
 		*   Store your chosen password, for the API Certificate, to a file in the same directory - the file must be named `f5xc.password`.
 		*   For more information, see [f5/README.md](f5/README.md)
 	*   Be sure the domain name set in the f5/hcd-coolstore-multi-cluster.yaml is not being used by anybody else.  You can check in the F5 XC [HTTP Load Balancer List](https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-app-connect/namespaces/multi-cloud-openshift/manage/load_balancers/http_loadbalancers) to see which are being used. 
