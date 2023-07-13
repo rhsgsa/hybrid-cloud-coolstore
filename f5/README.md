@@ -152,6 +152,10 @@ URL for domain name management:
 
 https://f5-asean.console.ves.volterra.io/web/workspaces/dns-management/manage/dns_domain
 
+URL to manage F5 XC monitors (useful to send traffic to the demo app):
+
+https://f5-asean.console.ves.volterra.io/web/workspaces/observability/namespaces/multi-cloud-openshift/manage/synthetic-monitors/http-monitors 
+
 
 If you see the following error in the ves-system, namespace, then more worker nodes need to be added, add one more node to each cluster where F5 is running:
 
