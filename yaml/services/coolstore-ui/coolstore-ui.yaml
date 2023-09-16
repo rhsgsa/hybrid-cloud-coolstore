@@ -22,7 +22,7 @@ spec:
         app: coolstore-ui
     spec:
       containers:
-      - image: quay.io/rhsgsa/coolstore-ui:latest
+      - image: quay.io/rhsgsa/coolstore-ui:20230916
         name: coolstore-ui
         ports:
         - containerPort: 8080
@@ -32,6 +32,14 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.namespace
+        - name: MY_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        envFrom:
+          - configMapRef:
+              name: coolstore-ui-config
         securityContext:
           allowPrivilegeEscalation: false
           capabilities:
