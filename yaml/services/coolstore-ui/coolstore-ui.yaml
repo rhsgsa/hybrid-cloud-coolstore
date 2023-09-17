@@ -22,7 +22,7 @@ spec:
         app: coolstore-ui
     spec:
       containers:
-      - image: quay.io/rhsgsa/coolstore-ui:20230916
+      - image: quay.io/rhsgsa/coolstore-ui:20230917
         name: coolstore-ui
         ports:
         - containerPort: 8080
