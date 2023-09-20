@@ -1,0 +1,66 @@
+#!/bin/bash
+
+cd `dirname $0`
+BASE=`pwd`
+cd - >> /dev/null
+
+source ${BASE}/../config.sh
+
+if [ "$#" -lt 7 ]; then
+  echo "Usage: $0 PROJECT APP_NAME GIT_USER GIT_PASSWORD REPO_NAME WEBHOOK WEBHOOK_EVENT [BRANCH_FILTER]"
+  exit 1
+fi
+
+# WEBHOOK_EVENT can be "push" or "pull_request"
+
+PROJ="$1"
+APP_NAME="$2"
+GIT_USER="$3"
+GIT_PASSWORD="$4"
+REPO_NAME="$5"
+WEBHOOK="$6"
+WEBHOOK_EVENT="$7"
+BRANCH_FILTER="$8"
+
+if [ -z "$BRANCH_FILTER" ]; then
+  BRANCH_FILTER='*'
+fi
+
+ROUTE_HOST="$(oc get route/$APP_NAME -n $PROJ -o jsonpath='{.spec.host}')"
+if [ -z "$ROUTE_HOST" ]; then
+  echo "could not get gitea host"
+  exit 1
+fi
+
+# payload also includes a branch_filter field
+HOOK_RESP=$(curl \
+  -s \
+  -X POST \
+  -H "accept: application/json" \
+  -H "Content-Type: application/json" \
+  -u "${GIT_USER}:${GIT_PASSWORD}" \
+  -d '{"type":"gitea","branch_filter":"'"$BRANCH_FILTER"'","config":{"content_type":"json","url":"'"$WEBHOOK"'"},"events":["'"$WEBHOOK_EVENT"'"],"active":true}' \
+  http://${ROUTE_HOST}/api/v1/repos/${GIT_USER}/${REPO_NAME}/hooks)
+
+if [ $? -ne 0 ]; then
+  echo "error creating webhook"
+  exit 1
+fi
+
+HOOK_ID="$(echo $HOOK_RESP | jq '.id')"
+if [ -z "$HOOK_ID" ]; then
+  echo "could not retrieve webhook ID"
+  exit 1
+fi
+
+echo "successfully created webhook with ID ${HOOK_ID}"
+
+# test the webhook in order to kick off the pipeline
+echo "sending test request to webhook..."
+curl \
+  -s \
+  -X POST \
+  -H "accept: application/json" \
+  -H "Content-Type: application/json" \
+  -u "${GIT_USER}:${GIT_PASSWORD}" \
+  http://${ROUTE_HOST}/api/v1/repos/${GIT_USER}/${REPO_NAME}/hooks/${HOOK_ID}/tests

@@ -23,6 +23,16 @@ oc new-app \
   -p DOMAIN="${APP}-${GIT_PROJ}.${SUFFIX}" \
   -p ROOT_URL="https://${APP}-${GIT_PROJ}.${SUFFIX}"
 
+until oc get -n $GIT_PROJ sts/$APP > /dev/null 2>&1; do
+  sleep 1
+done
+
+# needed for webhooks to work
+oc set env \
+  -n $GIT_PROJ \
+  -e GITEA__WEBHOOK__ALLOWED_HOST_LIST='*' \
+  sts/$APP
+
 if [ "$(oc get -n $GIT_PROJ cm/kube-root-ca.crt 2>/dev/null | wc -l)" -lt 1 ]; then
   # we are on an earlier version of Kubernetes - we will need to copy over
   # the root CA ConfigMap

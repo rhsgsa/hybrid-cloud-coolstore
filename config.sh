@@ -2,6 +2,7 @@ PROJ=demo
 GIT_PROJ=infra
 GIT_ADMIN=demo
 GIT_PASSWORD=password
+GIT_REPO=coolstore
 
 AWS_SECRET_NAME=aws
 CLUSTERSET_NAME=coolstore
@@ -16,3 +17,10 @@ COMPUTE_COUNT=4         # At least 4 are needed for F5 ingres to run
 
 INSTALLER_IMAGE=ghcr.io/rhsgsa/hybrid-cloud-installer
 REMOTE_INSTALL_PROJ=infra
+
+# variables required for the ArgoCD Sync Handler
+ARGO_ACCOUNT=robot
+TOKEN_ID=sync-token
+TOKEN_FILE=/tmp/token.txt
+ARGO_APP=coolstore
+HANDLER_PROJ=infra
