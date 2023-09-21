@@ -1,0 +1,168 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: caddy
+spec: {}
+status: {}
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: caddy
+  namespace: caddy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: caddy
+  namespace: caddy
+rules:
+- apiGroups:
+  - security.openshift.io
+  resourceNames:
+  - anyuid
+  resources:
+  - securitycontextconstraints
+  verbs:
+  - use
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: caddy
+  name: caddy
+spec:
+  selector:
+    app: caddy
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 8443
+  type: LoadBalancer
+---
+apiVersion: v1
+data:
+  Caddyfile: |
+    {
+        #debug
+        http_port 8080
+        https_port 8443
+        #acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+    }
+
+    coolstore-ui-demo.hcd4.ltsai.com {
+      reverse_proxy coolstore-ui-demo.apps.aws-ocp-cluster-1.sandbox2864.opentlc.com coolstore-ui-demo.apps.drosf81f.eastus.aroapp.io {
+        header_up Host {upstream_hostport}
+        health_uri /info.js
+        health_interval 5s
+        fail_duration 30s
+      }
+    }
+
+    cart-demo.hcd4.ltsai.com {
+      reverse_proxy cart-demo.apps.aws-ocp-cluster-1.sandbox2864.opentlc.com cart-demo.apps.drosf81f.eastus.aroapp.io cart-demo.apps.gcp-ocp-cluster-1.nh86r.gcp.redhatworkshops.io {
+        header_up Host {upstream_hostport}
+        health_uri /q/health/live
+        health_interval 5s
+        fail_duration 30s
+      }
+    }
+
+    catalog-demo.hcd4.ltsai.com {
+      reverse_proxy catalog-demo.apps.aws-ocp-cluster-1.sandbox2864.opentlc.com catalog-demo.apps.drosf81f.eastus.aroapp.io catalog-demo.apps.gcp-ocp-cluster-1.nh86r.gcp.redhatworkshops.io {
+        header_up Host {upstream_hostport}
+        health_uri /actuator/health/liveness
+        health_interval 5s
+        fail_duration 30s
+      }
+    }
+
+    inventory-demo.hcd4.ltsai.com {
+      reverse_proxy inventory-demo.apps.aws-ocp-cluster-1.sandbox2864.opentlc.com inventory-demo.apps.drosf81f.eastus.aroapp.io inventory-demo.apps.gcp-ocp-cluster-1.nh86r.gcp.redhatworkshops.io {
+        header_up Host {upstream_hostport}
+        health_uri /q/health/live
+        health_interval 5s
+        fail_duration 30s
+      }
+    }
+
+    order-demo.hcd4.ltsai.com {
+      reverse_proxy order-demo.apps.aws-ocp-cluster-1.sandbox2864.opentlc.com order-demo.apps.drosf81f.eastus.aroapp.io order-demo.apps.gcp-ocp-cluster-1.nh86r.gcp.redhatworkshops.io {
+        header_up Host {upstream_hostport}
+        health_uri /q/health/live
+        health_interval 5s
+        fail_duration 30s
+      }
+    }
+kind: ConfigMap
+metadata:
+  labels:
+    app: caddy
+  name: caddy
+  namespace: caddy
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: caddy
+  namespace: caddy
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: caddy
+subjects:
+- kind: ServiceAccount
+  name: caddy
+  namespace: caddy
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  labels:
+    app: caddy
+  name: caddy
+  namespace: caddy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: caddy
+  template:
+    metadata:
+      labels:
+        app: caddy
+    spec:
+      serviceAccountName: caddy
+      containers:
+      - image: docker.io/caddy:2.7.4
+        name: caddy
+        ports:
+        - name: http
+          containerPort: 8080
+        - name: https
+          containerPort: 8443
+        volumeMounts:
+        - mountPath: /data
+          name: data
+        - mountPath: /etc/caddy
+          name: config
+        resources: {}
+      volumes:
+      - name: config
+        configMap:
+          name: caddy
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      resources:
+        requests:
+          storage: 1Gi
+status: {}

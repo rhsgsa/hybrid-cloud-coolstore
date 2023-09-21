@@ -1,0 +1,23 @@
+#!/bin/bash
+
+echo -n "getting service external hostname..."
+while true; do 
+  EXTERNAL_HOST="$(oc get svc/caddy -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+  if [ -n "$EXTERNAL_HOST" ]; then break; fi
+  echo -n "."
+  sleep 5
+done
+echo "done"
+
+echo "service external host is $EXTERNAL_HOST"
+
+echo -n "getting service external IP..."
+while true; do
+    EXTERNAL_IP="$(nslookup $EXTERNAL_HOST | grep -i -A 5 answer | grep Address | awk '{ print $2 }' | head -1)"
+    if [ -n "$EXTERNAL_IP" ]; then break; fi
+    echo -n "."
+    sleep 5
+done
+echo "done"
+
+echo "service external IP is $EXTERNAL_IP"
