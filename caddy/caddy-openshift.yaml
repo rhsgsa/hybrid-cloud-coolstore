@@ -56,8 +56,8 @@ data:
         #acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
     }
 
-    coolstore-ui-demo.hcd4.ltsai.com {
-      reverse_proxy coolstore-ui-demo.apps.aws-ocp-cluster-1.sandbox2864.opentlc.com coolstore-ui-demo.apps.drosf81f.eastus.aroapp.io {
+    coolstore-ui-demo.{$DNS_DOMAIN} {
+      reverse_proxy coolstore-ui-demo.{$DOMAIN_1} coolstore-ui-demo.{$DOMAIN_2} {
         header_up Host {upstream_hostport}
         health_uri /info.js
         health_interval 5s
@@ -65,8 +65,8 @@ data:
       }
     }
 
-    cart-demo.hcd4.ltsai.com {
-      reverse_proxy cart-demo.apps.aws-ocp-cluster-1.sandbox2864.opentlc.com cart-demo.apps.drosf81f.eastus.aroapp.io cart-demo.apps.gcp-ocp-cluster-1.nh86r.gcp.redhatworkshops.io {
+    cart-demo.{$DNS_DOMAIN} {
+      reverse_proxy cart-demo.{$DOMAIN_1} cart-demo.{$DOMAIN_2} cart-demo.{$DOMAIN_3} {
         header_up Host {upstream_hostport}
         health_uri /q/health/live
         health_interval 5s
@@ -74,8 +74,8 @@ data:
       }
     }
 
-    catalog-demo.hcd4.ltsai.com {
-      reverse_proxy catalog-demo.apps.aws-ocp-cluster-1.sandbox2864.opentlc.com catalog-demo.apps.drosf81f.eastus.aroapp.io catalog-demo.apps.gcp-ocp-cluster-1.nh86r.gcp.redhatworkshops.io {
+    catalog-demo.{$DNS_DOMAIN} {
+      reverse_proxy catalog-demo.{$DOMAIN_1} catalog-demo.{$DOMAIN_2} catalog-demo.{$DOMAIN_3} {
         header_up Host {upstream_hostport}
         health_uri /actuator/health/liveness
         health_interval 5s
@@ -83,8 +83,8 @@ data:
       }
     }
 
-    inventory-demo.hcd4.ltsai.com {
-      reverse_proxy inventory-demo.apps.aws-ocp-cluster-1.sandbox2864.opentlc.com inventory-demo.apps.drosf81f.eastus.aroapp.io inventory-demo.apps.gcp-ocp-cluster-1.nh86r.gcp.redhatworkshops.io {
+    inventory-demo.{$DNS_DOMAIN} {
+      reverse_proxy inventory-demo.{$DOMAIN_1} inventory-demo.{$DOMAIN_2} inventory-demo.{$DOMAIN_3} {
         header_up Host {upstream_hostport}
         health_uri /q/health/live
         health_interval 5s
@@ -92,8 +92,8 @@ data:
       }
     }
 
-    order-demo.hcd4.ltsai.com {
-      reverse_proxy order-demo.apps.aws-ocp-cluster-1.sandbox2864.opentlc.com order-demo.apps.drosf81f.eastus.aroapp.io order-demo.apps.gcp-ocp-cluster-1.nh86r.gcp.redhatworkshops.io {
+    order-demo.{$DNS_DOMAIN} {
+      reverse_proxy order-demo.{$DOMAIN_1} order-demo.{$DOMAIN_2} order-demo.{$DOMAIN_3} {
         header_up Host {upstream_hostport}
         health_uri /q/health/live
         health_interval 5s
@@ -105,6 +105,19 @@ metadata:
   labels:
     app: caddy
   name: caddy
+  namespace: caddy
+---
+apiVersion: v1
+data:
+  DNS_DOMAIN: hcd4.ltsai.com
+  DOMAIN_1: apps.aws-ocp-cluster-1.sandbox2864.opentlc.com
+  DOMAIN_2: apps.drosf81f.eastus.aroapp.io
+  DOMAIN_3: apps.gcp-ocp-cluster-1.nh86r.gcp.redhatworkshops.io
+kind: ConfigMap
+metadata:
+  labels:
+    app: caddy
+  name: caddy-domains
   namespace: caddy
 ---
 apiVersion: rbac.authorization.k8s.io/v1
@@ -147,6 +160,9 @@ spec:
           containerPort: 8080
         - name: https
           containerPort: 8443
+        envFrom:
+        - configMapRef:
+            name: caddy-domains
         volumeMounts:
         - mountPath: /data
           name: data

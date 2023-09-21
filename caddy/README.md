@@ -6,10 +6,10 @@ This directory contains instructions on setting up Caddy as a load-balancer.
 
 01. Login using `oc login`
 
-01. Edit the `ConfigMap` in `caddy-openshift-yaml`
+01. Edit the `caddy-domains` ConfigMap in `caddy-openshift-yaml`
 
-	*   Ensure that the domain names for each configuration block (e.g. `coolstore-ui-demo.domain.com`) reflect your DNS domain name
-	*   Ensure that all `reverse_proxy` entries point to the provisioned clusters
+	*   Set `DNS_DOMAIN` to your DNS domain name
+	*   Set `DOMAIN_1`, `DOMAIN_2`, and `DOMAIN_3` to each managed cluster's OpenShift router wildcard domain name (e.g. `apps.my-domain.com`)
 
 01. Deploy Caddy to the `caddy` namespace
 
