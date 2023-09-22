@@ -2,7 +2,7 @@
 
 echo -n "getting service external hostname..."
 while true; do 
-  EXTERNAL_HOST="$(oc get svc/caddy -o jsonpath='{.status.loadBalancer.ingress[0].hostname}')"
+  EXTERNAL_HOST="$(oc get svc/caddy -o jsonpath='{.status.loadBalancer.ingress[0].hostname}' 2>/dev/null)"
   if [ -n "$EXTERNAL_HOST" ]; then break; fi
   echo -n "."
   sleep 5

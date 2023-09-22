@@ -32,6 +32,7 @@ metadata:
   labels:
     app: caddy
   name: caddy
+  namespace: caddy
 spec:
   selector:
     app: caddy
