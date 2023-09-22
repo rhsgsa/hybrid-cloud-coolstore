@@ -11,7 +11,7 @@ This directory contains instructions on setting up Caddy as a load-balancer.
 	*   Set `DNS_DOMAIN` to your DNS domain name
 	*   Set `DOMAIN_1`, `DOMAIN_2`, and `DOMAIN_3` to each managed cluster's OpenShift router wildcard domain name (e.g. `apps.my-domain.com`)
 
-01. Deploy Caddy to the `caddy` namespace
+01. Deploy Caddy to the `caddy` namespace - note that the StatefulSet is set to `0` replicas initially
 
 		oc apply -f caddy-openshift.yaml
 
@@ -26,3 +26,7 @@ This directory contains instructions on setting up Caddy as a load-balancer.
 	*   `coolstore-ui-demo`
 	*   `inventory-demo`
 	*   `order-demo`
+
+01. Once the DNS entries have been setup, scale the StatefulSet up
+
+		oc scale -n caddy sts/caddy --replicas=1
