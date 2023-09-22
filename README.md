@@ -4,7 +4,7 @@
 
 ### Multicluster Installation
 
-01. Provision an `Red Hat OpenShift Container Platform 4 Red Hat Advanced Cluster Management Hub` ([OCP4 ACM Hub](https://demo.redhat.com/catalog?search=Advanced+Cluster+Management&item=babylon-catalog-prod%2Fsandboxes-gpte.ocp4-acm-hub-rhpds.prod)) cluster on `demo.redhat.com` - if you are planning on deploying clusters to the default regions (`ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1`), ensure that you deploy the ACM Hub cluster to a region other than those 3 to avoid problems with the AWS quotas
+01. Provision an `Advanced Cluster Management for Kubernetes Demo` ([OCP4 ACM Hub](https://demo.redhat.com/catalog?search=Advanced+Cluster+Management&item=babylon-catalog-prod%2Fsandboxes-gpte.ocp4-acm-hub-rhpds.prod)) cluster on `demo.redhat.com` - if you are planning on deploying clusters to the default regions (`ap-southeast-1`, `ap-southeast-2`, `ap-northeast-1`), ensure that you deploy the ACM Hub cluster to a region other than those 3 to avoid problems with the AWS quotas
 
 01. Clone this repo from GitHub and change into the top-level directory where this README file is.
 
@@ -12,18 +12,24 @@
 
 01. By default, the installer will deploy clusters to `ap-southeast-1`, `ap-southeast-2`, and `ap-northeast-1` - if you wish to deploy the clusters to different regions, edit `config.sh` and change the regions in the `CLUSTER_REGIONS` variable
 
-01. **If you want to install the demo with the F5 global load balancer, follow this step (and skip the next step - 'make install' - below.**  This step will also complete everything that 'make install' does): 
+01. **If you want to install the demo with the F5 global load balancer, follow this step (and skip the next step - 'make install' - below.**  This step will also complete everything that `make install` does): 
 
 	*  Configure access to the F5 XC API:
+
 		*   If not already, create and download your own F5 XC API Certificate file and store it to the same directory as this README.  Fetch the cert from the [F5 XC UI](https://f5-asean.console.ves.volterra.io/web/workspaces/administration/personal-management/api_credentials) (reset your password if it's your first time) - the file must be named `f5xc.p12`.  Remember the password for the next step.
+
 		*   Store your chosen password, for the API Certificate, to a file in the same directory - the file must be named `f5xc.password`.
+
 		*   For more information, see [f5/README.md](f5/README.md)
+
 	*   Be sure the domain name set in the f5/hcd-coolstore-multi-cluster.yaml is not being used by anybody else.  You can check in the F5 XC [HTTP Load Balancer List](https://f5-asean.console.ves.volterra.io/web/workspaces/multi-cloud-app-connect/namespaces/multi-cloud-openshift/manage/load_balancers/http_loadbalancers) to see which are being used. 
+
 	*   Execute the following command:
 
-		make clean                  # Run this once for every new "OCP4 ACM Hub" environment you order via RHDP 
+			# Run this once for every new "OCP4 ACM Hub" environment you order via RHDPS
+			make clean
 
-		make install-with-f5
+			make install-with-f5
 
 01. Install services to the ACM Hub Cluster
 
@@ -152,7 +158,14 @@ If you don't do the above, the clusters may be stuck in the detaching phase. If 
 
 01. Install the OpenShift GitOps operator and `gitea`, setup the ArgoCD `ApplicationSets`
 
-		make install-gitops deploy-gitea create-clusters
+		make \
+		  install-gitops \
+		  deploy-gitea \
+		  create-clusters \
+		  create-argocd-account \
+		  create-token \
+		  deploy-handler \
+		  add-gitea-webhook
 
 The manifests in the `single-cluster` folder differ from the manifests in the `argocd` folder in the following ways:
 

@@ -1,0 +1,36 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base/
+- xsite-service.yaml
+
+patches:
+- patch: |-
+    apiVersion: infinispan.org/v1
+    kind: Infinispan
+    metadata:
+      name: example-infinispan
+    spec:
+      service:
+        sites:
+          local:
+            name: INFINISPAN-A
+          locations:
+          - name: INFINISPAN-B
+            url: infinispan+xsite://infinispan-b.demo.svc.clusterset.local:7900
+- patch: |-
+    kind: Cache
+    apiVersion: infinispan.org/v2alpha1
+    metadata:
+      name: cart
+    spec:
+      template: |
+        distributedCache:
+          mode: "SYNC"
+          # https://infinispan.org/docs/stable/titles/xsite/xsite.html#cross-site-automatic-offline_cross-site-replication
+          backups:
+            INFINISPAN-B:
+              backup:
+                strategy: "SYNC"
+                timeout: "60000"

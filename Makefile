@@ -75,8 +75,6 @@ create-clusters:
 	@# installing Submariner in order to give the cluster some time to settle
 
 
-
-
 create-argocd-account:
 	oc patch argocd/openshift-gitops \
 	  -n openshift-gitops \

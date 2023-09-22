@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: ApplicationSet
 metadata:
-  name: kafka-0
+  name: kafka
   namespace: openshift-gitops
   finalizers:
   - resources-finalizer.argocd.argoproj.io
@@ -12,11 +12,20 @@ spec:
       - cluster: coolstore-a
         values:
           namespace: demo
+          overlay: "0"
+      - cluster: coolstore-b
+        values:
+          namespace: demo
+          overlay: "1"
+      - cluster: coolstore-c
+        values:
+          namespace: demo
+          overlay: "2"
   template:
     metadata:
       annotations:
         argocd.argoproj.io/sync-wave: "20"
-      name: "{{cluster}}-kafka-0"
+      name: "{{cluster}}-kafka"
     spec:
       destination:
         namespace: "{{values.namespace}}"
@@ -24,7 +33,7 @@ spec:
       project: default
       source:
         kustomize: {}
-        path: kafka/overlays/0
+        path: "kafka/overlays/{{values.overlay}}"
         repoURL: http://gitea.infra.svc.cluster.local:3000/demo/coolstore.git
         targetRevision: HEAD
       syncPolicy:

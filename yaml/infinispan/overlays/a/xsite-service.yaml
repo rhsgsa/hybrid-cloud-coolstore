@@ -6,7 +6,7 @@ metadata:
     app: infinispan-service-xsite
     clusterName: example-infinispan
     infinispan_cr: example-infinispan
-  name: infinispan-c
+  name: infinispan-a
 spec:
   ports:
   - port: 7900
@@ -22,4 +22,9 @@ spec:
 apiVersion: multicluster.x-k8s.io/v1alpha1
 kind: ServiceExport
 metadata:
-  name: infinispan-c
+  name: infinispan-a
+---
+apiVersion: multicluster.x-k8s.io/v1alpha1
+kind: ServiceExport
+metadata:
+  name: example-infinispan
