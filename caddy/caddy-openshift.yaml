@@ -58,7 +58,7 @@ data:
     }
 
     coolstore-ui-demo.{$DNS_DOMAIN} {
-      reverse_proxy coolstore-ui-demo.{$DOMAIN_1} coolstore-ui-demo.{$DOMAIN_2} {
+      reverse_proxy coolstore-ui-demo.{$DOMAIN_1} coolstore-ui-demo.{$DOMAIN_2} coolstore-ui-demo.{$DOMAIN_3} {
         header_up Host {upstream_hostport}
         health_uri /info.js
         health_interval 5s
