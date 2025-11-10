@@ -22,7 +22,7 @@ spec:
         app: mongodb
     spec:
       containers:
-      - image: docker.io/bitnami/mongodb:5.0.16
+      - image: quay.io/rhsgsa/mongodb:5.0.16
         name: mongodb
         ports:
         - name: mongodb

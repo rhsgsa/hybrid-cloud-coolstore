@@ -21,7 +21,7 @@ spec:
       terminationGracePeriodSeconds: 10
       containers:
       - name: kafka
-        image: docker.io/bitnami/kafka:3.4.0-debian-11-r24
+        image: quay.io/rhsgsa/kafka:3.4.0-debian-11-r24
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 9092
